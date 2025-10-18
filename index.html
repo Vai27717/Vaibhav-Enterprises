@@ -1,0 +1,5545 @@
+<!doctype html>
+<html lang="en">
+<!-- MOBILE / RESPONSIVE FIXES: add inside <head> -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<head>
+<meta charset="utf-8" />
+<title>Vaibhav Enterprises - App (All in one)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<style>
+ body {
+    font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
+    background: #2c2c2c;   /* Dark Grey background */
+    color: #ffffff;        /* White font */
+  }
+
+  /* --- Top Navigation Bar --- */
+  /* --- Top Navigation Bar --- */
+.nav {
+    position: sticky;       /* Header ekach jaagi thambel */
+    top: 0;                 /* Top la stick hoil */
+    z-index: 10;            /* Content chya var rahil */
+
+    background: #3a3a3a;
+    padding: .6rem;
+    border-radius: .5rem;
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    box-shadow: 0 6px 18px rgba(0,0,0,.4);
+    margin-bottom: 1rem;
+}
+  /* --- Buttons तसेच राहतील (blue) --- */
+  .smallbtn {
+    padding: .4rem .7rem;
+    border-radius: .375rem;
+    background: #0ea5e9;
+    color: #fff;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* --- Cards --- */
+  .card {
+    background: #3a3a3a;   /* Light Grey (dark theme compatible) */
+    padding: 1rem;
+    border-radius: .75rem;
+    box-shadow: 0 6px 18px rgba(0,0,0,.4);
+    margin: 8px 0;
+    color: #ffffff;
+  }
+
+  /* --- Input, Textarea, Select --- */
+  input, textarea, select {
+    background: #4a4a4a;   /* हलका ग्रे */
+    color: #ffffff;
+    border: 1px solid #666;
+    padding: .45rem;
+    border-radius: .375rem;
+  }
+
+  /* --- Tables --- */
+  table {
+    background: #3a3a3a;
+    color: #ffffff;
+  }
+  table th, table td {
+    padding: .45rem .5rem;
+    border-bottom: 1px solid #666;
+    font-size: 13px;
+  }
+  table th {
+    background: #4a4a4a;
+  }
+
+  /* --- Headings --- */
+  h2, h3, h4 {
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  /* --- Muted Text --- */
+  .muted {
+    color: #bbbbbb;
+    font-size: 13px;
+  }
+
+  /* --- Item Rows --- */
+  .item-row input, 
+  .item-row textarea {
+    background: #4a4a4a;
+    color: #ffffff;
+    padding: 6px 8px;
+    font-size: 14px;
+    height: 38px;
+  }
+
+  .item-row textarea {
+    height: 60px;
+  }
+
+/* ✅ सर्व input, textarea, select साठी */
+input, textarea, select {
+  background-color: #4a4a4a !important;
+  color: #ffffff !important;
+  border: 1px solid #666 !important;
+}
+
+/* ✅ Card मध्ये असलेल्या टेबल्ससाठी */
+.card table,
+.card table th,
+.card table td {
+  background-color: #3a3a3a !important;
+  color: #ffffff !important;
+  border-color: #666 !important;
+}
+
+/* ✅ Card मध्ये save section / div साठी */
+.card div,
+.card section {
+  background-color: #3a3a3a !important;
+  color: #ffffff !important;
+}
+
+
+/* मोबाइलमध्ये table fields एकाखाली एक */
+@media(max-width:640px){
+  table,
+  thead,
+  tbody,
+  tr,
+  th,
+  td {
+    display: block;
+    width: 100% !important;
+  }
+
+  thead { display: none; }  /* mobile वर headings hide होतील */
+  
+  tr { margin-bottom: 1rem; border: 1px solid #555; border-radius: .5rem; padding: .5rem; }
+  
+  td {
+    text-align: left;
+    padding: .5rem;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #bbb;
+    margin-bottom: 4px;
+  }
+}
+
+
+/* --- Input, Textarea, Select --- */
+input, textarea, select {
+    background: #4a4a4a;
+    color: #ffffff;
+    border: 1px solid #666;
+    padding: .45rem;
+    border-radius: .375rem;
+    transition: border-color 0.2s, box-shadow 0.2s; /* Transition add kela */
+}
+
+/* Naveen code: Focus kelyavar effect */
+input:focus, textarea:focus, select:focus {
+  border-color: #0ea5e9; /* Blue border on focus */
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3); /* Subtle blue glow */
+}
+
+
+/* Body - Background ani Font */
+ body {
+    font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
+    /* #202020: Ajun ghadad (darker) background */
+    background: #202020;
+    color: #f0f0f0;        /* Thoda soft white font */
+    line-height: 1.5;      /* Text madhe thodi jaaga */
+  }
+
+/* Container (Main Div) - Ek Udyat look */
+.container {
+    background-color: #2c2c2c; /* Container la background dya */
+    padding: 1.5rem;
+    border-radius: 1rem;       /* Thode jaast gol kinar */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Deep shadow */
+    margin: 1.5rem auto;       /* Margin */
+    max-width: 900px;
+}
+
+
+
+/* --- Tables (Sunder Alternating Rows) --- */
+table {
+    border-collapse: separate; /* Kinarasathi */
+    border-spacing: 0 0.25rem; /* Rows madhe thodi jaaga */
+    width: 100%;
+}
+
+/* Header row (Aadla Row) */
+table th {
+  background-color: #38bdf8 !important; /* Header la Sky Blue dya */
+  color: #1f2937 !important; /* Dark text */
+  padding: 0.75rem 0.5rem;
+  font-weight: 700;
+}
+table th:first-child { border-top-left-radius: 0.5rem; }
+table th:last-child { border-top-right-radius: 0.5rem; }
+
+
+/* Data rows (Naveen Alternating look) */
+table tbody tr {
+    transition: background-color 0.2s;
+    background-color: #333333; /* Default row color */
+}
+
+/* Joranchi raang (Even rows) */
+table tbody tr:nth-child(even) {
+  background-color: #3a3a3a !important; 
+}
+
+/* Ekdam uttam hover effect */
+table tbody tr:hover {
+    background-color: #4a4a4a !important; /* Hover kelyavar shine hoil */
+    cursor: pointer;
+}
+
+
+/* Tumche Home, Estimates, Invoices sathi aslele div */
+.tab-content, .panel {
+    background-color: #2c2c2c; /* Background container chya color sarkha */
+    padding: 1.2rem;
+    border-radius: 0.75rem;
+    border: 1px solid #3c3c3c; /* Subtle border */
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1); /* Inner shadow for depth */
+    margin-bottom: 1rem;
+}
+
+/* --- Buttons (Smallbtn & Basic Button) --- */
+.smallbtn, button:not(.smallbtn) {
+    /* Existing styles thode badalun */
+    background: #0ea5e9; /* Sky blue */
+    color: #fff;
+    border: none;
+    padding: .5rem 1rem;
+    border-radius: .5rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out; /* Smooth transition */
+    
+    /* 3D effect dya */
+    box-shadow: 0 4px #0284c7; /* Darker blue shadow */
+    transform: translateY(0);
+}
+
+/* Hover effect: Upar ya */
+.smallbtn:hover, button:not(.smallbtn):hover {
+    background: #38bdf8; /* Lighter blue on hover */
+    box-shadow: 0 5px #0284c7; /* Shadow deep kara */
+    transform: translateY(-2px); /* Button thoda var sarakel */
+}
+
+/* Click effect: Khali dabalya sarkha */
+.smallbtn:active, button:not(.smallbtn):active {
+    box-shadow: 0 2px #0284c7; /* Shadow kami kara */
+    transform: translateY(2px); /* Button thoda khali dabla jael */
+}
+
+
+</style>
+</head>
+<body class="p-4 md:p-8">
+
+<div class="nav">
+  <div class="flex flex-1 overflow-x-auto whitespace-nowrap gap-2 py-1">
+    <button class="smallbtn flex-shrink-0" onclick="show('home')">Home</button>
+    <button class="smallbtn flex-shrink-0" onclick="openHExpenses()">H.Expenses</button>
+    <button class="smallbtn flex-shrink-0" onclick="show('est')">Estimates</button>
+    <button class="smallbtn flex-shrink-0" onclick="show('inv')">Invoices</button>
+    <button class="smallbtn flex-shrink-0" onclick="show('orders')">Orders</button>
+    <button class="smallbtn flex-shrink-0" onclick="show('paid')">Paid Payments</button>
+    <button class="smallbtn flex-shrink-0" onclick="show('exp')">Expenses</button>
+    <button class="smallbtn flex-shrink-0" onclick="show('meas')">Measurements</button>
+    <button class="smallbtn flex-shrink-0" onclick="show('daily')">Daily Reports</button>
+    <button class="smallbtn flex-shrink-0" onclick="show('labor')">Labor Attendance</button>
+    <button class="smallbtn flex-shrink-0" onclick="show('payments')">Payments</button>
+    
+  <div class="flex gap-2 items-center flex-shrink-0 mt-2 md:mt-0">
+    <button onclick="exportToExcel()" class="smallbtn">Export Excel</button>
+    <input type="file" accept=".xlsx" onchange="importFromExcel(event)" class="text-xs">
+  </div>
+  
+  
+  <footer class="w-full mt-2 text-center muted">© Vaibhav Enterprises</footer>
+</div>
+  </div>
+    <div class="w-full mt-2 md:mt-0 text-right md:text-center" style="font-weight:700">Application Developed by Vaibhav Enterprises</div>
+</div>
+
+
+
+
+<!-- HOME CARD -->
+<div id="home" class="tab-content" style="display:none"> 
+    
+    <div id="summary-cards" class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div id="total-invoice-card" class="card-summary bg-blue-600">
+            <p>Total Invoice</p>
+            <h3 id="total-invoice-amount">₹ 0</h3>
+        </div>
+        
+        <div id="total-order-card" class="card-summary bg-yellow-600">
+            <p>Expenses/Order</p>
+            <h3 id="total-order-amount">₹ 0</h3>
+        </div>
+        <div id="total-received-card" class="card-summary bg-teal-600">
+            <p>Received Payment</p>
+            <h3 id="total-received-amount">₹ 0</h3>
+        </div>
+        <div id="total-paid-card" class="card-summary bg-red-600">
+            <p>Paid Payment</p>
+            <h3 id="total-paid-amount">₹ 0</h3>
+        </div>
+        <div id="total-paid-card" class="card-summary bg-green-600">
+  <p>All Profit</p>
+  <h3 id="total-profit-amount">₹ 0</h3>
+</div>
+
+</div>
+    
+    <div id="current-filter-display" class="mb-6 text-lg font-semibold text-center py-2 rounded-lg bg-gray-700">
+        Current Filter: <span id="current-invoice-no" class="text-yellow-400">All Data</span>
+    </div>
+
+    <div id="home-summary" class="mt-4">
+      <h2 class="text-xl font-bold mb-4">Invoice-wise Expense & Profit</h2>
+      <div id="invoice-summary" class="p-4 bg-gray-700 rounded text-white overflow-x-auto">
+        <p class="text-center text-gray-400">Select an Invoice Number in the Expenses tab to see detailed summary here.</p>
+      </div>
+    </div>
+
+    <div class="mt-6">
+      <h2 class="text-xl font-bold mb-4">Expenses By Category</h2>
+      <canvas id="categoryChart" height="200"></canvas>
+    </div>
+     </div>
+
+
+
+
+
+
+
+
+
+<div id="est" class="card max-w-4xl mx-auto">
+  <h2>Estimate</h2>
+  <div class="grid md:grid-cols-3 gap-2">
+    <div>
+      <label class="muted">Estimate No</label>
+      <input id="est-no" class="w-full" disabled>
+    </div>
+    <div>
+      <label class="muted">Client Name</label>
+      <input id="est-client" class="w-full">
+    </div>
+    <div>
+      <label class="muted">Contact</label>
+      <div class="flex gap-2">
+        <input id="est-contact" class="w-full">
+        <button class="smallbtn" type="button" onclick="pickContact('est')">Pick</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-2 mt-2">
+    <div>
+      <label class="muted">Date</label>
+      <input id="est-date" type="date" class="w-full">
+    </div>
+    <div>
+      <label class="muted">Work Title</label>
+      <input id="est-work" class="w-full">
+    </div>
+  </div>
+
+  <div id="est-items" class="mt-3 space-y-2"></div>
+  <div class="mt-2">
+    <button class="smallbtn" type="button" onclick="addItem('est')">+ Add Item</button>
+  </div>
+
+  <div class="mt-3 flex justify-between items-center">
+    <div class="muted">
+      Discount (%) 
+      <input type="number" id="est-discount" value="0" oninput="recalcAll()">
+
+    </div>
+     
+
+    <div class="text-right">
+      <div class="font-semibold">Subtotal: <span id="est-sub">0.00</span></div>
+      <div class="font-semibold">Final Amount: <span id="est-total">0.00</span></div>
+      <div class="muted">In words: <span id="est-words"></span></div>
+    </div>
+  </div>
+
+  <div class="flex gap-2 mt-3">
+    <button class="smallbtn" type="button" onclick="saveEstimate()">Save Estimate</button>
+    <button class="smallbtn" type="button" onclick="exportEstimatePDF()">Export PDF</button>
+    <button onclick="toggleSection('saved-est-list', this)" class="smallbtn mt-4">
+  ➕ Show Saved Estimates
+    </div>
+    
+<h3 class="mt-4 font-semibold">Saved Estimates</h3>
+  <div id="saved-est-list" class="mt-2 space-y-2 hidden"></div>
+  
+</div>
+ 
+ 
+
+  
+
+
+<!-- INVOICE -->
+<div id="inv" class="card max-w-4xl mx-auto" style="display:none">
+  <h2>Invoice</h2>
+  <div class="grid md:grid-cols-3 gap-2">
+    <div><label class="muted">Invoice No</label><input id="inv-no" class="w-full" disabled></div>
+    <div><label class="muted">Client Name</label><input id="inv-client" class="w-full"></div>
+    <div><label class="muted">Contact</label><div class="flex gap-2"><input id="inv-contact" class="w-full"><button class="smallbtn" onclick="pickContact('inv')">Pick</button></div></div>
+  </div>
+  <div class="grid md:grid-cols-2 gap-2 mt-2">
+    <div><label class="muted">Date</label><input id="inv-date" type="date" class="w-full"></div>
+    <div><label class="muted">Work Title</label><input id="inv-work" class="w-full"></div>
+  </div>
+
+  <div id="inv-items" class="mt-3 space-y-2"></div>
+  <div class="mt-2"><button class="smallbtn" onclick="addItem('inv')">+ Add Item</button></div>
+ <div class="mt-2"></div>
+  
+  <div class="mt-3 flex justify-between items-center">
+    <div class="muted">Advance (₹) <input id="inv-adv" type="number" value="0" class="ml-2 inline-block w-32 p-1 border rounded"></div>
+    <div class="text-right">
+      <div class="font-semibold">Subtotal: <span id="inv-sub">0.00</span></div>
+      <div class="font-semibold">Final Amount: <span id="inv-total">0.00</span></div>
+      <div class="muted">In words: <span id="inv-words"></span></div>
+    </div>
+  </div>
+
+  <div class="flex gap-2 mt-3">
+    <button class="smallbtn" onclick="saveInvoice()">Save Invoice</button>
+    <button class="smallbtn" onclick="exportInvoicePDF()">Export PDF</button>
+    <button onclick="toggleSection('saved-inv-list', this)" class="smallbtn mt-4">
+  ➕ Show Saved Invoices
+  </div>
+
+  <h3 class="mt-4 font-semibold">Saved Invoices</h3>
+  <div id="saved-inv-list" class="mt-2 space-y-2 hidden"></div>
+  
+</div>
+
+
+  <!-- ✅ EXPENSES MODULE -->
+<div id="exp" class="card max-w-4xl mx-auto" style="display:none">
+  <h2>Expenses</h2>
+
+  <!-- Invoice select + Main Category -->
+  <div class="grid md:grid-cols-2 gap-2 mb-3 items-end">
+    <div>
+      <label class="muted">Invoice (select)</label>
+      <select id="exp-invoice-select" class="p-2 border rounded w-full"></select>
+    </div>
+
+    <div>
+      <label class="muted">Main Category</label>
+      <div class="flex gap-2">
+        <select id="cat-select" class="p-2 border rounded flex-1"></select>
+        <button class="smallbtn" onclick="addCategoryPrompt()">Add</button>
+        <button class="smallbtn" onclick="deleteCategoryPrompt()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Item Table (editable form rows) -->
+  <div class="overflow-x-auto">
+    <table class="w-full border">
+      <thead>
+        <tr class="bg-gray-50">
+          <th>Date</th><th>Item Name</th><th>Category</th>
+        </tr>
+        <tr class="bg-gray-50">
+          <th>Qty</th><th>Unit</th><th>Rate</th><th>Amount</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="exp-rows"></tbody> <!-- ✅ ONLY ONE "exp-rows" tbody -->
+    </table>
+  </div>
+
+  <!-- Buttons -->
+  <div class="mt-2 flex gap-2">
+    <button class="smallbtn" onclick="addExpenseRow()">+ Add Item</button>
+    <button class="smallbtn" onclick="saveExpenses()">Save</button>
+    <button onclick="toggleSection('expenses-table-wrap', this)" class="smallbtn mt-4">
+  ➕ Show Saved Expenses
+  </div>
+
+  <!-- Total -->
+  <div class="mt-3 font-semibold">Total Expenses: ₹<span id="exp-total">0.00</span></div>
+
+  <!-- Expenses Table -->
+  <div id="expenses-table-wrap" class="overflow-x-auto hidden">
+  <table class="w-full border">
+    <thead>
+      <tr class="bg-gray-50">
+        <th>Date</th><th>Invoice No</th><th>Category</th><th>Items</th>
+        <th>Qty</th><th>Unit</th><th>Rate</th><th>Amount</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="expenses-tbody"></tbody> <!-- ✅ FOR RENDERED SAVED ENTRIES -->
+  </table>
+  </div>
+
+  <!-- Invoice wise Profit Section -->
+  <div class="mt-4">
+    <h3>Invoice-wise Profit</h3>
+    <div id="invoice-profits" class="mt-2"></div>
+  </div>
+ 
+</div>
+
+
+
+
+<!-- MEASUREMENTS -->
+<div id="meas" class="card max-w-3xl mx-auto" style="display:none">
+  <h2>Measurements</h2>
+
+  <!-- Customer Info -->
+  <div class="grid md:grid-cols-2 gap-2 mb-2">
+    
+    <!-- Name -->
+    <div>
+      <label for="msr-client" class="block mb-1 font-medium">Customer Name</label>
+      <input id="msr-client" placeholder="Customer Name" class="p-2 border w-full">
+    </div>
+
+    <!-- Contact + Picker -->
+    <div>
+      <label for="msr-contact" class="block mb-1 font-medium">Customer Contact</label>
+      <div class="flex gap-2">
+        <input id="msr-contact" placeholder="Customer Contact" class="p-2 border flex-1">
+        <button type="button" class="smallbtn" onclick="pickContact('msr')">📇</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Measurement Rows -->
+  <div id="meas-items" class="space-y-2"></div>
+
+  <div class="mt-2 flex items-center gap-2">
+    <button class="smallbtn" onclick="addMeasurement()">+ Add Measurement</button>
+    <button class="smallbtn" onclick="saveMeasurements()">Save</button>
+    <!-- 🔘 Toggle Button -->
+    <button onclick="toggleSection('saved-meas', this)" class="smallbtn mt-4">
+  ➕ Show Saved Measurements
+    
+  </div>
+  <span id="meas-total" class="ml-4 font-semibold">Tot. R.ft: 0 | Tot. Sq.ft: 0</span>
+  <h3 class="mt-4">Saved Measurements</h3>
+  <div id="saved-meas" class="mt-2 hidden"></div>
+  <input type="hidden" id="msr-id">
+  
+</div>
+
+
+
+<!-- LABOR -->
+<div id="labor" class="card max-w-4xl mx-auto" style="display:none">
+  <h2>Labor Attendance</h2>
+  <div class="flex gap-2 mb-2">
+  <button class="smallbtn" onclick="addLabor()">+ New Labor</button>
+  <input id="labor-search" class="p-2 border rounded flex-1" placeholder="Search by Client or Work" oninput="filterLabor()">
+  <button class="smallbtn" onclick="exportLaborReport()">Report</button>
+</div>
+
+  <div id="labor-rows" class="space-y-3"></div>
+  <h3 class="mt-4">Saved Attendance</h3>
+  <div id="saved-labor" class="mt-2"></div>
+</div>
+
+
+
+<!-- PAYMENTS -->
+<div id="payments" class="card max-w-4xl mx-auto" style="display:none">
+  <h2>Payments</h2>
+  <div class="grid md:grid-cols-4 gap-2">
+   
+  <select id="pay-invno" class="p-2 border rounded w-full" onchange="handleInvoiceSelectInPayment(this.value)">
+  <option value="">Select Invoice</option>
+  </select>
+
+    
+    <div><label class="muted">Client Name</label><input id="pay-client" class="w-full"></div>
+    <div><label class="muted">Contact</label><div class="flex gap-2"><input id="pay-contact" class="w-full"><button class="smallbtn" onclick="pickContact('pay')">Pick</button></div></div>
+    <div><label class="muted">Work Title</label><input id="pay-work" class="w-full"></div>
+    <div><label class="muted">Project Cost (₹)</label><input id="pay-cost" type="number" class="w-full"></div>
+  </div>
+
+  <div id="payment-rows" class="mt-3 space-y-2"></div>
+  <div class="mt-2"><button class="smallbtn" onclick="addPaymentRowForm()">+ Add Payment Entry</button> <button class="smallbtn" onclick="savePayments()">Save Payments</button></div>
+  <button onclick="toggleSection('saved-payments', this)" class="smallbtn mt-4">
+  ➕ Show Saved Payments
+</button> 
+  <h3 class="mt-4">Saved Payments</h3>
+  <div id="saved-payments" class="mt-2 hidden"></div>
+  
+</div>
+
+
+
+<!-- ORDER POPUP -->
+<div id="orders" class="card max-w-4xl mx-auto" style="display:none">
+  <h2>Orders</h2>
+
+  <!-- Client Name -->
+ <select id="order-invoice-select" class="p-2 border rounded w-full">
+  <option value="">-- Select Invoice No --</option>
+</select>
+
+
+   <div class="mb-2">
+    <label class="muted">Client Name</label>
+    <input id="ord-client" type="text" class="w-full p-2 border rounded">
+ </div>
+
+  <!-- Work -->
+  <div class="mb-2">
+    <label class="muted">Work</label>
+    <input id="ord-work" type="text" class="w-full p-2 border rounded">
+  </div>
+
+  <!-- Date -->
+  <div class="mb-2">
+    <label class="muted">Date</label>
+    <input id="ord-date" type="date" class="w-full p-2 border rounded">
+  
+
+   <label class="block mt-2">Category</label>
+<select id="ord-category" class="p-2 border rounded w-full">
+  <option value="">-- Select Category --</option>
+  <!-- Dynamically fill -->
+</select>
+
+<label class="block mt-2">Order Status</label>
+<select id="order-status" class="p-2 border rounded w-full">
+  <option value="">-- Select Status --</option>
+  <option value="order">Order</option>
+  <option value="received">Order Received</option>
+  <option value="cancelled">Order Cancelled</option>
+  <option value="returned">Order Returned</option>
+</select>
+
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px;">
+  <!-- Merchant Name -->
+  <input type="text" id="merchant-name" placeholder="Merchant Name" />
+
+  <!-- Contact Number -->
+  <input type="tel" id="merchant-contact" placeholder="Contact No." />
+
+  <!-- Payment Status Dropdown -->
+  <select id="payment-status" style="flex: 1.5; min-width: 120px;">
+  <option value="" disabled selected>Select Status</option>
+  <option value="Order">Order</option>
+  <option value="Paid">Paid</option>
+  <option value="Unpaid">Unpaid</option>
+</select>
+  <!-- Contact Picker Button -->
+  <button onclick="pickContact('ord')">📞 Pick</button>
+</div>
+
+
+</div>
+  
+
+
+  <!-- Items Table -->
+  <div id="order-items" class="space-y-2"></div>
+
+  <!-- Buttons under Items -->
+  <div class="mt-2 flex gap-2">
+    <button class="smallbtn" onclick="addOrderRow()">+ Add Item</button>
+    <button class="smallbtn" onclick="saveOrder()">Save Order</button>
+    <button class="smallbtn" onclick="importMaterialList()">Import Items</button>
+ 
+
+  </div>
+   
+   <button onclick="toggleSection('saved-orders', this)" class="smallbtn mt-4">
+  ➕ Show Saved Orders
+</button>
+ 
+  <!-- Action Buttons -->
+  <div class="flex gap-2 justify-end mt-3">
+    
+  </div>
+
+  <!-- Saved Orders -->
+  <h4 class="mt-4 font-semibold">Saved Orders</h4>
+  <div id="saved-orders" class="mt-2 space-y-2 hidden"></div>
+  
+<!-- Material Dropdown List -->
+<datalist id="materials"></datalist>
+</div>
+
+
+
+<!-- PAID PAYMENTS CARD -->
+<div id="paid" class="card max-w-4xl mx-auto" style="display:none">
+ 
+<!-- Invoice No + Order ID in same row -->
+<div class="grid grid-cols-2 gap-2 mb-2">
+  <!-- Invoice No Dropdown -->
+  <div>
+    <label class="muted">Invoice No</label>
+    <select id="pp-invno" class="p-2 border rounded w-full" onchange="handleInvoiceSelectInPaid(this.value)">
+      <option value="">Select Invoice</option>
+    </select>
+  </div>
+
+  <!-- Order ID Dropdown -->
+  <div>
+    <label class="muted">Order ID</label>
+    <select id="pp-order-id" class="p-2 border rounded w-full">
+      <option value="">-- Select Order ID --</option>
+    </select>
+  </div>
+</div>
+
+
+  <!-- Client Name -->
+  <div class="mb-2">
+    <label class="muted">Client Name</label>
+    <input id="pp-client" type="text" class="w-full p-2 border rounded">
+  </div>
+
+  <!-- Work -->
+  <div class="mb-2">
+    <label class="muted">Work</label>
+    <input id="pp-work" type="text" class="w-full p-2 border rounded">
+  </div>
+
+  <!-- Name + Contractor -->
+  <div class="grid grid-cols-2 gap-2 mb-2">
+    <div>
+      <label class="muted">Name</label>
+      <input id="pp-name" placeholder="Customer Name" class="p-2 border rounded w-full">
+    </div>
+    <div>
+      <label class="muted">Labor / Contractort </label>
+      <input id="pp-labor" placeholder="Work by" class="p-2 border rounded w-full">
+    </div>
+  </div>
+
+  <!-- Dynamic Rows -->
+  <div id="pp-rows" class="space-y-2"></div>
+  <button class="smallbtn mt-2" onclick="addPaidRow()">+ Add Payment</button>
+  <button class="smallbtn" onclick="savePaidPayment()">Save</button>
+  <!-- Action -->
+  <div class="flex gap-2 justify-end mt-3">
+    
+  </div>
+  <button onclick="toggleSection('saved-paid', this)" class="smallbtn mt-4">
+  ➕ Show Saved Payments
+</button>
+  <!-- Saved Payments -->
+  <h4 class="mt-4 font-semibold">Saved Paid Payments</h4>
+  <div id="saved-paid" class="mt-2 space-y-2 hidden"></div>
+  <input type="hidden" id="pp-id">
+</div>
+
+
+
+ 
+
+
+
+<!-- DAILY REPORT -->
+<div id="daily" class="card max-w-4xl mx-auto" style="display:none">
+  <h2>Daily Report</h2>
+
+  <!-- Customer Info -->
+  <div class="grid md:grid-cols-3 gap-2 mb-2">
+    <input id="dr-client" placeholder="Client Name" class="p-2 border rounded">
+    <input id="dr-contact" placeholder="Contact" class="p-2 border rounded">
+    <input id="dr-work" placeholder="Work Title" class="p-2 border rounded">
+  </div>
+
+  <!-- Report Rows -->
+  <div id="daily-rows" class="space-y-2"></div>
+
+  <div class="mt-2 flex gap-2">
+    <button class="smallbtn" onclick="addDailyRow()">+ Add Row</button>
+    <button class="smallbtn" onclick="saveDaily()">Save</button>
+    <button onclick="toggleSection('saved-daily', this)" class="smallbtn mt-4">
+  ➕ Show Saved Reports
+</div>
+
+<h3 class="mt-4">Saved Reports</h3>
+  <div id="saved-daily" class="mt-2 hidden"></div>
+  </div>
+
+<footer class="w-full mt-2 text-center muted">© Vaibhav Enterprises</footer>
+
+
+
+
+
+
+<script>
+
+/* ---------- Data model ---------- */
+const KEY = 've_final_v1';
+let DATA = {
+  estimates: [], invoices: [], expenses: [], measurements: [], daily: [], labor: [], payments: [], categories: [], counters: { est:0, inv:0, exp:0, meas:0, pay:0, lab:0 }
+};
+
+function loadData(){ const s = localStorage.getItem(KEY); if(s) DATA = JSON.parse(s); renderAll(); }
+function saveData(){ localStorage.setItem(KEY, JSON.stringify(DATA)); renderAll(); }
+
+/* ---------- UI helpers ---------- */
+
+function show(id){ document.querySelectorAll('.card').forEach(c=>c.style.display='none'); document.getElementById(id).style.display='block'; window.scrollTo({top:0,behavior:'smooth'}); }
+
+
+/* ---------- Contact picker (fallback prompt) ---------- */
+function pickContact(form){
+  try{
+    if('contacts' in navigator && navigator.contacts.select){
+      navigator.contacts.select(['name','tel'], {multiple:false}).then(list=>{
+        if(list && list.length){
+          const c = list[0];
+          const name = (c.name && c.name[0])||'';
+          const tel = (c.tel && c.tel[0])||'';
+
+          if(form==='est'){ el('est-client').value = name; el('est-contact').value = tel; }
+          if(form==='inv'){ el('inv-client').value = name; el('inv-contact').value = tel; }
+          if(form==='pay'){ el('pay-client').value = name; el('pay-contact').value = tel; }
+          if(form==='msr'){ el('msr-client').value = name; el('msr-contact').value = tel; }
+          if(form==='ord'){ el('merchant-name').value = name; el('merchant-contact').value = tel; } // ✅ New
+        }
+      }).catch(e=>{ fallbackPrompt(); });
+      return;
+    }
+  }catch(e){}
+  fallbackPrompt();
+
+  function fallbackPrompt(){
+    const name = prompt('Contact name');
+    const tel = prompt('Contact number');
+    if(!name && !tel) return;
+
+    if(form==='est'){ if(name) el('est-client').value=name; if(tel) el('est-contact').value=tel; }
+    if(form==='inv'){ if(name) el('inv-client').value=name; if(tel) el('inv-contact').value=tel; }
+    if(form==='pay'){ if(name) el('pay-client').value=name; if(tel) el('pay-contact').value=tel; }
+    if(form==='msr'){ if(name) el('msr-client').value=name; if(tel) el('msr-contact').value=tel; }
+    if(form==='ord'){ if(name) el('merchant-name').value=name; if(tel) el('merchant-contact').value=tel; } // ✅ New
+  }
+}
+
+/* ---------- Utility ---------- */
+
+
+
+
+function el(id){ return document.getElementById(id); }
+function money(n){ return (parseFloat(n)||0).toFixed(2); }
+
+/* ---------- Items (for estimate/invoice) ---------- */
+function addItem(type,data){
+  const parent = el(type==='est'?'est-items':'inv-items');
+  const box = document.createElement('div'); 
+  box.className='p-3 border rounded bg-gray-50 item-row';
+
+  box.innerHTML = `
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2 items-center">
+      <input class="p-2 item-name md:col-span-2 w-full border rounded" placeholder="Item name">
+      <input class="p-2 item-unit w-full border rounded" placeholder="Unit">
+      <input type="number" class="p-2 item-qty w-full border rounded" placeholder="Qty" min="0">
+      <input type="number" class="p-2 item-rate w-full border rounded" placeholder="Rate" min="0">
+    </div>
+    <textarea class="item-desc p-2 border rounded w-full mt-2" rows="2" placeholder="Description"></textarea>
+    <div class="flex justify-between items-center mt-2">
+      <div>Amount: ₹<span class="item-amount">0.00</span></div>
+      <div><button class="smallbtn" onclick="this.closest('.item-row').remove(); recalcAll()">Remove</button></div>
+    </div>
+  `;
+
+  parent.appendChild(box);
+
+  if(data){
+    box.querySelector('.item-name').value = data.name || ''; 
+    box.querySelector('.item-unit').value = data.unit || ''; 
+    box.querySelector('.item-qty').value = data.qty || 0; 
+    box.querySelector('.item-rate').value = data.rate || 0; 
+    box.querySelector('.item-desc').value = data.desc || ''; 
+    box.querySelector('.item-amount').textContent = money((data.qty||0)*(data.rate||0)); 
+  }
+
+  const qty = box.querySelector('.item-qty'), rate = box.querySelector('.item-rate'), amt = box.querySelector('.item-amount');
+  [qty,rate].forEach(i=> i.addEventListener('input', ()=>{
+    amt.textContent = money((parseFloat(qty.value)||0)*(parseFloat(rate.value)||0)); 
+    recalcAll(); 
+  }));
+
+  recalcAll();
+}
+
+
+/* ---------- Recalc totals ---------- */
+function recalcAll() {
+  // -------- Estimate ----------
+  let subtotal = 0;
+  document.querySelectorAll('#est-items .item-row').forEach(row => {
+    const qty = Number(row.querySelector('.item-qty')?.value) || 0;
+    const rate = Number(row.querySelector('.item-rate')?.value) || 0;
+    const amt = qty * rate;
+
+    const amtInput = row.querySelector('.item-amt'); // ✅ FIXED class
+    if (amtInput) amtInput.value = amt.toFixed(2);
+
+    subtotal += amt;
+  });
+
+  const discountPercent = Number(el('est-discount')?.value) || 0;
+  const discountAmt = subtotal * (discountPercent / 100);
+  const finalAmount = subtotal - discountAmt;
+
+  if (el('est-sub')) el('est-sub').textContent = subtotal.toFixed(2);
+  if (el('est-total')) el('est-total').textContent = finalAmount.toFixed(2);
+  if (el('est-words')) el('est-words').textContent = numberToWords(finalAmount) + " only";
+
+  // ---------- Invoice ----------
+  let invSub = 0;
+  document.querySelectorAll('#inv-items .item-row').forEach(row => {
+    const qty   = Number(row.querySelector('.item-qty')?.value) || 0;
+    const rate  = Number(row.querySelector('.item-rate')?.value) || 0;
+    const amt   = qty * rate;
+
+    const amtInput = row.querySelector('.item-amt'); // ✅ FIXED here too
+    if (amtInput) amtInput.value = amt.toFixed(2);
+
+    invSub += amt;
+  });
+
+  const invAdv = Number(el('inv-adv')?.value) || 0;
+  const invTotal = Math.max(0, invSub - invAdv);
+
+  if (el('inv-sub')) el('inv-sub').textContent = money(invSub);
+  if (el('inv-total')) el('inv-total').textContent = money(invTotal);
+  if (el('inv-words')) el('inv-words').textContent = numberToWords(invTotal) + " only";
+
+  renderInvoiceProfits?.();
+}
+
+
+
+/* ---------- Number to Words (Indian Rupees) ---------- */
+function numberToWords(amount){
+  amount = Math.round(amount);
+  if(isNaN(amount)) return '';
+  if(amount === 0) return 'Zero Rupees Only';
+
+  const ones = ["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine",
+                "Ten","Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen",
+                "Seventeen","Eighteen","Nineteen"];
+  const tens = ["","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"];
+
+  function convert_hundreds(num){
+    let str = "";
+    if(num > 99){
+      str += ones[Math.floor(num/100)] + " Hundred ";
+      num = num % 100;
+    }
+    if(num > 19){
+      str += tens[Math.floor(num/10)] + " ";
+      num = num % 10;
+    }
+    if(num > 0){
+      str += ones[num] + " ";
+    }
+    return str.trim();
+  }
+
+  function convert_to_words(num){
+    if(num === 0) return "";
+    let result = "";
+
+    const crore = Math.floor(num / 10000000);
+    if(crore > 0){
+      result += convert_hundreds(crore) + " Crore ";
+      num %= 10000000;
+    }
+
+    const lakh = Math.floor(num / 100000);
+    if(lakh > 0){
+      result += convert_hundreds(lakh) + " Lakh ";
+      num %= 100000;
+    }
+
+    const thousand = Math.floor(num / 1000);
+    if(thousand > 0){
+      result += convert_hundreds(thousand) + " Thousand ";
+      num %= 1000;
+    }
+
+    const hundred = Math.floor(num / 100);
+    if(hundred > 0){
+      result += convert_hundreds(hundred*100);
+      num %= 100;
+    }
+
+    if(num > 0){
+      result += convert_hundreds(num);
+    }
+
+    return result.trim();
+  }
+
+  return convert_to_words(amount) + " Rupees Only";
+}
+
+
+/* ---------- Save Estimate Google sheet ---------- */
+function openHExpenses(){
+  // तुझ्या H.Expenses चं GitHub URL इथे टाका
+ window.location.href = "https://vai27717.github.io/Home-Exp./";
+ 
+
+}
+
+// ✅ Auto-fill Date on page load
+document.addEventListener("DOMContentLoaded", ()=>{
+  const dateField = document.getElementById("est-date");
+
+  if(dateField){
+    const today = new Date().toISOString().split("T")[0];
+    dateField.value = today;
+  }
+});
+
+// ✅ Auto-fill Date on page load
+document.addEventListener("DOMContentLoaded", ()=>{
+  const dateField = document.getElementById("inv-date");
+
+  if(dateField){
+    const today = new Date().toISOString().split("T")[0];
+    dateField.value = today;
+  }
+});
+
+// ✅ Auto-fill Date on page load
+document.addEventListener("DOMContentLoaded", ()=>{
+  const dateField = document.getElementById("ord-date");
+
+  if(dateField){
+    const today = new Date().toISOString().split("T")[0];
+    dateField.value = today;
+  }
+});
+
+
+
+
+
+
+/* ---------- Save Estimate ---------- */
+// ---------- CONFIG ----------
+const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbzvNcf7sgWgIO5gsWw9MRYhXZIFLD1ct1Ha1ZPbhpH43UhS-XHCdt8pDecnhjJFV0uH/exec";
+
+// ---------- SAVE ESTIMATE ----------
+async function saveEstimate() {
+  const items = [];
+  el('est-items').querySelectorAll('.item-row').forEach(div => {
+  const name = div.querySelector('.item-name').value;
+  if (!name) return;
+
+  const qty = Number(div.querySelector('.item-qty').value) || 0;
+  const rate = Number(div.querySelector('.item-rate').value) || 0;
+  const itemTotal = qty * rate; // ✅ safe variable
+
+  items.push({
+    name,
+    unit: div.querySelector('.item-unit').value,
+    quantity: qty,
+    rate: rate,
+    description: div.querySelector('.item-desc').value || '',
+    total: itemTotal // ✅ key name is 'total', variable is 'itemTotal'
+  });
+});
+
+
+  const subtotal = items.reduce((sum, it) => sum + (it.quantity * it.rate), 0);
+const discountPercent = Number(el('est-discount').value) || 0;
+const discountAmount = subtotal * (discountPercent / 100);
+const total = subtotal - discountAmount;
+
+  let estNo = el('est-no').value;
+  if(!estNo) {
+    // Generate Estimate No based on max existing number in Sheet
+    try {
+      const res = await fetch(`${DEPLOY_URL}?action=getnextno`);
+      const nextNo = parseInt(await res.text()) || 1;
+      estNo = "EST-" + nextNo.toString().padStart(4, "0");
+      el('est-no').value = estNo;
+    } catch(err) {
+      alert("Failed to generate Estimate No: " + err.message);
+      return;
+    }
+  }
+
+  const rec = {
+    "Customer Name": el('est-client').value || '',
+    "Customer Whatsapp": el('est-contact').value || '',
+    "Date": el('est-date').value || new Date().toISOString().slice(0,10),
+    "Work Title": el('est-work').value || '',
+    "Estimate Number": estNo,
+    "Items": JSON.stringify(items),
+    "Subtotal": subtotal.toFixed(2),
+    "Discount": discountPercent.toFixed(2),   // टक्केवारी पाठवतोय!
+    "Grand Total": total.toFixed(2),
+
+    "Status": "Pending",
+    "Your WhatsApp Number": "9049764945"
+  };
+
+  try {
+    const res = await fetch(`${DEPLOY_URL}?action=save&data=${encodeURIComponent(JSON.stringify(rec))}`, {method:"POST"});
+    const out = await res.json();
+    if(out.status==="success") {
+      el('est-no').value = estNo;
+      alert("Estimate saved/updated: "+estNo);
+      renderEstimatesList();
+      await generateNextEstimateNo(); // पुढचा नंबर auto-ready
+    } else {
+      alert("Error: " + out.message);
+    }
+  } catch(err) {
+    alert("Save failed: " + err.message);
+ }
+}
+
+function addItem(prefix, data = {}) {
+  const container = document.getElementById(prefix + '-items');
+  const row = document.createElement('div');
+  row.className = "item-row border rounded p-3 flex flex-col gap-2 bg-white";
+
+  const qty = Number(data.qty || 0);
+  const rate = Number(data.rate || 0);
+  const amount = qty * rate;
+
+  row.innerHTML = `
+    <div class="flex items-center">
+      <input type="text" class="item-name flex-1 p-2 border rounded" list="materials" placeholder="Item" value="${data.name || ''}">
+      <button type="button" class="smallbtn ml-2 bg-red-500 text-white" onclick="this.closest('.item-row').remove(); recalcAll()">✕</button>
+    </div>
+
+    <textarea class="item-desc w-full p-2 border rounded" placeholder="Description (long answer)">${data.desc || ''}</textarea>
+
+    <!-- Qty, Unit, Rate, Amount एका ओळीत -->
+    <div class="flex gap-2">
+      <input type="number" class="item-qty p-2 border rounded w-1/4" placeholder="Qty" value="${qty}" oninput="recalcAll()">
+      <input type="text" class="item-unit p-2 border rounded w-1/4" placeholder="Unit" value="${data.unit || ''}">
+      <input type="number" class="item-rate p-2 border rounded w-1/4" placeholder="Rate" value="${rate}" oninput="recalcAll()">
+      <input type="number" class="item-amt p-2 border rounded w-1/4 bg-gray-100" placeholder="Amount" value="${amount.toFixed(2)}" disabled>
+    </div>
+  `;
+
+  container.appendChild(row);
+
+  // Auto-fill Unit on item selection
+  const partInput = row.querySelector('.item-name');
+  partInput.addEventListener('change', () => {
+    const match = (DATA.materials || []).find(m => m.part === partInput.value);
+    if (match && match.unit) {
+      row.querySelector('.item-unit').value = match.unit;
+    }
+  });
+}
+
+
+// ---------- RENDER / LOAD ESTIMATES ----------
+async function renderEstimatesList() {
+  const box = el('saved-est-list');
+  box.innerHTML = 'Loading...';
+  try {
+    const res = await fetch(`${DEPLOY_URL}?action=getall`);
+    const data = await res.json();
+    box.innerHTML = '';
+    data.forEach(e=>{
+      const div = document.createElement('div');
+      div.className='p-2 bg-gray-50 rounded flex justify-between items-center';
+      div.innerHTML=`
+        <div>
+          <strong>${e["Estimate Number"]}</strong> (${e["Date"]}) 
+          ${e["Customer Name"]} | ${e["Work Title"]} - ₹${e["Grand Total"]}
+        </div>
+        <div class="flex gap-2">
+          <button class="smallbtn" onclick="loadRecord('${e["Estimate Number"]}')">Load</button>
+          <button class="smallbtn" onclick="shareEstimate('${e["Estimate Number"]}')">Share</button>
+          <button class="smallbtn" onclick="deleteEstimate('${e["Estimate Number"]}')">Delete</button>
+        </div>`;
+      box.appendChild(div);
+    });
+  } catch(err) {
+    box.innerHTML='Failed to load estimates';
+  }
+}
+
+/* ---------- LOAD SINGLE RECORD ---------- */
+window.loadRecord = async function(estNo) {
+  try {
+    const res = await fetch(`${DEPLOY_URL}?action=getsingle&estimateNumber=${encodeURIComponent(estNo)}`);
+    const rec = await res.json();
+
+    if (!rec || !rec["Estimate Number"]) {
+      alert("Record not found: " + estNo);
+      return;
+    }
+
+    el('est-no').value = rec["Estimate Number"] || '';
+    el('est-client').value = rec["Customer Name"] || '';
+    el('est-contact').value = String(rec["Customer Whatsapp"] || '');
+    
+    if (rec["Date"]) {
+      const d = new Date(rec["Date"]);
+      el('est-date').value = isNaN(d) ? String(rec["Date"]).slice(0,10) : d.toISOString().split('T')[0];
+    } else {
+      el('est-date').value = '';
+    }
+
+    el('est-work').value = rec["Work Title"] || '';
+
+    const discountPercent = Number(rec["Discount"] || 0);
+    el('est-discount').value = isNaN(discountPercent) ? 0 : discountPercent;
+
+    const items = JSON.parse(rec["Items"] || "[]");
+    const container = el('est-items');
+    container.innerHTML = '';
+    let subtotal = 0;
+
+    items.forEach(it => {
+      const name = it.name || it.item || '';
+      const qty = Number(it.quantity || it.qty || 0);
+      const rate = Number(it.rate || 0);
+      const unit = it.unit || '';
+      const desc = it.desc || it.description || '';
+      addItem('est', { name, qty, rate, unit, desc });
+      subtotal += qty * rate;
+    });
+
+    const discountAmt = subtotal * ((Number(discountPercent) || 0) / 100);
+    const finalAmount = subtotal - discountAmt;
+
+    el('est-sub').innerText = subtotal.toFixed(2);
+    el('est-total').innerText = finalAmount.toFixed(2);
+    el('est-words').innerText = numberToWords(finalAmount);
+
+  } catch (err) {
+    alert("Load failed: " + err.message);
+  }
+};
+
+// ---------- DELETE ESTIMATE ----------
+async function deleteEstimate(estNo) {
+  if(!confirm("Delete this estimate?")) return;
+  try {
+    const res = await fetch(`${DEPLOY_URL}?action=delete&estimateNumber=${encodeURIComponent(estNo)}`, {method:"POST"});
+    const out = await res.json();
+    if(out.status==="success") {
+      alert("Deleted: " + estNo);
+      renderEstimatesList();
+      await generateNextEstimateNo();
+    } else {
+      alert("Error: "+out.message);
+    }
+  } catch(err) {
+    alert("Delete failed: "+err.message);
+  }
+}
+
+// ---------- AUTO-GENERATE ESTIMATE NO ----------
+async function generateNextEstimateNo(){
+  try {
+    const res = await fetch(`${DEPLOY_URL}?action=getnextno`);
+    const nextNo = parseInt(await res.text()) || 1;  
+    el('est-no').value = "EST-" + nextNo.toString().padStart(4, "0");
+  } catch(err) {
+    console.error("Estimate No generate fail:", err);
+  }
+}
+
+// ---------- PAGE LOAD ----------
+document.addEventListener("DOMContentLoaded", async function(){
+  renderEstimatesList();
+  await generateNextEstimateNo(); // App उघडताच Estimate No तयार
+});
+
+// ---------- HELPER FUNCTION ----------
+function el(id){ return document.getElementById(id); }
+
+
+function toggleSection(sectionId, btn) {
+  const sec = document.getElementById(sectionId);
+  const isHidden = sec.classList.contains("hidden");
+
+  if (isHidden) {
+    sec.classList.remove("hidden");
+    btn.innerText = "➖ Hide Saved Estimates";
+  } else {
+    sec.classList.add("hidden");
+    btn.innerText = "➕ Show Saved Estimates";
+  }
+}
+
+
+
+async function shareEstimate(estNo){
+  try {
+    const res = await fetch(`${DEPLOY_URL}?action=getsingle&estimateNumber=${encodeURIComponent(estNo)}`);
+    const r = await res.json();
+    if(!r["Estimate Number"]){
+      alert("Record not found for sharing");
+      return;
+    }
+
+    const items = JSON.parse(r["Items"] || "[]");
+    const lines = [];
+    lines.push('🧾 Estimate Details');
+    lines.push('');
+    
+    lines.push('*Vaibhav Enterprises*');
+    lines.push('');
+    lines.push('_Dear Sir/Madam,_');
+    lines.push('Estimate No.: ' + r["Estimate Number"]);
+    lines.push('Customer Name: ' + r["Customer Name"]);
+    lines.push('Contact No.: ' + r["Customer Whatsapp"]);
+    lines.push('Date: ' + new Date(r["Date"]).toLocaleDateString());
+    lines.push('');
+    lines.push('Item Details:');
+    items.forEach(it => {
+      lines.push('• *' + it.name +'*');
+      lines.push('_Description: ' + (it.description || '').trim() + '_');
+      lines.push('Qty | Unit | Rate | Amount');
+      lines.push(`${it.quantity} | ${it.unit || ''} | ₹${it.rate} | ₹${(it.quantity * it.rate)}`);
+    });
+    lines.push('');
+    lines.push('Subtotal: ₹' + r["Subtotal"]);
+    lines.push('Discount: ' + r["Discount"] + '%');
+    lines.push('*Final Amount: ₹' + r["Grand Total"] + '*');
+    lines.push('_In words: ' + numberToWords(r["Grand Total"] || 0) + '_');
+    lines.push('');
+    lines.push('_Regarding,_');
+    lines.push('');
+    lines.push('_Vaibhav Enterprises_');
+    lines.push('For more info, visit: www.vaibhaventerprises.info');
+    lines.push('_Thank you for connecting with Vaibhav Enterprises_');
+    lines.push('');
+    lines.push('Open Estimate PDF:https://vai27717.github.io/Your-Estimate/?view=customer&id=' + r["Estimate Number"]);
+    window.open('https://wa.me/?text=' + encodeURIComponent(lines.join('\n')), '_blank');
+  } catch(err){
+    alert("Share failed: "+err.message);
+  }
+}
+
+
+
+
+/* ---------- Save Invoice ---------- */
+
+// ---------- CONFIG (Invoice) ----------
+const DEPLOY_URL_INV = "https://script.google.com/macros/s/AKfycbw9xa1AaPreaZtpG3JbO0mUKoCjQ2IWOiLOhc6rPNKMkL-tTC6m9CUDikhNZRYTMmWJ/exec";
+
+// ---------- SAVE INVOICE ----------
+async function saveInvoice() {
+  const items = [];
+  el('inv-items').querySelectorAll('.item-row').forEach(div => {
+    const name = div.querySelector('.item-name').value;
+    if (!name) return;
+    items.push({
+      name,
+      unit: div.querySelector('.item-unit').value,
+      quantity: Number(div.querySelector('.item-qty').value) || 0,
+      rate: Number(div.querySelector('.item-rate').value) || 0,
+      description: div.querySelector('.item-desc').value || '',
+    });
+  });
+
+  const subtotal = items.reduce((sum, it) => sum + (it.quantity * it.rate), 0);
+  const advance = Number(el('inv-adv').value) || 0;
+  const total = subtotal;  // <-- वजा करू नकोस
+
+
+  let invNo = el('inv-no').value;
+  if (!invNo) {
+    try {
+      const res = await fetch(`${DEPLOY_URL_INV}?action=getnextno`);
+      const nextNo = parseInt(await res.text()) || 1;
+      invNo = "INV-" + nextNo.toString().padStart(4, "0");
+      el('inv-no').value = invNo;
+    } catch (err) {
+      alert("Failed to generate Invoice No: " + err.message);
+      return;
+    }
+  }
+
+  const rec = {
+    "Customer Name": el('inv-client').value || '',
+    "Customer Whatsapp": el('inv-contact').value || '',
+    "Date": el('inv-date').value || new Date().toISOString().slice(0, 10),
+    "Work Title": el('inv-work').value || '',
+    "Invoice Number": invNo,
+    "Items": JSON.stringify(items),
+    "Subtotal": subtotal.toFixed(2),
+    "Advance": advance.toFixed(2),
+    "Grand Total": total.toFixed(2)
+  };
+
+  try {
+    const res = await fetch(`${DEPLOY_URL_INV}?action=save&data=${encodeURIComponent(JSON.stringify(rec))}`, { method: "POST" });
+    const out = await res.json();
+    if (out.status === "success") {
+      el('inv-no').value = invNo;
+      alert("Invoice saved/updated: " + invNo);
+      renderInvoicesList();
+
+      // ✅ Update DATA.invoices (Add/Update)
+      // ✅ इथे advance साठवा (sheet मध्ये आणि DATA.invoices मध्ये)
+      rec["Advance"] = advance;
+      DATA.invoices = DATA.invoices || [];
+      const existing = DATA.invoices.find(inv => inv.id === invNo);
+      if (existing) {
+        existing.total = subtotal;
+        existing.advance = advance;
+
+        existing.total = total;
+        existing.date = rec["Date"];
+        existing.client = rec["Customer Name"];
+        existing.work = rec["Work Title"];
+      } else {
+        DATA.invoices.push({
+          id: invNo,
+          total: total,
+          date: rec["Date"],
+          client: rec["Customer Name"],
+          work: rec["Work Title"]
+        });
+      }
+
+      // ✅ Re-render Dropdown and Profit Section
+      renderInvoiceDropdown();
+      renderInvoiceProfits();
+      
+saveData(); 
+renderPaymentsList(); 
+renderInvoiceDropdownForPayments(); // हे सुद्धा call कर  
+ renderInvoiceDropdownForPayments();
+renderInvoiceDropdownForOrders();   // 🟢 Order App साठी
+renderInvoiceDropdownForPaid();
+
+
+
+    } else {
+      alert("Error: " + out.message);
+    }
+  } catch (err) {
+    alert("Save failed: " + err.message);
+  }
+}
+
+
+// ✅ Invoice Items Function
+function addInvoiceItem(data = {}) {
+  const container = document.getElementById('inv-items');
+  const row = document.createElement('div');
+  row.className = "item-row border rounded p-3 flex flex-col gap-2 bg-white";
+
+  const qty = Number(data.qty || 0);
+  const rate = Number(data.rate || 0);
+  const amount = qty * rate;
+
+  row.innerHTML = `
+    <div class="flex items-center">
+      <input type="text" class="item-name flex-1 p-2 border rounded" list="materials" placeholder="Item" value="${data.name || ''}">
+      <button type="button" class="smallbtn ml-2 bg-red-500 text-white" onclick="this.closest('.item-row').remove(); recalcAll()">✕</button>
+    </div>
+
+    <textarea class="item-desc w-full p-2 border rounded" placeholder="Description (long answer)">${data.desc || ''}</textarea>
+
+    <!-- Qty, Unit, Rate, Amount एका ओळीत -->
+    <div class="flex gap-2">
+      <input type="number" class="item-qty p-2 border rounded w-1/4" placeholder="Qty" value="${qty}" oninput="recalcAll()">
+      <input type="text" class="item-unit p-2 border rounded w-1/4" placeholder="Unit" value="${data.unit || ''}">
+      <input type="number" class="item-rate p-2 border rounded w-1/4" placeholder="Rate" value="${rate}" oninput="recalcAll()">
+      <input type="number" class="item-amt p-2 border rounded w-1/4 bg-gray-100" placeholder="Amount" value="${amount.toFixed(2)}" disabled>
+    </div>
+  `;
+
+  container.appendChild(row);
+
+  // Auto-fill Unit on item selection
+  const partInput = row.querySelector('.item-name');
+  partInput.addEventListener('change', () => {
+    const match = (DATA.materials || []).find(m => m.part === partInput.value);
+    if (match && match.unit) {
+      row.querySelector('.item-unit').value = match.unit;
+    }
+  });
+}
+
+
+
+// ---------- LOAD ALL INVOICES ----------
+
+async function renderInvoicesList() {
+  const box = el('saved-inv-list');
+  box.innerHTML = 'Loading...';
+  try {
+    const res = await fetch(`${DEPLOY_URL_INV}?action=getall`);
+    const txt = await res.text();      // ⬅️ आधी text घ्या
+    
+
+    let data;
+    try {
+      data = JSON.parse(txt);          // ⬅️ मग parse करा
+    } catch (e) {
+      console.error("❌ JSON parse error:", e);
+      box.innerHTML = 'Server did not return valid JSON';
+      return;
+    }
+
+    // ✅ Set to DATA.invoices so dropdown & profit can access
+    DATA.invoices = data.map(e => ({
+      id: e["Invoice Number"],
+      total: Number(e["Grand Total"]) || 0,
+      date: e["Date"],
+      client: e["Customer Name"],
+      work: e["Work Title"]
+    }));
+
+    box.innerHTML = '';
+    data.forEach(e => {
+      const div = document.createElement('div');
+      div.className = 'p-2 bg-gray-50 rounded flex justify-between items-center';
+      div.innerHTML = `
+        <div>
+          <strong>${e["Invoice Number"]}</strong> (${e["Date"]})
+          ${e["Customer Name"]} | ${e["Work Title"]} - ₹${e["Grand Total"]}
+        </div>
+        <div class="flex gap-2">
+          <button class="smallbtn" onclick="loadInvoice('${e["Invoice Number"]}')">Load</button>
+          <button class="smallbtn" onclick="shareInvoice('${e["Invoice Number"]}')">Share</button>
+          <button class="smallbtn" onclick="deleteInvoice('${e["Invoice Number"]}')">Delete</button>
+        </div>`;
+      box.appendChild(div);
+    });
+
+    renderInvoiceDropdown();
+    renderInvoiceProfits();
+
+saveData(); 
+renderPaymentsList(); 
+renderInvoiceDropdownForOrders();   // 🟢 Order App साठी
+ 
+
+  } catch (err) {
+    console.error("❌ Fetch error:", err);
+    box.innerHTML = 'Failed to load invoices';
+  }
+}
+
+
+// ---------- RENDER INVOICE PROFITS ----------
+
+function renderInvoiceProfits() {
+  const box = el('invoice-profits');
+  if (!box) return; // जर div नसला तर skip करा
+
+  if (!DATA.invoices || DATA.invoices.length === 0) {
+    box.innerHTML = "<p>No invoices to calculate profits.</p>";
+    return;
+  }
+
+  // सध्या फक्त Invoice No आणि Total दाखवतोय
+  let html = "<h3 class='font-bold mb-2'>Invoice Profits</h3>";
+  DATA.invoices.forEach(inv => {
+    html += `
+      <div class="p-2 border-b">
+        <strong>${inv.id}</strong> (${inv.date}) - 
+        ${inv.client} | ${inv.work} 
+        <br> Total: ₹${inv.total}
+      </div>`;
+  });
+
+  box.innerHTML = html;
+}
+
+
+
+
+
+
+
+// ---------- LOAD SINGLE INVOICE ----------
+async function loadInvoice(invNo) {
+  try {
+    const res = await fetch(`${DEPLOY_URL_INV}?action=getsingle&invoiceNumber=${encodeURIComponent(invNo)}`);
+    const rec = await res.json();
+
+    if (!rec || !rec["Invoice Number"]) {
+      alert("Invoice not found: " + invNo);
+      return;
+    }
+
+    // ---- Header Fields ----
+    el('inv-no').value = rec["Invoice Number"] || '';
+    el('inv-client').value = rec["Customer Name"] || '';
+    el('inv-contact').value = rec["Customer Whatsapp"] || '';
+    el('inv-work').value = rec["Work Title"] || '';
+    
+    if (rec["Date"]) {
+      const d = new Date(rec["Date"]);
+      el('inv-date').value = isNaN(d) ? String(rec["Date"]).slice(0, 10) : d.toISOString().split('T')[0];
+    }
+
+    // ---- Items ----
+    const container = el('inv-items');
+    container.innerHTML = '';
+    let items = [];
+    try { 
+      items = JSON.parse(rec["Items"] || "[]"); 
+    } catch (e) { 
+      console.error("Items parse error", e); 
+    }
+
+    items.forEach(it => {
+      addItem('inv', {
+        name: it.name || '',
+        qty: Number(it.quantity || it.qty || 0),
+        unit: it.unit || '',
+        rate: Number(it.rate || 0),
+        desc: it.description || ''   // ✅ Correct key: 'desc'
+      });
+    });
+
+    // --- Get total payments received for this invoice ---
+    const paymentsForInvoice = (DATA.payments || []).filter(p => p.invoiceNo === invNo);
+    const totalPaidAdvance = paymentsForInvoice.reduce((sum, p) => sum + Math.abs(Number(p.received) || 0), 0);
+
+    // ✅ Use ONLY received payments as Advance value — do not modify it
+    el('inv-adv').value = totalPaidAdvance.toFixed(2);
+
+    // ✅ Recalculate final amount
+    recalcAll('inv');
+
+    
+
+  } catch (err) {
+    alert("Load failed: " + err.message);
+  }
+}
+
+
+
+
+// ---------- DELETE INVOICE ----------
+async function deleteInvoice(invNo) {
+  if (!confirm("Delete this invoice?")) return;
+  try {
+    const res = await fetch(`${DEPLOY_URL_INV}?action=delete&invoiceNumber=${encodeURIComponent(invNo)}`, { method: "POST" });
+    const out = await res.json();
+    if (out.status === "success") {
+      alert("Deleted: " + invNo);
+      renderInvoicesList();
+    } else {
+      alert("Error: " + out.message);
+    }
+  } catch (err) {
+    alert("Delete failed: " + err.message);
+  }
+}
+
+// ---------- AUTO-GENERATE INVOICE NO ----------
+async function generateNextInvoiceNo() {
+  try {
+    const res = await fetch(`${DEPLOY_URL_INV}?action=getnextno`);
+    const nextNo = parseInt(await res.text()) || 1;
+    el('inv-no').value = "INV-" + nextNo.toString().padStart(4, "0");
+  } catch (err) {
+    console.error("Invoice No generate fail:", err);
+  }
+}
+
+
+function toggleSection(sectionId, btn) {
+  const sec = document.getElementById(sectionId);
+  const isHidden = sec.classList.contains("hidden");
+
+  if (isHidden) {
+    sec.classList.remove("hidden");
+    btn.innerText = "➖ Hide Saved Invoices";
+  } else {
+    sec.classList.add("hidden");
+    btn.innerText = "➕ Show Saved Invoices";
+  }
+}
+
+
+async function shareInvoice(invNo){
+  try {
+    const res = await fetch(`${DEPLOY_URL_INV}?action=getsingle&invoiceNumber=${encodeURIComponent(invNo)}`);
+    const r = await res.json();
+
+    if(!r["Invoice Number"]){
+      alert("Record not found for sharing");
+      return;
+    }
+
+    const items = JSON.parse(r["Items"] || "[]");
+
+    // DATA.payments मधून त्या invoice नंबरसाठी payments शोधा
+    const advances = (DATA.payments || []).filter(p => p.invoiceNo === invNo);
+
+    // एकूण advance received काढा
+    const totalAdvance = advances.reduce((sum, p) => sum + (p.received || 0), 0);
+
+    const subtotal = parseFloat(r["Subtotal"]) || 0;
+    const finalAmount = subtotal - totalAdvance;
+
+    const lines = [];
+    lines.push('🧾 Invoice Details');
+    lines.push('');
+    lines.push('*Vaibhav Enterprises*');
+    lines.push('');
+    lines.push('_Dear Sir/Madam,_');
+    lines.push('Invoice No.: ' + r["Invoice Number"]);
+    lines.push('Customer Name: ' + r["Customer Name"]);
+    lines.push('Contact No.: ' + r["Customer Whatsapp"]);
+    lines.push('Date: ' + new Date(r["Date"]).toLocaleDateString());
+    lines.push('');
+    lines.push('Item Details:');
+    items.forEach(it => {
+      lines.push('• *' + it.name + '*');
+      lines.push('_Description: ' + (it.description || '').trim() + '_');
+      lines.push('Qty | Unit | Rate | Amount');
+      lines.push(`${it.quantity} | ${it.unit || ''} | ₹${money(it.rate)} | ₹${money(it.quantity * it.rate)}`);
+    });
+    lines.push('');
+    lines.push('Subtotal: ₹' + money(subtotal));
+    lines.push('Advance: ₹' + money(totalAdvance));
+    lines.push('*Final Amount: ₹' + money(finalAmount) + '*');
+    lines.push('_In words: ' + numberToWords(finalAmount) + '_');
+    lines.push('');
+
+    // Advance details
+    // Advance details
+    lines.push('Receive Advance Details:👇');
+    if (advances.length === 0) {
+    lines.push('_No advance payments found for this invoice._');
+    } else {
+    lines.push('No  |    Date            |  Amount    | ');
+    advances.forEach((adv, i) => {
+    const sr = i + 1;
+    const date = adv.date || '';
+    const amt = '₹' + money(adv.received || 0);
+    const type = adv.note || '';
+    lines.push(`${sr}     | ${date} | ${amt.padEnd(9)} | ${type}`);
+    });
+    }
+
+    lines.push('');
+    lines.push('_Regarding,_');
+    lines.push('');
+    lines.push('_Vaibhav Enterprises_');
+    lines.push('');
+    lines.push('For more info, visit: www.vaibhaventerprises.info');
+    lines.push('');
+    lines.push('_Thank you for connecting with Vaibhav Enterprises_');
+    lines.push('');
+    lines.push('Open Invoice PDF:https://vai27717.github.io/Invoice/?view=customer&id=' + r["Invoice Number"]);
+    window.open('https://wa.me/?text=' + encodeURIComponent(lines.join('\n')), '_blank');
+
+  } catch(err){
+    alert("Share failed: "+err.message);
+  }
+}
+
+
+
+
+
+
+document.addEventListener("DOMContentLoaded", function() {
+  renderInvoicesList();
+  generateNextInvoiceNo();
+});
+
+
+
+
+
+
+
+/* ---------- Render saved lists ---------- */
+
+/* ---------- Render saved lists ---------- */
+
+function renderAll() {
+  // --- Daily Reports ---
+  if (typeof renderDailyReports === 'function') {
+    renderDailyReports();
+  }
+
+  // --- Labor ---
+  const sl = el('saved-labor');
+  sl.innerHTML = '';
+  DATA.labor.forEach(l => {
+    const div = document.createElement('div');
+    div.className = 'p-2 bg-gray-50 rounded flex justify-between items-center';
+    div.innerHTML = `<div><strong>${l.id}</strong> ${l.name} (${l.start} to ${l.end})</div><div class="flex gap-2"><button class="smallbtn" onclick="loadLabor('${l.id}')">Load</button><button class="smallbtn" onclick="shareLabor('${l.id}')">Share</button><button class="smallbtn" onclick="deleteLabor('${l.id}')">Delete</button></div>`;
+    sl.appendChild(div);
+  });
+
+  // --- Payments ---
+  // ✅ Ithe fakt function call kara. Function chi definition baher asavi.
+  renderPaymentsList(); 
+
+  // --- Expenses + Invoice ---
+  renderCategories();
+  renderExpensesTable();
+  initExpensesModule(); 
+
+  // --- Invoice related ---
+  renderInvoiceDropdown(); 
+  renderInvoiceProfits(); 
+  renderInvoiceDropdownForOrders(); 
+
+  // --- Other modules ---
+  renderMeasurementsList();
+  renderPaidPayments();
+  renderOrders();
+  renderMaterialsDropdown();
+  renderOrderCategories(); 
+  renderInvoiceDropdownForPaid();
+
+
+  recalcAll();
+}
+
+
+
+
+
+
+
+
+/* ---------- PDF Export (Estimate & Invoice) ---------- */
+function exportEstimatePDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 15;
+
+  // --- HEADER ---
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.setTextColor(255,102,0);
+  doc.text('Vaibhav Enterprises', 105, y, {align:'center'});
+  y += 6;
+
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(10);
+  doc.setTextColor(0);
+  doc.text('Mob: 9049764945 / 8080588206 | www.vaibhaventerprises.info', 105, y, {align:'center'});
+  y += 5;
+  doc.text('Reg. No: MH-26-0106699', 105, y, {align:'center'});
+  y += 5;
+
+  // Orange underline
+  doc.setDrawColor(255,102,0);
+  doc.setLineWidth(0.5);
+  doc.line(14, y, 196, y);
+  y += 10;
+
+  // --- RECORD DATA ---
+  const id = el('est-no').value;
+  const rec = DATA.estimates.find(x=>x.id===id) || {
+    id, client:el('est-client').value, contact:el('est-contact').value,
+    date:el('est-date').value, work:el('est-work').value,
+    items:[], subtotal:0, discount:0, total:0
+  };
+
+  // --- LEFT SIDE ---
+  doc.setFontSize(11);
+  doc.text("To,", 14, y);
+  y += 6;
+  doc.text(`Customer Name: ${rec.client}`, 14, y);
+  y += 6;
+  doc.text(`Contact No.: ${rec.contact}`, 14, y);
+  y += 6;
+  doc.text(`Work Title: ${rec.work}`, 14, y);
+
+  // --- RIGHT SIDE ---
+  let rightY = y - 18;
+  doc.text(`Estimate No.: ${rec.id}`, 140, rightY);
+  rightY += 6;
+  let dt = rec.date ? rec.date.split("-").reverse().join("-") : "";
+  doc.text(`Date: ${dt}`, 140, rightY);
+
+  y += 10;
+
+  // --- TABLE HEADERS ---
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(11);
+  doc.text("Item / Description", 14, y);
+  doc.text("Qty", 90, y);
+  doc.text("Unit", 110, y);
+  doc.text("Rate", 130, y);
+  doc.text("Amount", 196-14, y, {align:'right'});
+  y += 4;
+
+  // Orange line
+  doc.setDrawColor(255,102,0);
+  doc.setLineWidth(0.5);
+  doc.line(14, y, 196, y);
+  y += 6;
+
+  doc.setFont("helvetica","normal");
+
+  // --- TABLE ROWS ---
+  rec.items.forEach(it=>{
+    doc.setFont("helvetica","bold");
+    doc.text(it.name, 14, y);
+    doc.text(String(it.qty), 90, y);
+    doc.text(it.unit||'', 110, y);
+    doc.text(money(it.rate), 140, y, {align:'right'});
+    doc.text(money(it.qty*it.rate), 196-14, y, {align:'right'});
+    y += 5;
+
+    if(it.desc){
+      doc.setFont("helvetica","italic");
+      doc.setFontSize(10);
+      doc.text(it.desc, 16, y);
+      doc.setFont("helvetica","normal");
+      doc.setFontSize(11);
+      y += 6;
+    } else {
+      y += 4;
+    }
+
+    if(y > 240){ doc.addPage(); y = 20; }
+  });
+
+  // Orange line before totals
+  y += 2;
+  doc.setDrawColor(255,102,0);
+  doc.line(14, y, 196, y);
+  y += 8;
+
+  // --- TOTALS (right align, no weird spacing) ---
+  doc.setFont("helvetica","normal");
+  doc.setTextColor(0);
+  doc.text("Subtotal:" + money(rec.subtotal||0), 196-14, y, {align:'right'});
+  y += 6;
+  doc.text("Discount:" + money(rec.discount||0), 196-14, y, {align:'right'});
+  y += 6;
+  doc.setFont("helvetica","bold");
+  doc.setTextColor(255,0,0);
+  doc.text("Amount:" + money(rec.total||0), 196-14, y, {align:'right'});
+  doc.setTextColor(0);
+  doc.setFont("helvetica","normal");
+  y += 10;
+
+  // --- In words (right side) ---
+  let words = numberToWords(rec.total||0);
+  doc.setFontSize(10);
+  doc.text("In words: " + words, 196-14, y, {align:'right'});
+  y += 15;
+
+  // --- SIGNATURE (Thank you ↓ For Vaibhav Enterprises) ---
+  doc.setFontSize(11);
+  doc.text("Thank you", 196-35, y);
+  y += 6;
+  doc.setFont("helvetica","bold");
+  doc.text("For Vaibhav Enterprises", 196-50, y);
+
+  // --- FOOTER ---
+  doc.setFontSize(10);
+  doc.setFont("helvetica","normal");
+  doc.text('Thank you for connecting with Vaibhav Enterprises', 105, 290, {align:'center'});
+
+  doc.save(`${rec.id}_estimate.pdf`);
+}
+
+// --- Money formatter (NO spaces, no weird chars) ---
+function money(v){
+  return (parseFloat(v)||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+/* ---------- PDF Export (Invoice) ---------- */
+
+function exportInvoicePDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 15;
+
+  // --- HEADER ---
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.setTextColor(255,102,0);
+  doc.text('Vaibhav Enterprises', 105, y, {align:'center'});
+  y += 6;
+
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(10);
+  doc.setTextColor(0);
+  doc.text('Mob: 9049764945 / 8080588206 | www.vaibhaventerprises.info', 105, y, {align:'center'});
+  y += 5;
+  doc.text('Reg. No: MH-26-0106699', 105, y, {align:'center'});
+  y += 5;
+
+  // Orange underline
+  doc.setDrawColor(255,102,0);
+  doc.setLineWidth(0.5);
+  doc.line(14, y, 196, y);
+  y += 10;
+
+  // --- RECORD DATA ---
+  const id = el('inv-no').value;
+  const rec = DATA.invoices.find(x=>x.id===id) || {
+    id, client:el('inv-client').value, contact:el('inv-contact').value,
+    date:el('inv-date').value, work:el('inv-work').value,
+    items:[], subtotal:0, advance:0, total:0
+  };
+
+  // --- LEFT SIDE ---
+  doc.setFontSize(11);
+  doc.text("To,", 14, y);
+  y += 6;
+  doc.text(`Customer Name: ${rec.client}`, 14, y);
+  y += 6;
+  doc.text(`Contact No.: ${rec.contact}`, 14, y);
+  y += 6;
+  doc.text(`Work Title: ${rec.work}`, 14, y);
+
+  // --- RIGHT SIDE ---
+  let rightY = y - 18;
+  doc.text(`Invoice No.: ${rec.id}`, 140, rightY);
+  rightY += 6;
+  let dt = rec.date ? rec.date.split("-").reverse().join("-") : "";
+  doc.text(`Date: ${dt}`, 140, rightY);
+
+  y += 10;
+
+  // --- TABLE HEADERS ---
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(11);
+  doc.text("Item / Description", 14, y);
+  doc.text("Qty", 90, y);
+  doc.text("Unit", 110, y);
+  doc.text("Rate", 130, y);
+  doc.text("Amount", 196-14, y, {align:'right'});
+  y += 4;
+
+  // Orange line
+  doc.setDrawColor(255,102,0);
+  doc.setLineWidth(0.5);
+  doc.line(14, y, 196, y);
+  y += 6;
+
+  doc.setFont("helvetica","normal");
+
+  // --- TABLE ROWS ---
+  rec.items.forEach(it=>{
+    doc.setFont("helvetica","bold");
+    doc.text(it.name, 14, y);
+    doc.text(String(it.qty), 90, y);
+    doc.text(it.unit||'', 110, y);
+    doc.text(money(it.rate), 140, y, {align:'right'});
+    doc.text(money(it.qty*it.rate), 196-14, y, {align:'right'});
+    y += 5;
+
+    if(it.desc){
+      doc.setFont("helvetica","italic");
+      doc.setFontSize(10);
+      doc.text(it.desc, 16, y);
+      doc.setFont("helvetica","normal");
+      doc.setFontSize(11);
+      y += 6;
+    } else {
+      y += 4;
+    }
+
+    if(y > 240){ doc.addPage(); y = 20; }
+  });
+
+  // Orange line before totals
+  y += 2;
+  doc.setDrawColor(255,102,0);
+  doc.line(14, y, 196, y);
+  y += 8;
+
+  // --- TOTALS (right align, no weird spacing) ---
+  doc.setFont("helvetica","normal");
+  doc.setTextColor(0);
+  doc.text("Subtotal:" + money(rec.subtotal||0), 196-14, y, {align:'right'});
+  y += 6;
+  doc.text("Advance:" + money(rec.advance||0), 196-14, y, {align:'right'});
+  y += 6;
+  doc.setFont("helvetica","bold");
+  doc.setTextColor(255,0,0);
+  doc.text("Amount:" + money(rec.total||0), 196-14, y, {align:'right'});
+  doc.setTextColor(0);
+  doc.setFont("helvetica","normal");
+  y += 10;
+
+  // --- In words (right side) ---
+  let words = numberToWords(rec.total||0);
+  doc.setFontSize(10);
+  doc.text("In words: " + words, 196-14, y, {align:'right'});
+  y += 15;
+
+  // --- SIGNATURE (Thank you ↓ For Vaibhav Enterprises) ---
+  doc.setFontSize(11);
+  doc.text("Thank you", 196-35, y);
+  y += 6;
+  doc.setFont("helvetica","bold");
+  doc.text("For Vaibhav Enterprises", 196-50, y);
+
+  // --- FOOTER ---
+  doc.setFontSize(10);
+  doc.setFont("helvetica","normal");
+  doc.text('Thank you for connecting with Vaibhav Enterprises', 105, 290, {align:'center'});
+
+  doc.save(`${rec.id}_invoice.pdf`);
+}
+
+
+
+/* ---------- Expenses: rows with item list support ---------- */
+/* ---------- Invoice Counter ---------- */
+function nextExpenseInvoice(){
+  DATA.counters = DATA.counters || {};
+  DATA.counters.exp = (DATA.counters.exp||0) + 1;
+  return "EXP-" + String(DATA.counters.exp).padStart(4,"0");
+}
+
+function initExpenseInvoice(){
+  if(!el('exp-invoice').value){
+    el('exp-invoice').value = nextExpenseInvoice();
+  }
+}
+
+/* ---------- Expenses Module: full, standalone functions ---------- */
+
+(function(){
+  // --- small fallbacks if your app doesn't already define them ---
+  if(typeof window.el !== 'function'){
+    window.el = id => document.getElementById(id);
+  }
+  if(typeof window.money !== 'function'){
+    window.money = n => (Number(n||0)).toFixed(2);
+  }
+  if(typeof window.pad !== 'function'){
+    window.pad = (n,len=4) => String(n).padStart(len,'0');
+  }
+  if(typeof window.saveData !== 'function'){
+    // minimal fallback (will persist DATA JSON to localStorage)
+    window.saveData = function(){
+      try{ localStorage.setItem('APP_DATA_BACKUP', JSON.stringify(DATA||{})); }
+      catch(e){ console.warn('saveData fallback failed', e); }
+    };
+  }
+
+
+
+// ✅ इथे paste कर
+ function formatDateLocal(d) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+
+
+
+
+  // ensure DATA structure
+  window.DATA = window.DATA || {};
+  DATA.expenses = Array.isArray(DATA.expenses) ? DATA.expenses : [];
+  DATA.categories = Array.isArray(DATA.categories) ? DATA.categories : [];
+  DATA.invoices = Array.isArray(DATA.invoices) ? DATA.invoices : [];
+  DATA.counters = DATA.counters || {};
+  DATA.counters.exp = DATA.counters.exp || (DATA.expenses.length);
+
+  /* ---------- Render / Helpers ---------- */
+
+  function renderInvoiceDropdown(){
+    const sel = el('exp-invoice-select');
+    const inp = el('exp-invoice');
+    const opts = ['<option value=""></option>'].concat(
+      (DATA.invoices||[]).map(inv => `<option value="${inv.id}">${inv.id} (₹${money(inv.total)})</option>` )
+    ).join('');
+    if(sel){
+      sel.innerHTML = opts;
+    } else if(inp){
+      // pick first invoice if any
+      const first = (DATA.invoices && DATA.invoices.length) ? DATA.invoices[0] : null;
+      if(first){
+        inp.value = `${first.id} (₹${money(first.total)})`;
+        inp.dataset.invId = first.id;
+      } else {
+        inp.value = '';
+        inp.removeAttribute('data-inv-id');
+      }
+    }
+  }
+  
+ document.getElementById("exp-invoice-select").addEventListener("change", function(){
+  const invoiceId = this.value;
+  if(invoiceId) updateHomeDashboard(invoiceId);
+  
+});
+
+
+  function renderCategories(){
+    DATA.categories = DATA.categories || [];
+    const cs = el('cat-select');
+    if(cs){
+      cs.innerHTML = '<option value=""></option>';
+      DATA.categories.forEach(c=>{
+        if(typeof c === 'string') {
+          const opt = document.createElement('option');
+          opt.value = c;
+          opt.textContent = c;
+          cs.appendChild(opt);
+        }
+      });
+    }
+
+    // Update all in-edit category selects (.exp-cat)
+    document.querySelectorAll('.exp-cat').forEach(sel=>{
+      const cur = sel.value || '';
+      sel.innerHTML = '<option value=""></option>' + DATA.categories.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      if(cur && DATA.categories.includes(cur)) sel.value = cur;
+    });
+  }
+
+  function escapeHtml(s){
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ---------- Add Edit Rows (two-row pair) ---------- */
+function addExpenseRow(data){
+  const tbody = el('exp-rows');
+  if(!tbody){
+    console.error('exp-rows tbody not found in DOM. Add <tbody id="exp-rows"></tbody> for editing rows.');
+    return;
+  }
+
+  // first row: date, item name, category
+  const tr1 = document.createElement('tr');
+  tr1.className = 'exp-row-1';
+ tr1.innerHTML = `
+  <td><input type="date" class="exp-date p-2 border rounded w-full" 
+    value="${data && data.date ? data.date : (new Date().toISOString().split('T')[0])}">
+  </td>
+  <td><input class="exp-item-name p-2 border rounded w-full" placeholder="Item Name" value="${escapeHtml(data && data.name ? data.name : '')}"></td>
+  <td><select class="exp-cat p-2 border rounded w-full"></select></td>
+`;
+
+  tbody.appendChild(tr1);
+
+  // second row: qty, unit, rate, amount, remove
+  const tr2 = document.createElement('tr');
+  tr2.className = 'exp-row-2';
+  tr2.innerHTML = `
+    
+
+    
+    <td><input type="number" class="exp-item-qty p-2 border rounded w-full" placeholder="Qty" value="${data && data.qty ? data.qty : 0}"></td>
+    <td><input class="exp-item-unit p-2 border rounded w-full" placeholder="Unit" value="${escapeHtml(data && data.unit ? data.unit : '')}"></td>
+    <td><input type="number" class="exp-item-rate p-2 border rounded w-full" placeholder="Rate" value="${data && data.rate ? data.rate : 0}"></td>
+    <td><span class="exp-item-amt font-semibold">0.00</span></td>
+    <td><button class="smallbtn bg-red-500" onclick="(function(btn){ const tr = btn.closest('tr'); const r1 = tr.previousElementSibling; if(r1) r1.remove(); tr.remove(); renderEditTotals(); })(this)">❌</button></td>
+  `;
+  tbody.appendChild(tr2);
+
+  // category list fill करा
+  renderCategories();
+
+  if (data && data.category) {
+    const catSel = tr1.querySelector('.exp-cat');
+    if (catSel) catSel.value = data.category;
+  }
+
+  // calculation hook
+  const qty = tr2.querySelector('.exp-item-qty');
+  const rate = tr2.querySelector('.exp-item-rate');
+  const amtSpan = tr2.querySelector('.exp-item-amt');
+
+  function calc(){
+    const q = parseFloat(qty.value) || 0;
+    const r = parseFloat(rate.value) || 0;
+    const a = q * r;
+    amtSpan.textContent = a.toFixed(2);
+    renderEditTotals();
+  }
+
+  qty.addEventListener('input', calc);
+  rate.addEventListener('input', calc);
+
+  // initialization
+  calc();
+}
+
+
+  // small helper: recalc edit area total (display under exp-edit-total if exists)
+  function renderEditTotals(){
+    const tbody = el('exp-rows');
+    if(!tbody) return;
+    const rows = tbody.querySelectorAll('tr.exp-row-2');
+    let tot = 0;
+    rows.forEach(r2=>{
+      const q = parseFloat(r2.querySelector('.exp-item-qty').value) || 0;
+      const rate = parseFloat(r2.querySelector('.exp-item-rate').value) || 0;
+      tot += q*rate;
+    });
+    // update display: prefer an explicit edit total span (id='edit-exp-total'), otherwise update exp-total
+    const editSpan = el('edit-exp-total');
+    if(editSpan){
+      editSpan.textContent = money(tot);
+    } else {
+      const main = el('exp-total');
+      if(main) main.textContent = money(tot);
+    }
+  }
+
+  /* ---------- Save Expenses ---------- */
+  /* ---------- Save Expenses (updated: also POST to Google Sheet) ---------- */
+// ---------- Google Sheet URL (deploy केल्यानंतरची URL) ----------
+const SHEET_URL = "https://script.google.com/macros/s/AKfycby0l8Cii6A5wJub28YxXxeldNt1otxBp2G7qT5ECTYz0hSSsDJhKbwpiiH4dz6fw7T1/exec";
+
+function saveExpenses(){
+  const tbody = el('exp-rows');
+  if(!tbody) return alert('No editing area (exp-rows) found');
+  const trs = Array.from(tbody.querySelectorAll('tr'));
+  if(trs.length===0) return alert('Add at least one item');
+
+  const invSel = el('exp-invoice-select');
+  const invInp = el('exp-invoice');
+  const invoiceVal = invSel ? invSel.value : (invInp ? (invInp.dataset && invInp.dataset.invId ? invInp.dataset.invId : invInp.value) : '');
+  
+  // 🔴 New check here
+  if (!invoiceVal) {
+  return alert("Select Invoice No first then save Expenses");
+  }
+
+  // gather item objects
+  const items = [];
+  for(let i=0;i<trs.length;i+=2){
+    const r1 = trs[i], r2 = trs[i+1];
+    if(!r1 || !r2) continue;
+    const date = r1.querySelector('.exp-date').value;
+    const name = r1.querySelector('.exp-item-name').value.trim();
+    const category = r1.querySelector('.exp-cat').value;
+    const qty = parseFloat(r2.querySelector('.exp-item-qty').value) || 0;
+    const unit = r2.querySelector('.exp-item-unit').value.trim();
+    const rate = parseFloat(r2.querySelector('.exp-item-rate').value) || 0;
+    const amount = Math.round((qty*rate)*100)/100;
+    if(!name) continue;
+    items.push({ date, name, category, qty, unit, rate, amount });
+  }
+  if(items.length===0) return alert('No valid items to save');
+
+  // update local DATA
+  DATA.expenses = DATA.expenses || [];
+  DATA.counters = DATA.counters || {};
+  DATA.counters.exp = DATA.counters.exp || DATA.expenses.length;
+
+  if(invoiceVal){
+    let existing = DATA.expenses.find(e => e.invoice === invoiceVal);
+    const amountSum = items.reduce((s,it)=> s + (it.amount||0),0);
+    if(existing){
+      existing.date = items[0].date || existing.date;
+      existing.items = items;
+      existing.category = items[0].category || existing.category || '';
+      existing.amount = amountSum;
+    } else {
+      DATA.counters.exp++;
+      const id = 'EXP-' + pad(DATA.counters.exp);
+      const rec = { id, date: items[0].date || new Date().toISOString().split('T')[0], invoice: invoiceVal, category: items[0].category || '', items, amount: amountSum };
+      DATA.expenses.push(rec);
+    }
+  } else {
+    items.forEach(it=>{
+      DATA.counters.exp++;
+      const id = 'EXP-' + pad(DATA.counters.exp);
+      DATA.expenses.push({ id, date: it.date || new Date().toISOString().split('T')[0], invoice: '', category: it.category||'', items:[{ name: it.name, qty: it.qty, unit: it.unit, rate: it.rate, amount: it.amount }], amount: it.amount });
+    });
+  }
+
+  // persist locally and rerender
+  if(typeof saveData === 'function') saveData();
+  renderExpensesTable();
+  renderSavedExpensesList();
+  renderInvoiceProfits();
+
+  // --- SAVE to Google Sheet (via GET to avoid CORS) ---
+  const payload = items.map(it=>({
+    date: it.date,
+    invoice: invoiceVal,
+    category: it.category,
+    name: it.name,
+    qty: it.qty,
+    unit: it.unit,
+    rate: it.rate,
+    amount: it.amount
+  }));
+
+  const params = new URLSearchParams({ data: JSON.stringify(payload) });
+
+  fetch(`${SHEET_URL}?${params}`)
+    .then(r => r.json())
+    .then(res => {
+      if(res && res.status === "success"){
+        console.log("✅ Data saved to Google Sheet");
+        if(typeof loadExpensesFromSheet === 'function') loadExpensesFromSheet();
+        alert('Expenses saved and synced to Google Sheet');
+      } else {
+        console.error("❌ Sheet error:", res);
+        alert('Saved locally but failed to save to Sheet: ' + (res && res.message ? res.message : 'unknown'));
+      }
+    })
+    .catch(err => {
+      console.error("❌ Fetch failed:", err);
+      alert('Saved locally but could not reach Google Sheet. Check console.');
+    });
+}
+
+
+
+/* ---------- Load Expenses from Google Sheet (group by Invoice) ---------- */
+function loadExpensesFromSheet() {
+  fetch(SHEET_URL)
+    .then(r => r.json())
+    .then(rows => {
+      if (!Array.isArray(rows)) rows = [];
+
+      const groups = {};
+      rows.forEach((r, idx) => {
+        const invoice = (r["Invoice"] || r["Invoice No"] || "").toString().trim();
+
+        // Date from sheet row
+        let rawDate = r["Date"] || "";
+        let date = "";
+        if (rawDate) {
+          try {
+            const d = new Date(rawDate);
+            if (!isNaN(d)) {
+              date = formatDateLocal(d);
+            } else {
+              date = rawDate;
+            }
+          } catch (e) {
+            date = rawDate;
+          }
+        }
+
+        const category = r["Category"] || "";
+        const name = r["Item"] || r["Items"] || "";
+        const qty = parseFloat(r["Qty"]) || 0;
+        const unit = r["Unit"] || "";
+        const rate = parseFloat(r["Rate"]) || 0;
+        const amount = parseFloat(r["Amount"]) || (qty * rate);
+
+        const key = invoice || ("SHEET-" + (idx + 1));
+        if (!groups[key]) {
+          groups[key] = { invoice: invoice, items: [], amount: 0, category: category };
+        }
+
+        groups[key].items.push({
+          date,
+          category,
+          name,
+          qty,
+          unit,
+          rate,
+          amount
+        });
+        groups[key].amount += amount;
+      });
+
+      const arr = Object.keys(groups).map((k, i) => {
+        const g = groups[k];
+        const id = g.invoice && g.invoice.length ? g.invoice : ('EXP-S' + pad(i + 1, 4));
+        return {
+          id,
+          invoice: g.invoice || id,
+          items: g.items,
+          amount: Math.round(g.amount * 100) / 100,
+          category: g.category,
+          // We can pick date from first item as a “representative” date (optional)
+          date: (g.items[0] && g.items[0].date) ? g.items[0].date : ''
+        };
+      });
+
+      DATA.expenses = arr;
+      DATA.counters = DATA.counters || {};
+      DATA.counters.exp = DATA.expenses.length;
+
+      renderExpensesTable();
+      renderSavedExpensesList();
+      renderInvoiceProfits();
+    })
+    .catch(err => {
+      console.error("❌ Sheet fetch failed:", err);
+    });
+}
+
+
+  
+  /* ---------- Render Saved Table ---------- */
+function renderExpensesTable(){
+  const tbody = el('expenses-tbody');
+  if(!tbody){
+    console.warn('No expenses-tbody found; create a saved table with <tbody id="expenses-tbody"></tbody>');
+    return;
+  }
+  tbody.innerHTML = '';
+  let tot = 0;
+  (DATA.expenses||[]).forEach(e=>{
+    tot += e.amount || 0;
+    const tr = document.createElement('tr');
+    const firstItem = (e.items && e.items[0]) ? e.items[0] : {};
+    tr.innerHTML = `
+      <td data-label="Date">${(e.items || []).map(i => i.date || '').join(', ')}</td>
+      <td data-label="Invoice No">${e.invoice || ''}</td>
+      <td data-label="Category">${e.category || firstItem.category || ''}</td>
+      <td data-label="Items">${(e.items || []).map(i=>escapeHtml(i.name)).join(', ')}</td>
+      <td data-label="Qty">${(e.items || []).map(i=>i.qty).join(', ')}</td>
+      <td data-label="Unit">${(e.items || []).map(i=>escapeHtml(i.unit)).join(', ')}</td>
+      <td data-label="Rate">${(e.items || []).map(i=>money(i.rate)).join(', ')}</td>
+      <td data-label="Amount">₹${money(e.amount)}</td>
+      <td data-label="Action">
+        <button class="smallbtn" onclick="(function(id){ window.loadExpense && loadExpense(id); })('${e.id}')">🔃 Load</button>
+        <button class="smallbtn" onclick="(function(id){ window.exportExpenseReport && exportExpenseReport(id); })('${e.id}')">📄 Report</button>
+        <button class="smallbtn bg-red-500" onclick="(function(id){ window.deleteExpense && deleteExpense(id); })('${e.id}')">❌</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  const totalSpan = el('exp-total');
+  if(totalSpan) totalSpan.textContent = money(tot);
+}
+
+
+/* ---------- Render Saved Expenses Boxes (optional) ---------- */
+function renderSavedExpensesList(){
+  const box = el('saved-expenses');
+  if(!box) return;
+  box.innerHTML = '';
+  (DATA.expenses||[]).forEach(e=>{
+    const div = document.createElement('div');
+    div.className = 'p-2 border rounded mb-2';
+    let html = `<b>${e.id}</b> | ${e.invoice || 'No Invoice'} | ₹${money(e.amount)} <br>`;
+    html += `${e.items.map(i=>`${escapeHtml(i.name)} (${i.qty} ${escapeHtml(i.unit)}) - ₹${money(i.amount)}`).join('<br>')}`;
+    html += `<div class="mt-2 flex gap-2"><button class="smallbtn" onclick="loadExpense('${e.id}')">Load</button><button class="smallbtn" onclick="exportExpenseReport('${e.id}')">Report</button><button class="smallbtn bg-red-500" onclick="deleteExpense('${e.id}')">Delete</button></div>`;
+    div.innerHTML = html;
+    box.appendChild(div);
+  });
+}
+
+
+  /* ---------- Load / Delete / Report ---------- */
+function loadExpense(id) {
+  const rec = (DATA.expenses || []).find(x => x.id === id);
+  if (!rec) return alert('Expense not found');
+
+  const tbody = el('exp-rows');
+  if (!tbody) return;
+  tbody.innerHTML = ''; // ✅ Clear previous rows
+
+  const sel = el('exp-invoice-select');
+  const inp = el('exp-invoice');
+  if (sel) {
+    sel.value = rec.invoice || '';
+  }
+  if (inp) {
+    if (rec.invoice) {
+      inp.value = rec.invoice + ((rec.amount != null) ? ` (₹${money(rec.amount)})` : '');
+      inp.dataset.invId = rec.invoice;
+    } else {
+      inp.value = '';
+      delete inp.dataset.invId;
+    }
+  }
+
+  // ✅ First: Load saved expense items
+  const loadedKeys = new Set();
+  (rec.items || []).forEach(it => {
+    const key = `${it.name}_${it.qty}_${it.rate}`;
+    addExpenseRow({
+      date: it.date || rec.date,
+      name: it.name,
+      category: it.category || rec.category || '',
+      qty: it.qty,
+      unit: it.unit,
+      rate: it.rate
+    });
+    loadedKeys.add(key);
+  });
+
+  // ✅ Second: Load from ALL matching Orders (not just first)
+  if (rec.invoice) {
+    const matchedOrders = (DATA.orders || []).filter(o =>
+      (o.invoiceId || "").trim() === rec.invoice.trim() &&
+      ["receive order", "received"].includes((o.status || "").toLowerCase())
+    );
+
+    matchedOrders.forEach(order => {
+      const orderItems = order.items || [];
+      const orderDate = order.date?.split("T")[0] || rec.date || new Date().toISOString().split("T")[0];
+      const orderCategory = order.category || rec.category || "";
+
+      orderItems.forEach(item => {
+        const key = `${item.part || item.name}_${item.qty}_${item.rate}`;
+        if (!loadedKeys.has(key)) {
+          addExpenseRow({
+            date: orderDate,
+            name: item.part || item.name || "",
+            category: orderCategory,
+            qty: item.qty || 0,
+            unit: item.unit || "",
+            rate: item.rate || 0
+          });
+          loadedKeys.add(key);
+        }
+      });
+    });
+  }
+
+  if (typeof show === 'function') show('exp');
+  renderEditTotals();
+}
+
+
+
+
+  function deleteExpenseFromSheet(invoiceId) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName("Expenses");
+  if (!sh) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Sheet not found" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const data = sh.getDataRange().getValues();
+  let deleted = 0;
+
+  // ✅ Invoice No is in Column B → index = 1
+  for (let i = data.length - 1; i > 0; i--) {
+    const rowInvoiceId = (data[i][1] || "").toString().trim();
+    if (rowInvoiceId === invoiceId) {
+      sh.deleteRow(i + 1);
+      deleted++;
+    }
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({ status: "deleted", deleted }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+
+function deleteExpense(id) {
+  if (!confirm('Delete this expense?')) return;
+
+  const rec = (DATA.expenses || []).find(x => x.id === id);
+  const invoiceId = rec?.invoice?.trim() || '';
+
+  const expenseScriptURL = "https://script.google.com/macros/s/AKfycby0l8Cii6A5wJub28YxXxeldNt1otxBp2G7qT5ECTYz0hSSsDJhKbwpiiH4dz6fw7T1/exec";
+
+  // 🔁 First: Delete from Google Sheet using invoiceId
+  if (invoiceId) {
+    fetch(`${expenseScriptURL}?action=deleteExpense&invoiceId=${encodeURIComponent(invoiceId)}`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.status === 'deleted') {
+          console.log(`✅ Deleted ${res.deleted} row(s) from Sheet for Invoice: ${invoiceId}`);
+        } else {
+          console.warn("⚠️ Delete failed or not found:", res);
+        }
+      })
+      .catch(err => console.error("❌ Error deleting from Sheet:", err));
+  }
+
+  // 🔁 Then: Delete from Local
+  DATA.expenses = (DATA.expenses || []).filter(x => x.id !== id);
+  DATA.expenses.forEach((r, i) => r.id = 'EXP-' + pad(i + 1));
+  DATA.counters = DATA.counters || {};
+  DATA.counters.exp = DATA.expenses.length;
+
+  if (typeof saveData === 'function') saveData();
+
+  renderExpensesTable();
+  renderSavedExpensesList();
+  renderInvoiceProfits();
+}
+
+
+
+
+
+
+function exportExpenseReport(id){
+  const { jsPDF } = window.jspdf;
+  const rec = (DATA.expenses||[]).find(x=>x.id===id);
+  if(!rec) return alert('Not found');
+
+  const doc = new jsPDF();
+  let y = 15;
+
+  // --- HEADER ---
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("Vaibhav Enterprises - Expense Report", 105, y, {align:'center'});
+  y += 8;
+
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Invoice: ${rec.invoice || '-'}`, 14, y);
+  doc.text(`Date: ${rec.date || ''}`, 105, y);
+  doc.text(`Total: ${(rec.amount)}`, 180, y, {align:'right'});
+  y += 10;
+
+  // --- TABLE HEADERS ---
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(11);
+  doc.text("Item", 14, y);
+  doc.text("Category", 50, y);
+  doc.text("Qty", 85, y);
+  doc.text("Unit", 105, y);
+  doc.text("Rate", 135, y);
+  doc.text("Amount", 196-14, y, {align:'right'});
+  y += 6;
+
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(10);
+
+  // --- ITEMS ---
+  let categoryTotals = {};  // ✅ category-wise total accumulator
+  (rec.items||[]).forEach(i=>{
+    doc.text(i.name || "-", 14, y);
+    doc.text(i.category || "-", 50, y);
+    doc.text(String(i.qty||0), 85, y);
+    doc.text(i.unit || "-", 105, y);
+    doc.text(""+(i.rate), 135, y);
+    doc.text(""+(i.amount), 196-14, y, {align:'right'});
+    y += 6;
+
+    // ✅ category total update
+    const cat = i.category || "Other";
+    if(!categoryTotals[cat]){
+      categoryTotals[cat] = { qty: 0, amt: 0 };
+    }
+    categoryTotals[cat].qty += (i.qty || 0);
+    categoryTotals[cat].amt += (i.amount || 0);
+
+    // page break
+    if(y > 270){
+      doc.addPage();
+      y = 20;
+    }
+  });
+
+  // --- TOTAL ---
+  y += 4;
+  doc.setFont("helvetica","bold");
+  doc.text("Total: " + (rec.amount), 196-14, y, {align:'right'});
+  y += 8;
+
+  // --- CATEGORY WISE SUMMARY ---
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(11);
+  doc.text("Category-wise Summary:", 14, y);
+  y += 6;
+
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(10);
+  Object.keys(categoryTotals).forEach(cat=>{
+    const ct = categoryTotals[cat];
+    doc.text(`${cat}: Qty ${ct.qty} | Amount ${ct.amt}`, 20, y);
+    y += 6;
+    if(y > 270){
+      doc.addPage();
+      y = 20;
+    }
+  });
+
+  // --- FOOTER ---
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(9);
+  doc.text("Generated: " + new Date().toLocaleString(), 14, 290);
+
+  doc.save(`${rec.id}_expenses.pdf`);
+}
+
+
+/* ---------- order to Expenses New add ---------- */
+
+
+function importOrderToExpenses(invoiceId) {
+  console.log("🧾 Loading Invoice to Expenses:", invoiceId);
+
+  if (!invoiceId || !DATA.orders || !Array.isArray(DATA.orders)) return;
+
+  invoiceId = invoiceId.trim();
+
+  // ✅ Find ALL matching orders
+  const matchedOrders = DATA.orders.filter(o => {
+    const inv = (o.invoiceId || "").trim();
+    const st = (o.status || "").toLowerCase();
+    return inv === invoiceId && (st === "receive order" || st === "received");
+  });
+
+  if (!matchedOrders.length) {
+    console.log("❌ No matching orders found for invoice:", invoiceId);
+    return;
+  }
+
+  console.log(`✅ Found ${matchedOrders.length} matching orders.`);
+
+  const tbody = el('exp-rows');
+  if (!tbody) return;
+
+  // 🧹 DELETE all existing expense rows with this invoice ID
+  const existingRows = Array.from(tbody.children);
+  let deletedCount = 0;
+  existingRows.forEach(row => {
+    const invInput = row.querySelector('[name="invoice"]');
+    if (invInput && invInput.value.trim() === invoiceId) {
+      row.remove();
+      deletedCount++;
+    }
+  });
+  console.log(`🗑️ Deleted ${deletedCount} existing rows for invoice ${invoiceId}`);
+
+  // ➕ ADD items from all matched orders
+  let addedCount = 0;
+
+  matchedOrders.forEach(order => {
+    const orderItems = order.items || [];
+    const dateStr = order.date?.split("T")[0] || new Date().toISOString().split("T")[0];
+
+    orderItems.forEach(item => {
+      addExpenseRow({
+        date: dateStr,
+        name: item.part || item.name || '',
+        category: order.category || '',
+        qty: item.qty || 0,
+        unit: item.unit || '',
+        rate: item.rate || 0,
+        invoice: invoiceId
+      });
+      addedCount++;
+    });
+  });
+
+  console.log(`✅ Added ${addedCount} items from ${matchedOrders.length} orders to Expenses.`);
+  renderEditTotals();
+}
+
+
+
+
+
+
+
+
+
+
+  /* ---------- Invoice-wise profit display ---------- */
+  function renderInvoiceProfits(){
+    const container = el('invoice-profits');
+    if(!container) return;
+    container.innerHTML = '';
+    (DATA.invoices||[]).forEach(inv=>{
+      const expenseSum = (DATA.expenses||[]).filter(e=> e.invoice === inv.id).reduce((s,e)=> s + (e.amount||0), 0);
+      const profit = (inv.total||0) - expenseSum;
+      const div = document.createElement('div');
+      div.textContent = `${inv.id}: Invoice ₹${money(inv.total)} • Expenses ₹${money(expenseSum)} • Profit ₹${money(profit)}`;
+      container.appendChild(div);
+    });
+  }
+
+  /* ---------- Category add/delete that immediately reflects ---------- */
+  // ---------- Category add/delete ----------
+function addCategoryPrompt(){
+  const name = prompt("Enter new category name:");
+  if(!name) return;
+  DATA.categories = DATA.categories || [];
+  if(DATA.categories.includes(name)) return alert("Category already exists");
+  DATA.categories.push(name);
+
+  // 🔹 Save to Sheet
+  fetch(SHEET_URL + "?action=saveCategories&data=" + encodeURIComponent(JSON.stringify(DATA.categories)))
+    .then(r => r.json())
+    .then(res => {
+      renderCategories();
+      alert("Category added & saved to Sheet");
+    })
+    .catch(err => alert("Error saving category: " + err));
+}
+
+function deleteCategoryPrompt(){
+  const sel = el('cat-select');
+  if(!sel) return alert('Category select not found');
+  const name = sel.value;
+  if(!name) return alert('Please select a category to delete');
+  if(!DATA.categories.includes(name)) return alert('Category not found');
+  if(!confirm(`Delete category "${name}" ?`)) return;
+  DATA.categories = DATA.categories.filter(c=> c !== name);
+
+  // 🔹 Save to Sheet
+  fetch(SHEET_URL + "?action=saveCategories&data=" + encodeURIComponent(JSON.stringify(DATA.categories)))
+    .then(r => r.json())
+    .then(res => {
+      renderCategories();
+      alert("Category removed from Sheet");
+    })
+    .catch(err => alert("Error saving category: " + err));
+}
+
+// 🔹 Load categories on page load
+function loadCategories(){
+  fetch(SHEET_URL + "?action=loadCategories")
+    .then(r => r.json())
+    .then(cats => {
+      DATA.categories = cats;
+      renderCategories();
+    })
+    .catch(err => {
+      console.error("Error loading categories", err);
+      DATA.categories = [];
+    });
+}
+
+
+
+function toggleSection(sectionId, btn) {
+  const sec = document.getElementById(sectionId);
+  const isHidden = sec.classList.contains("hidden");
+
+  if (isHidden) {
+    sec.classList.remove("hidden");
+    btn.innerText = "➖ Hide Saved Expenses";
+  } else {
+    sec.classList.add("hidden");
+    btn.innerText = "➕ Show Saved Expenses";
+  }
+}
+
+
+
+/* ---------- Initialization helper ---------- */
+function initExpensesModule(){
+  DATA.expenses = DATA.expenses || [];
+  DATA.categories = DATA.categories || [];
+  DATA.invoices = DATA.invoices || [];
+  DATA.counters = DATA.counters || {};
+  DATA.counters.exp = DATA.counters.exp || DATA.expenses.length;
+  loadCategories();
+  
+  renderInvoiceDropdown();
+  renderExpensesTable();
+  renderSavedExpensesList();
+  renderInvoiceProfits();
+
+  // ensure at least one edit row visible
+  //const tbody = el('exp-rows');
+  //if(tbody && tbody.querySelectorAll('tr').length===0) addExpenseRow();
+
+  // 🔥 Google Sheet मधून Data Load कर
+  loadExpensesFromSheet();
+}
+
+
+  // expose functions globally (so HTML onclick can call them)
+  window.addExpenseRow = addExpenseRow;
+  window.saveExpenses = saveExpenses;
+  window.renderExpensesTable = renderExpensesTable;
+  window.renderCategories = renderCategories;
+  window.renderInvoiceDropdown = renderInvoiceDropdown;
+  window.loadExpense = loadExpense;
+  window.deleteExpense = deleteExpense;
+  window.exportExpenseReport = exportExpenseReport;
+  window.renderSavedExpensesList = renderSavedExpensesList;
+  window.renderInvoiceProfits = renderInvoiceProfits;
+  window.initExpensesModule = initExpensesModule;
+  window.addCategoryPrompt = addCategoryPrompt;
+  window.deleteCategoryPrompt = deleteCategoryPrompt;
+
+})();
+
+
+/* ---------- Measurements ---------- */
+let currentLoadedId = null; 
+let originalClient = '';
+let originalContact = '';
+
+
+function addMeasurement(data){
+  const parent = el('meas-items');
+  const div = document.createElement('div'); 
+  div.className='p-2 border rounded bg-gray-50 meas-row';   
+
+  div.innerHTML = `
+    <div class="grid md:grid-cols-5 gap-2 items-center">
+      <input class="meas-name p-2" placeholder="Item" value="${data?.name || ''}">
+      <input class="meas-w p-2" type="number" placeholder="Width" value="${data?.w || 0}">
+      <input class="meas-h p-2" type="number" placeholder="Height" value="${data?.h || 0}">
+      <select class="meas-unit-select p-2 border rounded">
+        <option value="feet" ${data?.unitType === 'feet' ? 'selected' : ''}>Feet</option>
+        <option value="meter" ${data?.unitType === 'meter' ? 'selected' : ''}>Meter</option>
+        <option value="inch" ${data?.unitType === 'inch' ? 'selected' : ''}>Inch</option>
+        <option value="cm" ${data?.unitType === 'cm' ? 'selected' : ''}>Centimeter</option>
+      </select>
+      <div class="flex items-center">
+        Area: <span class="meas-area font-semibold ml-2">0.00</span> 
+        <span class="meas-unit ml-1 text-sm">R.ft</span>
+      </div>
+    </div>
+
+    <div class="mt-2 flex items-center gap-2">
+      <input class="meas-desc p-2 flex-grow border rounded" placeholder="Description" value="${data?.desc || ''}">
+      <button class="smallbtn bg-red-500 text-white" onclick="this.closest('.meas-row').remove(); recalcTotals()">Remove</button>
+    </div>
+  `;
+
+  parent.appendChild(div);
+
+  div.querySelector('.meas-w').addEventListener('input', ()=> updateMeas(div));
+  div.querySelector('.meas-h').addEventListener('input', ()=> updateMeas(div));
+  div.querySelector('.meas-unit-select').addEventListener('change', ()=> updateMeas(div));
+  if (data) updateMeas(div);
+}
+
+
+
+function convertToFeet(val, unitType){
+  switch(unitType){
+    case 'meter': return val * 3.28084;
+    case 'inch': return val / 12;
+    case 'cm': return val / 30.48;
+    default: return val; // feet
+  }
+}
+
+function updateMeas(div){
+  const wRaw = parseFloat(div.querySelector('.meas-w').value)||0;
+  const hRaw = parseFloat(div.querySelector('.meas-h').value)||0;
+  const unitType = div.querySelector('.meas-unit-select').value;
+
+  const w = convertToFeet(wRaw, unitType);
+  const h = convertToFeet(hRaw, unitType);
+
+  let result=0, unit='';
+  if(!hRaw){ 
+    result=w; unit='R.ft'; 
+  } else { 
+    result=w*h; unit='Sq.ft'; 
+  }
+
+  div.querySelector('.meas-area').textContent = result.toFixed(2);
+  div.querySelector('.meas-unit').textContent = unit;
+
+  recalcTotals();
+}
+
+function recalcTotals(){
+  let totalRft=0, totalSft=0;
+  document.querySelectorAll('#meas-items .meas-row').forEach(div=>{
+    const wRaw = parseFloat(div.querySelector('.meas-w').value)||0;
+    const hRaw = parseFloat(div.querySelector('.meas-h').value)||0;
+    const unitType = div.querySelector('.meas-unit-select').value;
+
+    const w = convertToFeet(wRaw, unitType);
+    const h = convertToFeet(hRaw, unitType);
+
+    if(!hRaw){ totalRft += w; }
+    else { totalSft += w*h; }
+  });
+  el('meas-total').textContent = `Tot. R.ft: ${totalRft.toFixed(2)} | Tot. Sq.ft: ${totalSft.toFixed(2)}`;
+}
+
+const scriptURL = "https://script.google.com/macros/s/AKfycbw4r-Rr8iRGzv7MC0f90il-n13oo9ZoRXwH2B9O93YIM_vDsdYy0XSa0p3sQP7Ljpzu/exec";
+
+function saveMeasurements() {
+    const currentIdFromField = (el('msr-id')?.value || '').trim();
+    const client = el('msr-client').value || '';
+    const contact = el('msr-contact').value || '';
+    
+    if (!client) return alert("Enter Customer Name");
+
+    // Items collection logic
+    const items = [];
+    document.querySelectorAll('#meas-items .meas-row').forEach(div => {
+        const name = div.querySelector('.meas-name').value || 'Item';
+        const wRaw = parseFloat(div.querySelector('.meas-w').value) || 0;
+        const hRaw = parseFloat(div.querySelector('.meas-h').value) || 0;
+        const unitType = div.querySelector('.meas-unit-select').value;
+        const desc = div.querySelector('.meas-desc').value || '';
+
+        const w = convertToFeet(wRaw, unitType);
+        const h = convertToFeet(hRaw, unitType);
+
+        let result = 0, unit = '';
+        if (!hRaw) {
+            result = w;
+            unit = 'R.ft';
+        } else {
+            result = w * h;
+            unit = 'Sq.ft';
+        }
+
+        items.push({
+            name,
+            w: wRaw,
+            h: hRaw,
+            result: parseFloat(result.toFixed(2)),
+            unit,
+            unitType,
+            desc
+        });
+    });
+
+    if (items.length === 0) return alert("Add at least one measurement row");
+    
+    // =========================================================================
+    // ✅ CRITICAL FIX: Case-Insensitive Comparison add kela.
+    // =========================================================================
+    let finalIdToSave = currentIdFromField; 
+    
+    if (currentLoadedId && currentIdFromField === currentLoadedId) {
+        
+        // Donhi values la String().trim().toUpperCase() vāparlā.
+        const currentClientStr = String(client).trim().toUpperCase();
+        const currentContactStr = String(contact).trim().toUpperCase();
+        const originalClientStr = String(originalClient).trim().toUpperCase();
+        const originalContactStr = String(originalContact).trim().toUpperCase();
+
+        const clientChanged = originalClientStr !== currentClientStr;
+        const contactChanged = originalContactStr !== currentContactStr;
+
+        if (clientChanged || contactChanged) {
+            // Client/Contact badalle, navīn ID tayar hoīl.
+            finalIdToSave = ""; 
+        } else {
+            // Client/Contact same āhet, junā ID vāparā (UPDATE hoīl).
+            finalIdToSave = currentIdFromField; 
+        }
+    }
+
+    const rec = {
+        id: finalIdToSave, // Hā finalIdToSave empty asel (navīn) kiṃvā junā ID (update)
+        client,
+        contact,
+        date: new Date().toISOString().split('T')[0],
+        items
+    };
+
+    fetch(scriptURL + "?action=saveMeasurement", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "data=" + encodeURIComponent(JSON.stringify(rec))
+    })
+    .then(res => {
+        if (!res.ok) {
+            return res.text().then(text => { throw new Error('API Error: ' + text) });
+        }
+        return res.json();
+    })
+    .then(res => {
+        console.log("Saved Measurement:", res);
+        if (res.status === "success") {
+            alert("Measurements saved under ID: " + res.id);
+            
+            // State variables clear karā
+            currentLoadedId = null;
+            originalClient = '';
+            originalContact = '';
+
+            el('msr-id').value = ''; 
+            fetchMeasurementsFromSheet();
+        } else {
+            alert("Failed to save measurements.");
+        }
+    })
+    .catch(err => {
+        console.error("Save measurement error:", err);
+        alert("Error saving measurements. Check console for details.");
+    });
+}
+
+// NOTE: scriptURL must be defined elsewhere in your file (e.g., const scriptURL = "...")
+// NOTE: DATA ani saveData() functions tumhi define kele ahet, ase manun chalat ahe.
+
+function fetchMeasurementsFromSheet() {
+    // 1. Sheet API call for loading data
+    fetch(scriptURL + "?action=loadMeasurements")
+        .then(res => {
+            if (!res.ok) {
+                console.error("HTTP error! status:", res.status);
+                return res.text().then(text => { throw new Error('API Load Error: ' + text) });
+            }
+            return res.json();
+        })
+        .then(data => {
+            
+            // 2. DATA variable madhye data store karā
+            DATA.measurements = Array.isArray(data) ? data : [];
+            
+            // 3. ✅ CRITICAL: Local Storage madhe data save karā
+            saveData(); 
+            
+            // 4. UI list refresh karā
+            renderMeasurementsList();
+        })
+        .catch(err => {
+            console.error("❌ Load Measurement Error:", err);
+            // Tumhī hī line JavaScript madhe thevūn console madhye error baghū śaktā.
+            // alert("Measurements load करू शकलो नाही."); 
+        });
+}
+
+
+
+
+
+function deleteMeasurementFromSheet(measureId) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName("Measurements");
+  if (!sh) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "error",
+      message: "Sheet not found"
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  var vals = sh.getDataRange().getValues();
+  var deleted = false;
+
+  for (var r = vals.length - 1; r > 0; r--) {
+    var rowId = String(vals[r][0]).toUpperCase().trim();
+    var givenId = String(measureId).toUpperCase().trim();
+    Logger.log("Checking row " + (r + 1) + ": " + rowId + " == " + givenId);
+
+    if (rowId === givenId) {
+      sh.deleteRow(r + 1);
+      deleted = true;
+    }
+  }
+
+  if (deleted) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "deleted",
+      measureId: measureId
+    })).setMimeType(ContentService.MimeType.JSON);
+  } else {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "not_found",
+      message: "ID not found",
+      measureId: measureId
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+
+
+// Tumhi dila hota to code, tyat fakt saveData() add kela ahe.
+// JavaScript: Final Delete Logic Fix
+function deleteMeasurement(measureId) {
+    if (!confirm(`Delete Measurement ${measureId} permanently?`)) return;
+
+    // 1. Sheet API call for permanent delete
+    // Note: Tumacā frontend GET request vāparto, to barobar āhe.
+    fetch(scriptURL + "?action=deleteMeasurement&measureId=" + encodeURIComponent(measureId))
+        .then(res => res.json())
+        .then(res => {
+            if (res.status === "deleted") {
+                alert(`Measurement ${measureId} permanently deleted from Sheet.`);
+                
+                // 2. DATA.measurements madhun record filter karun kaadha
+                DATA.measurements = DATA.measurements.filter(x => x.id !== measureId);
+                
+                // ✅ Local Storage madhe navin data save kara
+                // Hā fix Local Storage madhun data parat yenyaachi samasyā solve karel.
+                saveData(); 
+                
+                // 3. UI Refresh kara
+                renderMeasurementsList(); 
+                
+            } else if (res.status === "not_found") {
+                 alert(`Measurement ${measureId} not found on Sheet. Removing from App.`);
+                 DATA.measurements = DATA.measurements.filter(x => x.id !== measureId);
+                 saveData();
+                 renderMeasurementsList(); 
+            } else {
+                 alert(`Failed to delete ${measureId}. Status: ${res.status}`);
+            }
+        })
+        .catch(err => {
+            console.error("Delete error:", err);
+            alert("Error deleting measurement.");
+        });
+}
+
+
+
+
+
+function toggleSection(sectionId, btn) {
+  const section = document.getElementById(sectionId);
+  const isHidden = section.classList.contains("hidden");
+
+  if (isHidden) {
+    section.classList.remove("hidden");
+    btn.innerText = "➖ Hide Saved Measurements";
+  } else {
+    section.classList.add("hidden");
+    btn.innerText = "➕ Show Saved Measurements";
+  }
+}
+
+
+
+
+function loadMeasurement(id){
+    const rec = DATA.measurements.find(x => x.id === id);
+    if (!rec) return alert("Not found");
+
+    // ✅ Original state save kara (Required for save logic)
+    currentLoadedId = rec.id; 
+    originalClient = rec.client || '';
+    originalContact = rec.contact || '';
+    
+    el('msr-id').value = rec.id || ''; 
+    el('msr-client').value = rec.client || '';
+    el('msr-contact').value = rec.contact || '';
+
+    el('meas-items').innerHTML = '';
+    if (rec.items) {
+        rec.items.forEach(it => addMeasurement(it));
+    }
+
+    show('meas');
+    recalcTotals();
+}
+
+
+function renderMeasurementsList(){
+  const box = el('saved-meas');
+  box.innerHTML = '';
+
+  (DATA.measurements || []).forEach(r => {
+  
+    const div = document.createElement('div');
+    div.className = 'p-2 border rounded mb-2';
+
+    let html = `<b>${r.id}</b> ${r.client || ''} (${r.contact || ''})<br>`;
+    if (r.items) {
+      r.items.forEach(x => {
+        html += `${x.name}: ${x.w}×${x.h} = ${(Number(x.result) || 0).toFixed(2)} ${x.unit}<br>`;
+      });
+    }
+
+    div.innerHTML = html + `
+      <div class="mt-1 flex gap-2">
+        <button onclick="loadMeasurement('${r.id}')">Load</button>
+        <button onclick="deleteMeasurement('${r.id}')">Delete</button>
+
+        <button onclick="shareMeasurement('${r.id}')">Share</button>
+      </div>`;
+    box.appendChild(div);
+  });
+}
+
+
+function shareMeasurement(id){
+  const rec = DATA.measurements.find(x=> x.id === id);
+  if(!rec) return alert("Not found");
+
+  // ✅ Date la barobar format kela: 'rec.date' ha ISO string asel tar to Date object madhe convert karel.
+  const measurementDate = new Date(rec.date);
+  const formattedDate = measurementDate.toLocaleDateString('en-CA', { 
+    year: 'numeric', 
+    month: '2-digit', 
+    day: '2-digit' 
+  }); 
+
+  let text = `📏 Measurement: ${rec.id}\nClient: ${rec.client}\nDate: ${formattedDate}\n\n`;
+    
+  rec.items.forEach(x=>{
+    text += `${x.name}: ${x.w}×${x.h} = ${x.result.toFixed(2)} ${x.unit}\n`;
+  });
+
+  if(navigator.share){
+    navigator.share({title:"Measurement", text});
+  } else {
+    navigator.clipboard.writeText(text);
+    alert("Copied to clipboard ✅");
+  }
+}
+
+
+
+
+window.deleteMeasurement = deleteMeasurement;
+window.loadMeasurement = loadMeasurement;
+window.shareMeasurement = shareMeasurement;
+
+/* ---------------- DAILY REPORT ---------------- */
+function addDailyRow(pref){
+  const parent = el('daily-rows');
+  const div = document.createElement('div');
+  div.className = 'p-2 border rounded bg-gray-50 daily-row';
+
+  div.innerHTML = `
+    <div class="grid md:grid-cols-2 gap-2">
+      <input type="date" class="dr-date p-2 border rounded" value="${pref?.date || new Date().toISOString().slice(0,10)}">
+      <textarea class="dr-desc p-2 border rounded" placeholder="Work / Notes">${pref?.desc || ''}</textarea>
+    </div>
+    <div class="mt-2 text-right">
+      <button class="smallbtn bg-red-500" onclick="this.closest('.daily-row').remove()">Remove</button>
+    </div>
+  `;
+  parent.appendChild(div);
+}
+
+function saveDaily() {
+  const client = el('dr-client').value || '';
+  const contact = el('dr-contact').value || '';
+  const work = el('dr-work').value || '';
+
+  if (!client || !work) return alert("Enter Client and Work Title");
+
+  const rows = [];
+  document.querySelectorAll('#daily-rows .daily-row').forEach(div => {
+    const date = div.querySelector('.dr-date').value;
+    const desc = div.querySelector('.dr-desc').value;
+    if (desc) rows.push({ date, desc });
+  });
+
+  if (rows.length === 0) return alert("Add at least one row");
+
+  let rec = DATA.daily.find(x => x.client === client && x.work === work);
+
+  if (rec) {
+    // ✅ Update existing rows by date
+    rows.forEach(newRow => {
+      const existing = rec.rows.find(r => r.date === newRow.date);
+      if (existing) {
+        existing.desc = newRow.desc;  // Update description
+      } else {
+        rec.rows.push(newRow);        // Add new row
+      }
+    });
+  } else {
+    DATA.counters.daily = (DATA.counters.daily || 0) + 1;
+    const id = 'DR-' + String(DATA.counters.daily).padStart(4, '0');
+    rec = { id, client, contact, work, rows };
+    DATA.daily.push(rec);
+  }
+
+  saveData();
+  renderDailyReports();
+  alert("Daily Report saved: " + rec.id);
+}
+
+
+
+function renderDailyReports(){
+  const box = el('saved-daily');
+  box.innerHTML = '';
+
+  // reset numbering
+  DATA.daily.forEach((r,i)=> r.id = 'DR-'+String(i+1).padStart(4,'0'));
+  DATA.counters.daily = DATA.daily.length;
+
+  DATA.daily.forEach(r=>{
+    const div = document.createElement('div');
+    div.className = 'p-2 border rounded mb-2';
+
+    let html = `<b>${r.id}</b> ${r.client} (${r.contact}) | ${r.work}<br>`;
+    r.rows.forEach(x=>{
+      html += `${x.date} - ${x.desc}<br>`;
+    });
+
+    div.innerHTML = html + `
+      <div class="mt-2 flex gap-2">
+        <button class="smallbtn" onclick="loadDaily('${r.id}')">Load</button>
+        <button class="smallbtn" onclick="deleteDaily('${r.id}')">Delete</button>
+      </div>`;
+    box.appendChild(div);
+  });
+}
+
+function loadDaily(id){
+  const rec = DATA.daily.find(x=>x.id===id);
+  if(!rec) return;
+  el('dr-client').value = rec.client||'';
+  el('dr-contact').value = rec.contact||'';
+  el('dr-work').value = rec.work||'';
+  el('daily-rows').innerHTML = '';
+  rec.rows.forEach(r=> addDailyRow(r));
+}
+
+function deleteDaily(id){
+  if(!confirm("Delete this report?")) return;
+  DATA.daily = DATA.daily.filter(x=>x.id!==id);
+  // reset numbering
+  DATA.daily.forEach((r,i)=> r.id = 'DR-'+String(i+1).padStart(4,'0'));
+  DATA.counters.daily = DATA.daily.length;
+  saveData();
+  renderDailyReports();
+}
+
+function toggleSection(sectionId, btn) {
+  const section = document.getElementById(sectionId);
+  const isHidden = section.classList.contains("hidden");
+
+  if (isHidden) {
+    section.classList.remove("hidden");
+    btn.innerText = "➖ Hide Saved Reports";
+  } else {
+    section.classList.add("hidden");
+    btn.innerText = "➕ Show Saved Reports";
+  }
+}
+
+
+
+/* ---------- ORDERS MODULE ---------- */
+
+/* ---------- ORDERS MODULE (with Merchant, Contact, Payment Status) ---------- */
+
+function formatDateToInput(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+
+  // Instead of using toISOString (which gives UTC date),
+  // we'll extract local date parts directly
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+
+
+function escapeHtml(text) {
+  if (!text) return '';
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function addOrderRow(data = {}) {
+  const parent = el('order-items');
+  const row = document.createElement('div');
+  row.className = "order-row grid grid-cols-1 md:grid-cols-2 gap-2 border p-2 rounded bg-white";
+
+  const part = escapeHtml(data.part || '');
+  const qty = data.qty || '';
+  const unit = escapeHtml(data.unit || '');
+  const rate = data.rate || '';
+  const amount = data.amount !== undefined ? data.amount.toFixed(2) : '0.00';
+
+  row.innerHTML = `
+    <div class="md:col-span-2">
+      <input list="materials" class="ord-part w-full p-2 border rounded" placeholder="Particular" value="${part}">
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+      <input type="number" class="ord-qty p-2 border rounded" placeholder="Qty" value="${qty}">
+      <input class="ord-unit p-2 border rounded" placeholder="Unit" value="${unit}">
+    </div>
+
+    <div class="grid grid-cols-3 gap-2 items-center">
+      <input type="number" class="ord-rate p-2 border rounded" placeholder="Rate" value="${rate}">
+      <span class="ord-amt font-semibold text-right pr-2">${amount}</span>
+      <button class="smallbtn bg-red-500 text-white" onclick="this.closest('.order-row').remove()">✕</button>
+    </div>
+  `;
+
+  const partInput = row.querySelector('.ord-part');
+  partInput.addEventListener('change', () => {
+    const match = (DATA.materials || []).find(m => m.part === partInput.value);
+    if (match && match.unit) {
+      row.querySelector('.ord-unit').value = match.unit;
+    }
+  });
+
+  const qtyInput = row.querySelector('.ord-qty');
+  const rateInput = row.querySelector('.ord-rate');
+  const amtSpan = row.querySelector('.ord-amt');
+
+  function calcAmount() {
+    const q = parseFloat(qtyInput.value) || 0;
+    const r = parseFloat(rateInput.value) || 0;
+    const a = q * r;
+    amtSpan.textContent = a.toFixed(2);
+  }
+
+  qtyInput.addEventListener('input', calcAmount);
+  rateInput.addEventListener('input', calcAmount);
+  calcAmount();
+
+  parent.appendChild(row);
+}
+
+let selectedOrderId = null;
+
+function saveOrder() {
+  const date = el('ord-date').value;
+  const client = el('ord-client').value.trim();
+  const work = el('ord-work').value.trim();
+  const category = el('ord-category').value.trim();
+  const status = el('order-status').value.trim();
+  const invoiceId = el('order-invoice-select').value.trim();
+
+  // New fields
+  const merchantName = el('merchant-name').value.trim();
+  const merchantContact = el('merchant-contact').value.trim();
+  const paymentStatus = el('payment-status').value.trim();
+
+
+  if (!invoiceId) {
+    alert("कृपया Invoice No निवडा.");
+    return;
+  }
+
+  const items = [];
+  document.querySelectorAll('#order-items > div.grid').forEach(r => {
+    const part = r.querySelector('.ord-part').value.trim();
+    const qty = parseFloat(r.querySelector('.ord-qty').value) || 0;
+    const unit = r.querySelector('.ord-unit').value.trim();
+    const rate = parseFloat(r.querySelector('.ord-rate').value) || 0;
+    const amount = parseFloat(r.querySelector('.ord-amt').textContent) || 0;
+
+    if (part) items.push({ part, qty, unit, rate, amount });
+  });
+
+  if (!items.length) {
+    alert("कमीत कमी एक item add करा.");
+    return;
+  }
+
+  DATA.orders = DATA.orders || [];
+  let id = "";
+
+  if (selectedOrderId) {
+    const idx = DATA.orders.findIndex(o => o.id === selectedOrderId);
+    id = selectedOrderId;
+    if (idx !== -1) {
+      DATA.orders[idx] = {
+        id, date, client, work, category,
+        status, invoiceId,
+        merchantName, merchantContact, paymentStatus,
+        items
+      };
+    } else {
+      DATA.orders.push({
+        id, date, client, work, category,
+        status, invoiceId,
+        merchantName, merchantContact, paymentStatus,
+        items
+      });
+    }
+    alert("ऑर्डर अपडेट झाली ✅: " + id);
+  } else {
+    DATA.counters.orders = (DATA.counters.orders || 0) + 1;
+    id = "ORD-" + String(DATA.counters.orders).padStart(4, '0');
+    DATA.orders.push({
+      id, date, client, work, category,
+      status, invoiceId,
+      merchantName, merchantContact, paymentStatus,
+      items
+    });
+    alert("ऑर्डर सेव्ह झाली ✅: " + id);
+  }
+
+  selectedOrderId = null;
+
+  const payload = {
+    orderId: id,
+    date, client, work, category,
+    status, invoiceId,
+    merchantName, merchantContact, paymentStatus,
+    items
+  };
+
+  fetch("https://script.google.com/macros/s/AKfycbz5fAtLEI6xkeWNe5iXpIh9npXXqa-OLg7igHk5Qx-LnSSi1jB-qBzWxXaiw4zCHmxO/exec?action=saveOrder", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: "data=" + encodeURIComponent(JSON.stringify(payload))
+  })
+    .then(res => res.json())
+    .then(res => console.log("✅ Saved to Sheet:", res))
+    .catch(err => console.error("❌ Sheet Error:", err));
+
+  saveData();
+  renderOrders();
+}
+
+// Render Orders
+function renderOrders() {
+  const box = el('saved-orders');
+  box.innerHTML = '';
+  (DATA.orders || []).forEach(r => {
+    const div = document.createElement('div');
+    div.className = "p-2 border rounded";
+
+    const d = new Date(r.date);
+const formattedDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+
+    let html = `<b>${r.id}</b> | ${formattedDate} | ${r.client || ''} | ${r.work || ''}`;
+    if (r.invoiceId) html += ` | Invoice: ${r.invoiceId}`;
+    if (r.category) html += ` | Category: ${r.category}`; // ✅ ही नवीन लाईन
+    if (r.status) html += ` | Status: ${r.status}`;
+    if (r.merchantName) html += ` | Merchant: ${r.merchantName}`;
+    if (r.merchantContact) html += ` | Contact: ${r.merchantContact}`;
+    if (r.paymentStatus) html += ` | Payment: ${r.paymentStatus}`;
+
+    html += `<br>`;
+    r.items.forEach(it => {
+      html += `${it.part} - ${it.qty} ${it.unit} @ ₹${it.rate} = ₹${(it.qty * it.rate).toFixed(2)}<br>`;
+    });
+
+    html += `<div class="flex gap-2 mt-2">
+      <button class="smallbtn" onclick="loadOrder('${r.id}')">Load</button>
+      <button class="smallbtn" onclick="shareOrder('${r.id}')">Share</button>
+      <button class="smallbtn" onclick="deleteOrder('${r.id}')">Delete</button>
+    </div>`;
+
+    div.innerHTML = html;
+    box.appendChild(div);
+  });
+}
+
+// Load into form
+function loadOrder(id) {
+  const rec = (DATA.orders || []).find(x => x.id === id);
+  if (!rec) return;
+
+  selectedOrderId = id; // ✅ हे महत्वाचं
+
+  show('orders');
+
+  console.log("👉 Raw date from record:", rec.date); // ✅ हे
+  console.log("👉 JS parsed Date:", new Date(rec.date)); // ✅ हे
+  console.log("👉 ISO Format:", new Date(rec.date).toISOString()); // ✅ हे
+
+
+
+  el('ord-date').value = formatDateToInput(rec.date);
+  el('ord-client').value = rec.client || '';
+  el('ord-work').value = rec.work || '';
+  // Load category
+const catSel = el('ord-category');
+const catVal = rec.category || '';
+
+// check if category is present in options
+let found = false;
+for (let i = 0; i < catSel.options.length; i++) {
+  if (catSel.options[i].value === catVal) {
+    found = true;
+    break;
+  }
+}
+if (!found && catVal) {
+  const opt = document.createElement('option');
+  opt.value = catVal;
+  opt.textContent = catVal;
+  catSel.appendChild(opt);
+}
+
+catSel.value = catVal;
+
+  el('order-status').value = rec.status || '';
+  el('order-invoice-select').value = rec.invoiceId || '';
+
+  // ✅ नवीन Field लोड करा
+  el('merchant-name').value = rec.merchantName || '';
+  el('merchant-contact').value = rec.merchantContact || '';
+  el('payment-status').value = rec.paymentStatus || '';
+
+  el('order-items').innerHTML = '';
+  rec.items.forEach(it => addOrderRow(it));
+}
+
+
+// Delete Order
+function deleteOrder(id) {
+  if (!confirm("Are you sure you want to delete this order?")) return;
+
+  fetch(`https://script.google.com/macros/s/AKfycbz5fAtLEI6xkeWNe5iXpIh9npXXqa-OLg7igHk5Qx-LnSSi1jB-qBzWxXaiw4zCHmxO/exec?action=deleteOrder&orderId=${id}`)
+    .then(res => res.json())
+    .then(res => {
+      console.log("✅ Deleted from Sheet:", res);
+
+      DATA.orders = DATA.orders.filter(x => x.id !== id);
+      DATA.orders.forEach((o, i) => o.id = 'ORD-' + String(i + 1).padStart(4, '0'));
+
+      saveData();
+      renderOrders();
+      updateOrderCounterFromSheet();
+    })
+    .catch(err => console.error("❌ Delete Error:", err));
+}
+
+function updateOrderCounterFromSheet() {
+  fetch("https://script.google.com/macros/s/AKfycbz5fAtLEI6xkeWNe5iXpIh9npXXqa-OLg7igHk5Qx-LnSSi1jB-qBzWxXaiw4zCHmxO/exec?action=loadOrders")
+    .then(res => res.json())
+    .then(data => {
+      DATA.counters.orders = data.length;
+      saveData();
+      console.log("🔄 Updated order counter from Sheet:", data.length);
+    })
+    .catch(err => console.error("❌ Counter Update Error:", err));
+}
+
+function fetchOrdersFromSheet() {
+  fetch("https://script.google.com/macros/s/AKfycbz5fAtLEI6xkeWNe5iXpIh9npXXqa-OLg7igHk5Qx-LnSSi1jB-qBzWxXaiw4zCHmxO/exec?action=loadOrders")
+    .then(res => res.json())
+    .then(data => {
+      DATA.orders = data.map(o => ({
+        id: o["Order ID"],
+        date: o["Date"],
+        client: o["Client"],
+        work: o["Work"],
+        category: o["Category"] || "",
+        status: o["Status"] || "",
+        invoiceId: o["Invoice No"] || o["Invoice No "] || "",
+        merchantName: o["Merchant Name"] || "",
+        merchantContact: o["Contact"] || "",
+        paymentStatus: o["Payment Status"] || "",
+        items: o["Items"],
+        timestamp: o["Timestamp"]
+      }));
+      renderOrders();
+      renderInvoiceDropdownForOrders();
+
+     renderPaidPaymentOrderDropdown(); // ✅ ही महत्वाची नवीन ओळ
+    })
+    .catch(err => console.error("❌ Load Orders Error:", err));
+}
+
+function renderMaterialsDropdown() {
+  const dl = el('materials');
+  dl.innerHTML = '';
+  (DATA.materials || []).forEach(x => {
+    if (x.part) {
+      const opt = document.createElement('option');
+      opt.value = x.part;
+      dl.appendChild(opt);
+    }
+  });
+}
+
+
+
+
+function renderInvoiceDropdownForOrders() {
+  const sel = el('order-invoice-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select Invoice</option>';
+  (DATA.invoices || []).forEach(inv => {
+    const opt = document.createElement('option');
+    opt.value = inv.id;
+    opt.textContent = `${inv.id} - ${inv.client} (${inv.work})`;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change', () => {
+    const selectedId = sel.value;
+    const selectedInvoice = (DATA.invoices || []).find(inv => inv.id === selectedId);
+    if (selectedInvoice) {
+      el('ord-client').value = selectedInvoice.client || '';
+      el('ord-work').value = selectedInvoice.work || '';
+    } else {
+      el('ord-client').value = '';
+      el('ord-work').value = '';
+    }
+  });
+}
+
+function renderOrderCategories() {
+  const sel = el('ord-category');
+  sel.innerHTML = `<option value="">-- Select Category --</option>`;
+  (DATA.categories || []).forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    sel.appendChild(opt);
+  });
+}
+
+
+
+
+function shareOrder(id) {
+  const r = (DATA.orders || []).find(x => x.id === id);
+  if (!r) return;
+
+  // ✅ Use local date instead of UTC
+  const dateObj = new Date(r.date);
+  const cleanDate = dateObj.toLocaleDateString('en-CA'); // YYYY-MM-DD
+  const orderStatus = (r.status || "").toLowerCase();
+  const paymentStatus = (r.paymentStatus || "").toLowerCase();
+
+  let showRates = false;
+  let statusLine = "";
+
+  // Decide status line & rate display logic
+  if (paymentStatus === "paid") {
+    statusLine = "🟢 Payment: Paid";
+    showRates = true;
+  } else if (orderStatus === "received") {
+    statusLine = "🟢 Received Order";
+  } else if (!orderStatus || orderStatus === "order") {
+    statusLine = "🟠 Order";
+  } else if (orderStatus === "cancelled") {
+    statusLine = "🔴 Cancelled Order";
+  } else if (orderStatus === "returned") {
+    statusLine = "🔄 Returned Order";
+  } else if (orderStatus === "balance") {
+    statusLine = "🟡 Balance Order";
+  } else {
+    statusLine = `Status: ${orderStatus.toUpperCase()}`;
+  }
+
+  // Start message
+  let msg = `📦 Material Order\n========================\nID: ${r.id}\nDate: ${cleanDate}\nMerchant: ${r.merchantName || ''}\nContact: ${r.merchantContact || ''}\nStatus: ${statusLine}\n\n`;
+
+  if (showRates) {
+    msg += `Particular | Qty | Unit | Rate | Amount\n`;
+    let total = 0;
+    r.items.forEach(it => {
+      const rate = parseFloat(it.rate || 0);
+      const qty = parseFloat(it.qty || 0);
+      const amt = rate * qty;
+      total += amt;
+      msg += `${it.part.padEnd(10)} ${qty} ${it.unit.padEnd(5)} ₹${rate}     ₹${amt.toFixed(2)}\n`;
+    });
+    msg += `========================\nTotal Amount: ₹${total.toFixed(2)}\n`;
+  } else {
+    msg += `Particular | Qty | Unit\n`;
+    r.items.forEach(it => {
+      msg += `${it.part.padEnd(10)} ${it.qty} ${it.unit}\n`;
+    });
+  }
+
+  msg += `\nRegards,\nVaibhav Enterprises`;
+
+  // Share on WhatsApp
+  window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
+}
+
+
+// 👉 इथे importMaterialList() पेस्ट कर
+function importMaterialList(){
+  const input=document.createElement('input');
+  input.type='file'; input.accept='.xlsx';
+  input.onchange=e=>{
+    const file=e.target.files[0];
+    if(!file) return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const wb=XLSX.read(ev.target.result,{type:'binary'});
+      const ws=wb.Sheets['Item'];
+      if(!ws) return alert("No 'Item' sheet found in file");
+
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      DATA.materials = [];  // reset
+
+      rows.forEach(r=>{
+        const part = (r[0]||'').trim();
+        const unit = (r[1]||'').trim();
+        if(part){
+          DATA.materials.push({part, unit});
+        }
+      });
+
+      saveData();
+      renderMaterialsDropdown(); // refresh dropdown लगेच
+      alert("Item list (with Units) imported ✅");
+    };
+    reader.readAsBinaryString(file);
+  };
+  input.click();
+}
+
+
+
+
+
+
+
+// ---------- Paid Payments (save, render, load, delete) ----------
+// helper for padding numbers (e.g. 1 -> 0001)
+function pad(n, len=4){
+  return String(n).padStart(len,'0');
+}
+
+// Add row
+function addPaidRow(data={}) {
+  const box = el('pp-rows');
+  const row = document.createElement('div');
+  row.className = "pp-row border p-2 rounded space-y-2";
+
+  row.innerHTML = `
+    <div class="flex flex-col sm:flex-row gap-2">
+      <input type="date" class="pp-date flex-1 p-2 border rounded" value="${data.date || new Date().toISOString().slice(0,10)}">
+      <input type="number" class="pp-amount flex-1 p-2 border rounded" placeholder="Amount ₹" value="${data.amount || ''}">
+    </div>
+    <div class="flex flex-col sm:flex-row gap-2">
+      <select class="pp-status flex-1 p-2 border rounded">
+        <option value="">Status</option>
+        <option ${data.status==='Paid Cash'?'selected':''}>Paid Cash</option>
+        <option ${data.status==='Paid Online'?'selected':''}>Paid Online</option>
+        <option ${data.status==='Paid Cheque'?'selected':''}>Paid Cheque</option>
+      </select>
+      <input class="pp-note flex-1 p-2 border rounded" placeholder="Note" value="${data.note || ''}">
+    </div>
+    <div class="text-right">
+      <button class="smallbtn bg-red-500 text-white" onclick="this.closest('.pp-row').remove()">✕ Remove</button>
+    </div>
+  `;
+  box.appendChild(row);
+}
+
+
+function savePaidPayment() {
+  const invoiceNo = el('pp-invno').value || '';
+  const client = (el('pp-client').value || '').trim();
+  const work   = (el('pp-work').value || '').trim();
+  const name   = (el('pp-name').value || '').trim();
+  const labor  = (el('pp-labor').value || '').trim();
+
+  if(!invoiceNo) return alert("Create Invoice first and select invoice then save"); 
+  
+  if (!client) return alert("Enter Client Name");
+  if (!work) return alert("Enter Work");
+  if (!name) return alert("Enter Name"); // ✅ Hā badal kelelā āhe!
+  if (!labor) return alert("Enter Labor / Contractor");
+
+  const rows = el('pp-rows').querySelectorAll('.pp-row');
+  if (rows.length === 0) return alert("Add at least one payment row");
+
+  const payments = [];
+  rows.forEach(r => {
+    const date = r.querySelector('.pp-date').value;
+    const amount = parseFloat(r.querySelector('.pp-amount').value) || 0;
+    const status = r.querySelector('.pp-status').value;
+    const note = r.querySelector('.pp-note').value;
+    if (amount > 0 && status) payments.push({ date, amount, status, note });
+  });
+
+  if (payments.length === 0) return alert("Enter valid payments");
+
+  // ✅ Main Fix - add invoiceNo here
+  const rec = {
+    client,
+    work,
+    name,
+    labor,
+    invoiceNo, // ✅ added now
+    payments
+  };
+
+  fetch("https://script.google.com/macros/s/AKfycbxz39OETfk4Uv-XQJpHYHoaAbU-25LT3ZcQzI0278auxeAtPDNnSfwEjaggTynzwRnc/exec?action=savePaidPayment", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: "data=" + encodeURIComponent(JSON.stringify(rec))
+  })
+  .then(res => res.json())
+  .then(res => {
+    
+    alert("✅ Paid Payment Saved");
+    fetchPaidPaymentsFromSheet(); // refresh after save
+  })
+  .catch(err => {
+    console.error("Save Error:", err);
+    alert("❌ Save failed");
+  });
+}
+
+
+
+
+function fetchPaidPaymentsFromSheet(){
+  fetch("https://script.google.com/macros/s/AKfycbxz39OETfk4Uv-XQJpHYHoaAbU-25LT3ZcQzI0278auxeAtPDNnSfwEjaggTynzwRnc/exec?action=loadPaidPayments")
+    .then(res => res.json())
+    .then(data => {
+      // ✅ Fix: Normalize invoiceNo field
+      DATA.paidPayments = (data || []).map(p => ({
+        id: p["Payment ID"] || p.id || "",
+        client: p["Client"] || p.client || "",
+        work: p["Work"] || p.work || "",
+        name: p["Name"] || p.name || "",
+        labor: p["Labor"] || p.labor || "",
+        invoiceNo: p["Invoice No"] || p.invoiceNo || "",  // 👈 मुख्य बदल
+        payments: p["Payments"] || p.payments || []
+      }));
+
+      
+      renderPaidPayments();
+    })
+    .catch(err => {
+      console.error("Load Error:", err);
+      alert("❌ Could not load Paid Payments");
+    });
+}
+
+
+
+
+// Render
+function renderPaidPayments(){
+  const box = el('saved-paid'); 
+  box.innerHTML = '';
+
+  (DATA.paidPayments||[]).forEach(r=>{
+    const div=document.createElement('div');
+    div.className="p-2 border rounded";
+
+    let html = `<b>${r.id}</b> | ${r.client} (${r.work})<br>`;
+    if(r.invoiceNo) html += `Invoice No: ${r.invoiceNo}<br>`;
+
+    // ADD Name आणि Labor/Contractor info इथे
+    if (r.name) html += `Name: ${r.name}<br>`;
+    if (r.labor) html += `Labor/Contractor: ${r.labor}<br>`;
+
+    let total=0;
+    (r.payments||[]).forEach((p,i)=>{
+      total+=p.amount||0;
+      
+      const displayDate = formatDateToInput(p.date); 
+      
+      html+=`Payment ${i+1} - ${displayDate} | ₹${p.amount.toFixed(2)} | ${p.status} ${p.note?('| '+p.note):''}<br>`;
+    });
+    
+    html+=`<b>Total Paid: ₹${total.toFixed(2)}</b>`;
+    html+=`<div class="flex gap-2 mt-1">
+      <button class="smallbtn" onclick="loadPaidPayment('${r.id}')">Load</button>
+      <button class="smallbtn" onclick="sharePaidPayment('${r.id}')">Share</button>
+      <button class="smallbtn" onclick="deletePaidPayment('${r.id}')">Delete</button>
+    </div>`;
+    div.innerHTML=html;
+    box.appendChild(div);
+  });
+}
+
+// ---------- Load a specific Paid Payment ----------
+function loadPaidPayment(id) {
+  const rec = (DATA.paidPayments || []).find(x => x.id === id);
+  if (!rec) return alert("Not found");
+  
+  // ✅ Junā ID Hidden Field madhye save karā
+  el('pp-id').value = id;  // 👈 Hī line uncommented aslyamule ID save hoīl 
+  // 🧾 Fill main info
+  el('pp-client').value = rec.client || '';
+  el('pp-work').value   = rec.work   || '';
+  el('pp-name').value   = rec.name   || '';
+  el('pp-labor').value  = rec.labor  || '';
+  el('pp-invno').value  = rec.invoiceNo || ''; // ✅ आता इथे दिसेल
+
+  // 🧾 Clear old payment rows
+  el('pp-rows').innerHTML = '';
+
+  // 🧾 Add each saved payment row
+  (rec.payments || []).forEach(p => {
+    const formattedDate = formatDateToInput(p.date);
+    addPaidRow({ ...p, date: formattedDate });
+  });
+
+  // 🧾 Show Paid section
+  show('paid');
+  window.scrollTo({ top: el('paid').offsetTop, behavior: 'smooth' });
+}
+
+
+// 🔹 Load Paid Payments (with InvoiceNo)
+// 🔹 Load Paid Payments (with InvoiceNo)
+function loadPaidPaymentsFromSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName("PaidPayments");
+  if (!sh) {
+    return ContentService.createTextOutput(JSON.stringify([]))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  var values = sh.getDataRange().getValues();
+  var headers = values[0];
+  var rows = values.slice(1).filter(r => r.join('').trim() !== '');
+
+  // ✅ Find exact column index dynamically (for safety)
+  var idx = {
+    id: headers.findIndex(h => h.toString().trim().toLowerCase() === "id"),
+    client: headers.findIndex(h => h.toString().trim().toLowerCase() === "client"),
+    work: headers.findIndex(h => h.toString().trim().toLowerCase() === "work"),
+    name: headers.findIndex(h => h.toString().trim().toLowerCase() === "name"),
+    labor: headers.findIndex(h => h.toString().trim().toLowerCase() === "labor"),
+    invoiceNo: headers.findIndex(h => h.toString().trim().toLowerCase() === "invoiceno"),
+    date: headers.findIndex(h => h.toString().trim().toLowerCase() === "paymentdate"),
+    amount: headers.findIndex(h => h.toString().trim().toLowerCase() === "amount"),
+    mode: headers.findIndex(h => h.toString().trim().toLowerCase() === "mode"),
+    note: headers.findIndex(h => h.toString().trim().toLowerCase() === "note")
+  };
+
+  var map = {};
+  rows.forEach(function (r) {
+    var id = r[idx.id];
+    if (!map[id]) {
+      map[id] = {
+        id: id,
+        client: r[idx.client] || "",
+        work: r[idx.work] || "",
+        name: r[idx.name] || "",
+        labor: r[idx.labor] || "",
+        invoiceNo: r[idx.invoiceNo] || "", // ✅ Hī line khup mahatvachi ahe
+        payments: []
+      };
+    }
+
+    map[id].payments.push({
+      date: r[idx.date] || "",
+      amount: Number(r[idx.amount]) || 0,
+      status: r[idx.mode] || "",
+      note: r[idx.note] || ""
+    });
+  });
+
+  return ContentService.createTextOutput(JSON.stringify(Object.values(map)))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+
+
+
+
+function deletePaidPayment(id){
+  if(!confirm("Delete this paid payment?")) return;
+
+  fetch(`https://script.google.com/macros/s/AKfycbxz39OETfk4Uv-XQJpHYHoaAbU-25LT3ZcQzI0278auxeAtPDNnSfwEjaggTynzwRnc/exec?action=deletePaidPayment&paymentId=${id}`)
+    .then(res => res.json())
+    .then(res => {
+      console.log("Deleted:", res);
+      fetchPaidPaymentsFromSheet(); // refresh list
+      alert("✅ Deleted");
+    })
+    .catch(err => {
+      console.error("Delete Error:", err);
+      alert("❌ Delete failed");
+    });
+}
+
+
+
+function toggleSection(sectionId, btn) {
+  const section = document.getElementById(sectionId);
+  const isHidden = section.classList.contains("hidden");
+
+  if (isHidden) {
+    section.classList.remove("hidden");
+    btn.innerText = "➖ Hide Saved Data";
+  } else {
+    section.classList.add("hidden");
+    btn.innerText = "➕ Show Saved Data";
+  }
+}
+
+
+function renderPaidPaymentOrderDropdown() {
+  const sel = document.getElementById('pp-order-id');
+  if (!sel) return;
+
+  sel.innerHTML = '<option value="">-- Select Order ID --</option>';
+
+  (DATA.orders || []).forEach(order => {
+    const opt = document.createElement('option');
+    opt.value = order.id;
+    opt.textContent = `${order.id} - ${order.client || ''} (${order.work || ''})`;
+    sel.appendChild(opt);
+  });
+}
+
+// हे फंक्शन Order ID निवडल्यावर कॉल होईल
+function handleOrderSelectInPaid(orderId) {
+  if (!orderId) return;
+
+  const order = (DATA.orders || []).find(o => o.id === orderId);
+  if (!order) {
+    console.warn("Order not found for ID:", orderId);
+    return;
+  }
+
+  console.log("Selected Order:", order);
+
+  // 1. Name फील्डमध्ये "Merchant Name - Contact"
+  const merchantName = order.merchantName || "";
+  const merchantContact = order.merchantContact || "";
+  const combined = merchantName + (merchantContact ? (" - " + merchantContact) : "");
+  document.getElementById('pp-name').value = combined;
+
+  // 2. Labor / Contractor फील्डमध्ये Category
+  const cat = order.category || "";
+  document.getElementById('pp-labor').value = cat;
+
+  // 3. Items मधून total amount काढा
+  const items = order.items || [];
+  console.log("Order Items:", items);
+
+  let totalAmt = 0;
+  items.forEach(item => {
+    const amt = parseFloat(item.amount);
+    console.log(`Item: ${item.name}, Amount: ${amt}`);
+    if (!isNaN(amt)) totalAmt += amt;
+  });
+
+  console.log("Final Total Amount:", totalAmt);
+
+  // 4. Amount फील्डमध्ये Set करा
+  const firstRow = document.getElementById('pp-rows').querySelector('.pp-row');
+  if (firstRow) {
+    firstRow.querySelector('.pp-amount').value = totalAmt.toFixed(2);
+  } else {
+    addPaidRow({ amount: totalAmt.toFixed(2) });
+  }
+}
+
+
+
+// जेव्हा page load / data loaded झाले
+renderPaidPaymentOrderDropdown();  // ही function Order IDs dropdown भरते
+
+// change listener:
+document.getElementById('pp-order-id').addEventListener('change', function() {
+  handleOrderSelectInPaid(this.value);
+});
+
+
+
+// Share
+
+function sharePaidPayment(id){
+  const r = (DATA.paidPayments || []).find(x => x.id === id);
+  if (!r) return alert("Not found");
+
+  const lines = [];
+  lines.push("💶 Paid Payment Details");
+  lines.push("");
+  lines.push("ID: " + r.id);
+  lines.push("Client: " + r.client);
+  lines.push("Work: " + r.work);
+  lines.push("Name: " + r.name);
+  lines.push("Category: " + r.labor);
+  lines.push("");
+
+  lines.push('S.No |    Date    |   Amt    | Type'); // ✅ New Table Header
+  lines.push('------------------------------------'); // Divider
+
+  let total = 0;
+  (r.payments || []).forEach((p, i) => {
+  total += p.amount || 0;
+
+  // ✅ FIX: Local timezone date
+  const date = p.date ? new Date(p.date).toLocaleDateString('en-CA') : "N/A";
+
+  const amount = '₹' + (window.money ? money(p.amount) : p.amount.toFixed(2));
+  const type = `${p.status}${p.note ? (' | ' + p.note) : ''}`;
+
+  const serial = String(i + 1).padEnd(5, ' ');
+  const dateStr = date.padEnd(10, ' ');
+  const amtStr = amount.padEnd(9, ' ');
+
+  lines.push(`${serial}| ${dateStr} | ${amtStr} | ${type}`);
+  });
+
+  lines.push('------------------------------------'); // Divider
+
+  lines.push("");
+  lines.push("👉Total Paid: ₹" + (window.money ? money(total) : total.toFixed(2))); // Total la pan money() format kela
+  lines.push("");
+  lines.push("Regards,");
+  lines.push("Vaibhav Enterprises");
+
+  const msg = lines.join("\n");
+  const url = "https://wa.me/?text=" + encodeURIComponent(msg);
+  window.open(url, "_blank");
+}
+
+
+
+function formatDateToInput(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+
+function renderInvoiceDropdownForPaid() {
+  const sel = document.getElementById('pp-invno');
+  if (!sel) return;
+
+  sel.innerHTML = '<option value="">Select Invoice</option>';
+  (DATA.invoices || []).forEach(inv => {
+    const opt = document.createElement('option');
+    opt.value = inv.id;
+    opt.textContent = inv.id + " - " + inv.client;
+    sel.appendChild(opt);
+  });
+}
+
+function handleInvoiceSelectInPaid(invNo) {
+  if (!invNo) return;
+
+  const inv = (DATA.invoices || []).find(i => i.id === invNo);
+  if (!inv) return;
+
+  el('pp-client').value = inv.client || '';
+  el('pp-work').value = inv.work || '';
+
+  // तुम्ही अजून हवं असल्यास contact, grand total पण भरू शकता
+}
+
+function populateOrderDropdownForInvoice(invoiceNo) {
+  const orderDropdown = document.getElementById("pp-order-id");
+  if (!orderDropdown) return;
+
+  orderDropdown.innerHTML = `<option value="">-- Select Order ID --</option>`;
+
+  if (!invoiceNo || !Array.isArray(DATA.orders)) return;
+
+  const matchedOrders = [];
+
+  DATA.orders.forEach(order => {
+    // invoiceNo शी तुलना invoiceId field शी करायची आहे
+    const invMatch = (order.invoiceId === invoiceNo);
+    if (invMatch) {
+      matchedOrders.push(order);
+    }
+  });
+
+  matchedOrders.forEach(order => {
+    const opt = document.createElement("option");
+    opt.value = order.id;
+    opt.textContent = order.id;
+    orderDropdown.appendChild(opt);
+  });
+}
+
+
+function handleInvoiceSelectInPaid(invNo) {
+  if (!invNo) return;
+
+  const inv = (DATA.invoices || []).find(i => i.id === invNo);
+  if (!inv) return;
+
+  el('pp-client').value = inv.client || '';
+  el('pp-work').value = inv.work || '';
+
+  // 👉 Populate Order ID Dropdown
+  populateOrderDropdownForInvoice(invNo);  // ✅ हे महत्वाचं आहे
+}
+
+
+
+
+
+
+
+/* ---------- Labor Attendance (updated with Balance & Transport) ---------- */
+/* ---------- Labor Attendance ---------- */
+function addLabor(pref){
+  const parent = el('labor-rows');
+  const div = document.createElement('div'); 
+  div.className='p-3 border rounded bg-gray-50';
+
+  div.innerHTML = `
+    <div class="grid md:grid-cols-4 gap-2">
+      <input class="lab-client p-2 border rounded" placeholder="Client Name">
+      <input class="lab-work p-2 border rounded" placeholder="Work Title">
+      <input class="lab-name p-2 border rounded" placeholder="Labor Name">
+
+      <div class="flex items-center gap-1">
+        <select class="lab-category p-2 border rounded flex-1">
+          <option value="">Select</option>
+        </select>
+        <button type="button" class="smallbtn" onclick="addCategory()">+</button>
+        <button type="button" class="smallbtn" onclick="removeCategory()">-</button>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-4 gap-2 mt-2">
+      <input class="lab-rate p-2 border rounded" type="number" placeholder="Per day rate">
+      <select class="lab-range p-2 border rounded">
+        <option value="week">Week</option>
+        <option value="2week">2 Week</option>
+        <option value="month">Month</option>
+        <option value="combine">Combine</option>
+      </select>
+      <input class="lab-start p-2 border rounded" type="date">
+      <input class="lab-end p-2 border rounded" type="date" readonly>
+    </div>
+
+    <div class="mt-2 overflow-x-auto">
+      <table class="w-full bg-white">
+        <thead>
+          <tr class="bg-gray-100">
+            <th>Date</th>
+            <th>Status (P/A/H)</th>
+            <th>Advance (₹)</th>
+            <th>Transport (₹)</th>
+          </tr>
+        </thead>
+        <tbody class="lab-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Totals Labels -->
+    <div class="mt-2 text-sm font-semibold space-y-1">
+      <div>Total Days: <span class="lab-totdays">0</span></div>
+      <div>Total Advance: ₹<span class="lab-totadv">0</span></div>
+      <div>Total Transport: ₹<span class="lab-tottrans">0</span></div>
+      <div>Balance: ₹<span class="lab-balance">0</span></div>
+    </div>
+
+    <div class="flex gap-2 mt-2">
+      <button class="smallbtn" onclick="saveLabor(this)">Save</button>
+      <button class="smallbtn" onclick="this.closest('.p-3').remove(); resetLaborIds();">Remove</button>
+    </div>
+  `;
+
+  parent.appendChild(div);
+
+  const start = div.querySelector('.lab-start'), 
+        end = div.querySelector('.lab-end'), 
+        rangeSel = div.querySelector('.lab-range'),
+        tbody = div.querySelector('.lab-tbody');
+
+  // auto rows generate (patched to append, not overwrite)
+  function generateRows(){
+    if(!start.value) return;
+
+    const parts = start.value.split('-'); 
+    const f = new Date(parts[0], parts[1]-1, parts[2]);
+
+    let days = 7; // default week
+    if(rangeSel.value === '2week') days = 14;
+    if(rangeSel.value === 'combine') days = 30;
+    if(rangeSel.value === 'month'){
+      const year = f.getFullYear(), month = f.getMonth()+1;
+      days = new Date(year, month, 0).getDate() - f.getDate() + 1;
+    }
+
+    // किती rows आधीच आहेत ते check करा
+    const existing = tbody.querySelectorAll('tr').length;
+
+    for(let i=existing;i<days;i++){
+      const d = new Date(f);
+      d.setDate(f.getDate() + i);
+
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,'0');
+      const dd = String(d.getDate()).padStart(2,'0');
+      const ds = `${yyyy}-${mm}-${dd}`;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${ds}</td>
+        <td>
+          <select class="lab-status">
+            <option value=""></option>
+            <option value="P">P</option>
+            <option value="A">A</option>
+            <option value="H">H</option>
+          </select>
+        </td>
+        <td><input type="number" class="p-1 border rounded lab-adv" value="0" min="0"></td>
+        <td><input type="number" class="p-1 border rounded lab-trans" value="0" min="0"></td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    // end date नेहमी last row चा date असेल
+    if(tbody.querySelectorAll('tr').length > 0){
+      const lastRow = tbody.querySelectorAll('tr')[tbody.querySelectorAll('tr').length-1];
+      end.value = lastRow.cells[0].textContent;
+    }
+
+    updateLaborTotals(div);
+  }
+
+  start.addEventListener('change', generateRows);
+  rangeSel.addEventListener('change', generateRows);
+
+  // preload if record exists
+  if(pref){
+    div.querySelector('.lab-client').value = pref.client || '';
+    div.querySelector('.lab-work').value = pref.work || '';
+    div.querySelector('.lab-name').value = pref.name || '';
+    div.querySelector('.lab-rate').value = pref.rate || 0;
+    div.querySelector('.lab-category').value = pref.category || '';
+    div.querySelector('.lab-start').value = pref.start;
+    div.querySelector('.lab-end').value = pref.end || '';
+    rangeSel.value = pref.range || 'week';
+    div.querySelector('.lab-start').dispatchEvent(new Event('change'));
+
+    setTimeout(()=>{
+      const rows = div.querySelectorAll('.lab-tbody tr');
+      pref.days.forEach((d,i)=>{
+        if(rows[i]){
+          rows[i].querySelector('.lab-status').value = d.status||'';
+          rows[i].querySelector('.lab-adv').value = d.advance||0;
+          rows[i].querySelector('.lab-trans').value = d.transport||0;
+        }
+      });
+      updateLaborTotals(div);
+    },200);
+  }
+
+  refreshCategoryOptions(div.querySelector('.lab-category'));
+}
+
+/* ---------- Save Labor ---------- */
+function saveLabor(btn){
+  const div = btn.closest('.p-3'); 
+  const client = div.querySelector('.lab-client').value || 'Unknown';
+  const work   = div.querySelector('.lab-work').value || '';
+  const name   = div.querySelector('.lab-name').value || 'Unknown';
+  const category = div.querySelector('.lab-category').value || '';
+  const rate   = parseFloat(div.querySelector('.lab-rate').value)||0;
+  const range  = div.querySelector('.lab-range').value;
+  const start  = div.querySelector('.lab-start').value;
+  const end    = div.querySelector('.lab-end').value;
+
+  const days = [];
+  div.querySelectorAll('.lab-tbody tr').forEach(tr=>{
+    const date = tr.cells[0].textContent;
+    const status = tr.querySelector('.lab-status').value;
+    const advance = parseFloat(tr.querySelector('.lab-adv').value)||0;
+    const transport = parseFloat(tr.querySelector('.lab-trans').value)||0;
+    days.push({date,status,advance,transport});
+  });
+
+  const totalDays = days.reduce((s,d)=> s + (d.status==='P'?1:(d.status==='H'?0.5:0)),0);
+  const totalAdvance = days.reduce((s,d)=> s + (d.advance||0),0);
+  const totalTransport = days.reduce((s,d)=> s + (d.transport||0),0);
+  const totalPay = totalDays * rate;
+  const balance = Math.max(0, totalPay - totalAdvance);
+
+  // --- Duplicate check ---
+  const existingIndex = DATA.labor.findIndex(x=>x.client===client && x.work===work && x.start===start);
+  let id;
+  if(existingIndex !== -1){
+    id = DATA.labor[existingIndex].id;
+    DATA.labor[existingIndex] = { id, client, work, name, category, rate, range, start, end, days, totalDays, totalAdvance, totalTransport, totalPay, balance };
+  } else {
+    DATA.counters.lab++; 
+    id = 'LAB-' + String(DATA.counters.lab).padStart(4,'0');
+    DATA.labor.push({ id, client, work, name, category, rate, range, start, end, days, totalDays, totalAdvance, totalTransport, totalPay, balance });
+  }
+
+  saveData(); 
+  alert('Labor saved: ' + id);
+  updateLaborTotals(div);
+  resetLaborIds(); // numbering reset
+}
+
+/* ---------- Reset numbering after delete ---------- */
+function resetLaborIds(){
+  DATA.labor.forEach((e,i)=>{
+    e.id = 'LAB-' + String(i+1).padStart(4,'0');
+  });
+  saveData();
+}
+
+
+
+/* ---------- Update Totals Labels ---------- */
+function updateLaborTotals(div){
+  let totalDays = 0;
+  let adv = 0, trans = 0;
+
+  div.querySelectorAll('.lab-tbody tr').forEach(tr=>{
+    const status = tr.querySelector('.lab-status').value;
+    const advVal = parseFloat(tr.querySelector('.lab-adv').value)||0;
+    const transVal = parseFloat(tr.querySelector('.lab-trans').value)||0;
+
+    if(status==='P') totalDays += 1;
+    if(status==='H') totalDays += 0.5;
+    adv += advVal;
+    trans += transVal;
+  });
+
+  const rate = parseFloat(div.querySelector('.lab-rate').value)||0;
+  const balance = totalDays * rate - adv;
+
+  div.querySelector('.lab-totdays').textContent = totalDays;
+  div.querySelector('.lab-totadv').textContent = adv;
+  div.querySelector('.lab-tottrans').textContent = trans;
+  div.querySelector('.lab-balance').textContent = balance;
+}
+
+
+/* --- Category helpers --- */
+function refreshCategoryOptions(select){
+  select.innerHTML = '<option value="">Select</option>';
+  DATA.labCategories = DATA.labCategories || [];
+  DATA.labCategories.forEach(c=>{
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    select.appendChild(opt);
+  });
+}
+function addCategory(){
+  const newCat = prompt("Enter new category:");
+  if(newCat){
+    DATA.labCategories = DATA.labCategories || [];
+    if(!DATA.labCategories.includes(newCat)){
+      DATA.labCategories.push(newCat);
+      saveData();
+      document.querySelectorAll('.lab-category').forEach(sel=> refreshCategoryOptions(sel));
+    }
+  }
+}
+function removeCategory(){
+  const delCat = prompt("Enter category to remove:");
+  if(!delCat) return;
+  DATA.labCategories = DATA.labCategories || [];
+  DATA.labCategories = DATA.labCategories.filter(c => c !== delCat);
+  saveData();
+  document.querySelectorAll('.lab-category').forEach(sel=> refreshCategoryOptions(sel));
+}
+
+/* ---------- Delete & Reassign IDs (Labor) ---------- */
+function deleteLabor(id){
+  if(!confirm('Delete this attendance?')) return;
+  DATA.labor = DATA.labor.filter(x => x.id !== id);
+
+  // reassign sequential IDs and reset counter
+  DATA.labor.forEach((e,i)=> e.id = 'LAB-' + String(i+1).padStart(4,'0'));
+  DATA.counters.lab = DATA.labor.length;
+  saveData();
+
+  if(typeof renderAll === 'function') renderAll();
+  if(typeof renderLaborList === 'function') renderLaborList();
+}
+
+function loadLabor(id){ const r = DATA.labor.find(x=> x.id === id); if(!r) return; addLabor(r); show('labor'); }
+function deleteLabor(id){ if(!confirm('Delete?')) return; DATA.labor = DATA.labor.filter(x=> x.id !== id); saveData(); }
+function shareLabor(id){
+  const r = DATA.labor.find(x=> x.id === id); 
+  if(!r) return;
+
+  const lines = [];
+  // Header
+  lines.push('📅Attendance Details');
+  lines.push('');
+  lines.push('Vaibhav Enterprises');
+  lines.push('');
+  lines.push('Name: ' + r.name);
+  lines.push('Perday: ' + r.rate);
+  lines.push('Start Date: ' + r.start);
+  lines.push('End Date: ' + r.end);
+  lines.push('');
+
+  // फक्त P/A/H status असलेले दिवस
+  r.days.forEach(d => {
+    if(d.status && d.status !== " "){
+      lines.push(`${d.date}   ${d.status}   Adv. ${money(d.advance||0)}`);
+    }
+  });
+
+  lines.push('====================');
+  lines.push('Tot. Day: ' + r.totalDays + ' Adv. ' + money(r.totalAdvance||0));
+  lines.push('====================');
+  lines.push('Total Payment: ' + money(r.totalPay||0));
+  lines.push('Adv. Payment: ' + money(r.totalAdvance||0));
+  lines.push('====================');
+  lines.push('Balance Pay. ' + money(r.balance||0));
+  lines.push('Extra Allown Pay. ' + money(r.totalTransport||0));  // 🚍 Transport वेगळं
+  lines.push('');
+  // Footer
+  lines.push('Regarding');
+  lines.push('');
+  lines.push('Vaibhav Enterprises');
+  lines.push('');
+  lines.push('Thank you for connecting with Vaibhav Enterprises');
+  
+
+  window.open('https://wa.me/?text=' + encodeURIComponent(lines.join('\n')), '_blank');
+}
+
+
+
+
+
+/* ---------- Payments ---------- */
+const API_URL = "https://script.google.com/macros/s/AKfycbwsiKYakSX8skMWYIbao82PiLXjOFR7kTk80wrRapH5l9IEOMJduJXM7XLNPq7enuGI/exec";
+
+
+function addPaymentRowForm(pref){
+  const box = document.createElement('div'); box.className='p-2 border rounded bg-gray-50 payment-row';
+  box.innerHTML = `<div class="grid md:grid-cols-3 gap-2"><input class="p-2 pay-date" type="date"><input class="p-2 pay-recv" type="number" placeholder="Received Amount"><input class="p-2 pay-note" placeholder="Note"></div><div class="mt-2 text-right"><button class="smallbtn" onclick="this.closest('.payment-row').remove()">Remove</button></div>`;
+  el('payment-rows').appendChild(box);
+  if(pref){ box.querySelector('.pay-date').value = pref.date||''; box.querySelector('.pay-recv').value = pref.received||0; box.querySelector('.pay-note').value = pref.note||''; }
+}
+
+function savePayments(){
+  const client = el('pay-client').value||''; 
+  const contact = el('pay-contact').value||''; 
+  const work = el('pay-work').value||''; 
+  const invNo = el('pay-invno').value || ''; // ✅ Mukhya field: Invoice No
+  
+  if(!invNo) return alert("Create Invoice first and select invoice then save");
+  if(!client) return alert("Enter Client Name");
+  if(!work) return alert("Enter Work");
+
+  const projectCost = parseFloat(el('pay-cost').value)||0;
+  const entries = []; 
+
+  document.querySelectorAll('#payment-rows .payment-row').forEach(r=>{
+    const date = r.querySelector('.pay-date').value || new Date().toISOString().split('T')[0]; 
+    const received = parseFloat(r.querySelector('.pay-recv').value)||0; 
+    const note = r.querySelector('.pay-note').value||''; 
+    if(received || note) entries.push({date,received,note}); 
+  });
+  if(entries.length===0) return alert('Add at least one payment entry');
+
+  let id;
+  let isUpdating = false;
+
+  // 1. InvoiceNo pramane junā ID shoḍhā
+  let currentGroup = DATA.payments.filter(p => p.invoiceNo === invNo);
+
+  if(currentGroup.length > 0){
+    // ID sapadlā: Junā ID vāparā.
+    id = currentGroup[0].id;
+    isUpdating = true; // Update hot ahe
+    
+    // Junī entries DATA.payments madhun kāḍhūn ṭākā (Frontend memory clean)
+    DATA.payments = DATA.payments.filter(p => p.id !== id);
+    
+  } else {
+    // Navīn InvoiceNo asalyāmuḷe navīn ID generate karā.
+    DATA.counters.pay++; 
+    id = 'PAY-' + String(DATA.counters.pay).padStart(4,'0');
+  }
+
+  // 2. Navīn entry DATA.payments madhye add karā
+  const recordsToSave = [];
+  entries.forEach((en,i)=>{
+    const newRecord = {
+      id, client, contact, work,
+      invoiceNo: invNo,
+      // Project Cost fakt pahilyā entry madhye set karā.
+      projectCost: i===0 ? projectCost : 0, 
+      date: en.date,
+      received: en.received,
+      note: en.note
+    };
+    DATA.payments.push(newRecord);
+    recordsToSave.push(newRecord); // Sheet madhye save karnyāsāṭhī
+  });
+
+  // 3. Save ani render
+  saveData();
+  renderPaymentsList();
+  alert("Payments saved under: " + id);
+
+  // 🔹 Google Sheet madhye Save karā (Ata DELETE+SAVE logic Backend la call karel)
+  if (isUpdating) {
+      // 3a. Update asel tar, pahilā junā ID delete karā
+      fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action:"delete", id: id })
+      })
+      .then(r=>r.text()).then(msg=>console.log("Sheet Delete:", msg));
+  }
+  
+  // 3b. Navīn entries save karā
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({ action:"save", records: recordsToSave })
+  }).then(r=>r.text())
+    .then(msg=>{
+        console.log("Sheet Save:", msg);
+        // ✅ Sheet madhye save zalyāvar data punhā load karā jyamuḷe Balance barobar disel
+        loadAllPaymentsFromSheet(); 
+    });
+}
+
+
+function sharePayment(id){
+  const recs = DATA.payments.filter(x=> x.id === id); 
+  if(!recs.length) return;
+
+  const base = recs[0];
+  const projectCost = base.projectCost || 0;   
+  const totalReceived = recs.reduce((s,x)=> s + (x.received||0), 0);
+  const balance = projectCost - totalReceived;
+
+  // WhatsApp message तयार करा
+  let lines = [
+    '📄Recive Payment Receipt',   
+    '',
+    'Customer: ' + base.client,
+    'Contact: ' + (base.contact||''),
+    'Work Title: ' + (base.work||''),
+    'Project Cost: ₹' + money(projectCost),
+    '', // Blank line for separation
+    
+    // ✅ New Table Header
+    'S.No |    Date    |   Amt    | Type',
+    '------------------------------------' // Divider
+  ];
+
+  // ✅ Payment Details in Tabular Format
+  recs.forEach((r,i)=>{
+    // Date: YYYY-MM-DD format sathi Date() object vāparlā.
+    const date = String(r.date).split('T')[0] || 'N/A'; 
+    const amount = '₹' + money(r.received);
+    const type = r.note || 'Cash';
+    
+    // Formatting sathi padEnd vāparlā ahe. WhatsApp madhye spaces thode vegle disu shaktat.
+    const serial = String(i + 1).padEnd(5, ' ');
+    const dateStr = date.padEnd(10, ' ');
+    const amtStr = amount.padEnd(9, ' '); 
+
+    lines.push(`${serial}| ${dateStr} | ${amtStr} | ${type}`);
+  });
+  lines.push('------------------------------------'); // Divider
+
+  lines.push('');
+  lines.push('Balance: ₹' + money(balance));
+  lines.push('');
+  lines.push('Vaibhav Enterprises');
+  lines.push('www.vaibhaventerprises.info');
+
+  // Final WhatsApp URL open kara
+  window.open('https://wa.me/?text=' + encodeURIComponent(lines.join('\n')), '_blank');
+}
+
+
+function loadAllPaymentsFromSheet(){
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "loadAll" })
+  })
+  .then(r => r.json())
+  .then(rows => {
+    // Tumacya sheet chya columns nusar index set karā
+    DATA.payments = rows.map(r => ({
+      id: r[0],
+      client: r[1],
+      contact: r[2],
+      work: r[3],
+      invoiceNo: r[4],
+      projectCost: parseFloat(r[5]) || 0,
+      date: r[6], // normalizeDate mule hī date barobar yāyālā pahije
+      received: parseFloat(r[7]) || 0,
+      note: r[8]
+    }));
+
+    // Data load zalyāvar list render karā
+    renderPaymentsList(); 
+    
+    // Mahatvāche: Home Summary pan update karā
+    if (typeof updateHomeSummary === 'function') {
+        updateHomeSummary(); 
+    }
+  })
+  .catch(err => {
+    console.error("Error loading from sheet:", err);
+  });
+}
+
+
+
+
+function loadPayment(id){
+  const recs = DATA.payments.filter(x => x.id === id);
+  if(recs.length === 0) return alert('Not found');
+
+  const r0 = recs[0];
+  el('pay-client').value = r0.client;
+  el('pay-contact').value = r0.contact;
+  el('pay-work').value = r0.work;
+  el('pay-cost').value = r0.projectCost;
+  el('pay-invno').value = r0.invoiceNo || '';  // **इथे invoiceNo set करा**
+
+  el('payment-rows').innerHTML = '';
+
+  recs.forEach(rr => {
+    addPaymentRowForm({
+      date: rr.date,
+      received: rr.received,
+      note: rr.note
+    });
+  });
+
+  show('payments');
+}
+
+
+function deletePayment(id){
+  if(!confirm('Delete all payments under '+id+'?')) return;
+
+  DATA.payments = DATA.payments.filter(x=> x.id !== id);
+  saveData();
+  renderPaymentsList();
+
+  // 🔹 Sheet मधून Delete करा
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({action:"delete", id})
+  }).then(r=>r.text()).then(msg=>console.log("Sheet Delete:", msg));
+}
+
+
+
+// 🔹 Receive Payments List
+function renderPaymentsList(){
+  const sp = el('saved-payments'); 
+  sp.innerHTML = '';
+
+  // 🔹 Client + Work nusar group karto
+  const groups = {};
+  DATA.payments.forEach(p=>{
+    // ✅ Grouping ID nusar asayla pahije, Client/Work nusar nahi.
+    // Karan ata tumhi savePayments madhe ID chya adhare update karta
+    const key = p.id; 
+    if(!groups[key]) groups[key] = [];
+    groups[key].push(p);
+  });
+
+  // 🔹 Pratyek group sathi ek line
+  Object.values(groups).forEach(group=>{
+    const p = group[0]; // first record reference
+    
+    // ✅ FIX: Project Cost fakt tya group madhe 'projectCost' value jya entry madhe 
+    // saglech 0 peksha jast ahe, ti ghyaychi. Jar sheet madhun sarv 17620 yet asel tar,
+    // fakt ekdāch ProjectCost ghyā.
+    // Jya record madhye ProjectCost > 0 ahe, tyachi ProjectCost value ghya.
+    const baseRecord = group.find(x => (x.projectCost || 0) > 0) || p;
+    const totalProject = baseRecord.projectCost || 0;
+    
+    // 👆 Hā badal kelelyāmuḷe, jar sheet madhe ProjectCost sarv rows madhye asel, 
+    // tari to fakt 17620 vāparlā jāel.
+    
+    const totalReceived = group.reduce((s,x)=> s + (x.received||0),0); 
+    const balance = totalProject - totalReceived;
+
+    // invoiceNo प्रदर्शित करण्यासाठी
+    const invoicePart = p.invoiceNo ? ` || Invoice No: ${p.invoiceNo}` : '';
+
+    const div = document.createElement('div'); 
+    div.className = 'p-2 bg-gray-50 rounded flex justify-between items-center'; 
+
+    div.innerHTML = `
+      <div>
+        <strong>${p.id}</strong> ${p.client} | ${p.work} ${invoicePart} || Balance: ₹${money(balance)}
+      </div>
+      <div class="flex gap-2">
+        <button class="smallbtn" onclick="loadPayment('${p.id}')">Load</button>
+        <button class="smallbtn" onclick="sharePayment('${p.id}')">Share</button>
+        <button class="smallbtn" onclick="deletePayment('${p.id}')">Delete</button>
+      </div>
+    `;
+    sp.appendChild(div);
+  });
+}
+
+
+/* ---------- Invoice Dropdown List ---------- */
+function renderInvoiceDropdownForPayments() {
+  const sel = document.getElementById('pay-invno');
+  if (!sel) return;
+
+  sel.innerHTML = '<option value="">Select Invoice</option>';
+  (DATA.invoices || []).forEach(inv => {
+    const opt = document.createElement('option');
+    opt.value = inv.id;
+    opt.textContent = inv.id + " - " + inv.client;
+    sel.appendChild(opt);
+  });
+}
+
+/* ---------- Invoice Client work contact ---------- */
+
+function handleInvoiceSelectInPayment(invNo) {
+  if (!invNo) return;
+
+  const inv = (DATA.invoices || []).find(i => i.id === invNo);
+  if (!inv) return;
+
+  el('pay-client').value = inv.client || '';
+  el('pay-work').value = inv.work || '';
+
+  // Fetch full invoice details for contact and project cost
+  fetch(`${DEPLOY_URL_INV}?action=getsingle&invoiceNumber=${encodeURIComponent(invNo)}`)
+    .then(res => res.json())
+    .then(data => {
+      el('pay-contact').value = data["Customer Whatsapp"] || '';
+
+      // इथे Final Amount project cost मध्ये set करा
+      // data["Grand Total"] किंवा invoice मध्ये final amount कुठे असेल ते वापरा
+      el('pay-cost').value = data["Grand Total"] || 0;
+    })
+    .catch(err => alert("Failed to fetch invoice details: " + err.message));
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ---------- Home Expenses ---------- */
+
+
+
+
+/* ---------- Import Excel ---------- */
+function importFromExcel(event){
+  const file = event.target.files[0];
+  if(!file) return alert('No file selected');
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+
+      const sheets = [
+        'estimates','invoices','expenses','measurements','orders',
+        'daily','labor','payments','paidPayments','materials','categories',
+      ];
+
+      sheets.forEach(key=>{
+        const ws = wb.Sheets[key];
+        if(!ws) { DATA[key] = []; return; }
+        const rows = XLSX.utils.sheet_to_json(ws, {defval: ''});
+
+        // ✅ Special case for categories
+        if(key === 'categories'){
+          let cats = rows.map(r=>{
+            if(typeof r === 'string') return r.trim();
+            if(r.Category) return String(r.Category).trim();
+            return '';
+          }).filter(c=>c);
+
+          // duplicates remove
+          cats = [...new Set(cats)];
+          DATA.categories = cats;
+          return;
+        }
+
+        // normal restore for other sheets
+        const restored = rows.map(r=>{
+          const out = {};
+          Object.keys(r).forEach(col=>{
+            let val = r[col];
+            if(typeof val === 'string' && (val.trim().startsWith('[') || val.trim().startsWith('{'))){
+              try { out[col] = JSON.parse(val); return; } catch{}
+            }
+            out[col] = val;
+          });
+
+          if(key === 'daily'){
+            out.client  = out.client  || '';
+            out.contact = out.contact || '';
+            out.work    = out.work    || '';
+            out.rows    = Array.isArray(out.rows) ? out.rows : [];
+          }
+          if(key === 'paidPayments'){
+            out.amount = parseFloat(out.amount)||0;
+          }
+
+          return out;
+        });
+
+        DATA[key] = restored;
+      });
+
+      // counters restore
+      if(wb.Sheets['counters']){
+        const cnt = XLSX.utils.sheet_to_json(wb.Sheets['counters'], {defval:''});
+        if(cnt && cnt.length>0) DATA.counters = cnt[0];
+      }
+
+      // fallback counters
+      DATA.counters = DATA.counters || {};
+      DATA.counters.est  = computeNextCounter(DATA.estimates, 'EST');
+      DATA.counters.inv  = computeNextCounter(DATA.invoices, 'INV');
+      DATA.counters.exp  = computeNextCounter(DATA.expenses, 'EXP');
+      DATA.counters.msr  = computeNextCounter(DATA.measurements, 'MSR');
+      DATA.counters.daily= computeNextCounter(DATA.daily, 'DR');
+      DATA.counters.lab  = computeNextCounter(DATA.labor, 'LAB');
+      DATA.counters.pay  = computeNextCounter(DATA.payments, 'PAY');
+      DATA.counters.paid = computeNextCounter(DATA.paidPayments, 'PPY');
+      DATA.counters.ord  = computeNextCounter(DATA.orders, 'ORD');
+
+      saveData();
+      if(typeof renderAll === 'function') renderAll();
+      alert('Import finished ✅');
+    }catch(err){
+      console.error(err);
+      alert('Import failed: '+ (err.message||err));
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+
+
+
+/* ---------- Helpers for load list prompt ---------- */
+function loadList(type){
+  const list = type==='est' ? DATA.estimates : DATA.invoices;
+  if(list.length===0) return alert('No records');
+  const id = prompt('Enter '+ (type==='est'?'Estimate':'Invoice') + ' ID (leave blank to load first):', list[0].id);
+  if(!id) return;
+  loadRecord(type, id);
+}
+
+/* ---------- small helpers ---------- */
+function deleteExpense(id){ if(!confirm('Delete?')) return; DATA.expenses = DATA.expenses.filter(x=> x.id !== id); saveData(); }
+function deleteMeasurement(id){ if(!confirm('Delete?')) return; DATA.measurements = DATA.measurements.filter(x=> x.id !== id); saveData(); }
+function deleteDaily(id){ if(!confirm('Delete?')) return; DATA.daily = DATA.daily.filter(x=> x.id !== id); saveData(); }
+
+/* ---------- initial ---------- */
+window.addEventListener('load', ()=>{
+  loadData();
+  if(document.querySelectorAll('#est-items .item-row').length===0) addItem('est');
+  if(document.querySelectorAll('#inv-items .item-row').length===0) addItem('inv');
+  if(document.querySelectorAll('#exp-rows .p-3').length===0) addExpenseRow();
+  if(document.querySelectorAll('#meas-items .p-2').length===0) addMeasurement();
+  if(document.querySelectorAll('#payment-rows .payment-row').length===0) addPaymentRowForm();
+  show('est');
+  el('est-discount').addEventListener('input', recalcAll);
+  el('inv-adv').addEventListener('input', recalcAll);
+});
+   // Page load झाल्यावर payments list render करा
+window.addEventListener('load', ()=>{
+  renderPaymentsList();
+});
+
+window.addEventListener('load', ()=>{
+  renderMeasurementsList();
+});
+
+
+
+
+let categoryChart;
+
+function updateHomeDashboard(invoiceId) {
+  // Expense record invoiceId ने शोधा
+  const rec = (DATA.expenses || []).find(x => x.invoice === invoiceId);
+  if (!rec) return;
+
+  // 1) Invoice Summary
+  const total = (rec.items || []).reduce((sum, it) => sum + (it.amount || 0), 0);
+  const income = (DATA.invoices || []).find(i => i.id === invoiceId);
+  const revenue = income ? (income.total || 0) : 0;
+  const profit = revenue - total;
+
+  el("invoice-summary").innerHTML = `
+    <p><b>Invoice:</b> ${invoiceId}</p>
+    <p><b>Total Expenses:</b> ₹${total.toFixed(2)}</p>
+    <p><b>Invoice Amount:</b> ₹${revenue.toFixed(2)}</p>
+    <p><b>Profit:</b> ₹${profit.toFixed(2)}</p>
+  `;
+
+  // 2) Category Totals
+  const categoryTotals = {};
+  (rec.items || []).forEach(i => {
+    const cat = i.category || "Other";
+    if (!categoryTotals[cat]) categoryTotals[cat] = 0;
+    categoryTotals[cat] += (i.amount || 0);
+  });
+
+  const labels = Object.keys(categoryTotals);
+  const data = Object.values(categoryTotals);
+  const chartCanvas = document.getElementById("categoryChart");
+  if (!chartCanvas) return;
+
+  const ctx = chartCanvas.getContext("2d");
+
+  // ✅ Fix 1: जुना chart destroy करा
+  if (categoryChart && typeof categoryChart.destroy === "function") {
+    try {
+      categoryChart.destroy();
+    } catch (err) {
+      console.warn("Chart destroy error:", err);
+    }
+  }
+
+  // ✅ Fix 2: canvas clear करा (Canvas reuse bug fix)
+  chartCanvas.width = chartCanvas.width;
+
+  // 🔵 Color palette function (original ठेवला)
+  function getColors(n) {
+    const palette = [
+      "rgba(255, 99, 132, 0.7)",
+      "rgba(54, 162, 235, 0.7)",
+      "rgba(255, 206, 86, 0.7)",
+      "rgba(75, 192, 192, 0.7)",
+      "rgba(153, 102, 255, 0.7)",
+      "rgba(255, 159, 64, 0.7)",
+      "rgba(0, 200, 150, 0.7)"
+    ];
+    return Array.from({ length: n }, (_, i) => palette[i % palette.length]);
+  }
+
+  // ✅ नवीन Chart तयार करा
+  categoryChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Amount",
+        data: data,
+        backgroundColor: getColors(labels.length),
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      animation: false, // ✅ smoother updates
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function (ctx) {
+              return `₹ ${ctx.formattedValue}`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { color: "#fff" } },
+        x: { ticks: { color: "#fff" } }
+      }
+    }
+  });
+
+  show("home");
+}
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  const invoiceSelect = document.getElementById("exp-invoice-select");
+  if (invoiceSelect) {
+    invoiceSelect.addEventListener("change", () => {
+      const selectedInv = invoiceSelect.value || "";
+      updateHomeSummary(selectedInv);
+    });
+  }
+});
+
+function updateHomeSummary(invoiceNo) {
+  const totalInvEl = document.getElementById("total-invoice-amount");
+  const totalOrderEl = document.getElementById("total-order-amount");
+  const totalReceivedEl = document.getElementById("total-received-amount");
+  const totalPaidEl = document.getElementById("total-paid-amount");
+  const totalProfitEl = document.getElementById("total-profit-amount");
+  const currentLabel = document.getElementById("current-invoice-no");
+
+  if (!window.DATA || Object.keys(DATA).length === 0) {
+    console.warn("⏳ DATA not loaded yet");
+    return;
+  }
+
+  let invoices = DATA.invoices || [];
+  let expenses = DATA.expenses || [];
+  let payments = DATA.payments || [];
+  let paidPayments = DATA.paidPayments || [];
+
+  const allInvoices = DATA.invoices || [];
+  const allExpenses = DATA.expenses || [];
+  const allPaidPayments = DATA.paidPayments || [];
+  const allOrders = DATA.orders || [];
+
+  // ✅ Filter by selected invoice
+  if (invoiceNo) {
+    invoices = invoices.filter(inv => inv.id === invoiceNo);
+    expenses = expenses.filter(ex => ex.invoiceNo === invoiceNo || ex.invoice === invoiceNo);
+    payments = payments.filter(p => p.invoiceNo === invoiceNo);
+    paidPayments = allPaidPayments.filter(p => p.invoiceNo === invoiceNo && !p.orderId); // ✅ Only manual paidPayments
+    currentLabel.textContent = invoiceNo;
+  } else {
+    currentLabel.textContent = "All Data";
+    invoices = allInvoices;
+    expenses = allExpenses;
+    payments = DATA.payments || [];
+    paidPayments = allPaidPayments.filter(p => !p.orderId); // ✅ Exclude auto (order-based) records
+  }
+
+  // ✅ Helpers
+  const getInvoiceTotal = list =>
+    list.reduce((sum, i) => sum + (Number(i.total) || 0), 0);
+
+  const getExpenseTotal = list =>
+    list.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+
+  const getReceivedTotal = list =>
+    list.reduce((sum, p) => sum + (Number(p.received) || 0), 0);
+
+  const getPaidPaymentsTotal = list => {
+    let total = 0;
+    list.forEach(paidRec => {
+      if (Array.isArray(paidRec.payments)) {
+        paidRec.payments.forEach(p => {
+          total += Number(p.amount) || 0;
+        });
+      }
+    });
+    return total;
+  };
+
+  // ❌ REMOVE paidOrders - because we don't want to count "received orders"
+  // let paidOrders = allOrders.filter(o => o.paymentStatus?.toLowerCase() === "paid");
+  // if (invoiceNo) {
+  //   paidOrders = paidOrders.filter(o => o.invoiceId === invoiceNo);
+  // }
+  // const paidOrderTotal = getPaidOrderTotal(paidOrders);
+
+  const invoiceTotal = getInvoiceTotal(invoices);
+  const expenseTotal = getExpenseTotal(expenses);
+  const receivedTotal = getReceivedTotal(payments);
+  const paidPaymentTotal = getPaidPaymentsTotal(paidPayments); // ✅ Only manual ones
+  const totalPaid = paidPaymentTotal; // ✅ Only manual Paid Payments count here
+  const profitTotal = invoiceTotal - expenseTotal;
+
+  // ✅ Output
+  if (totalInvEl) totalInvEl.textContent = "₹ " + invoiceTotal.toFixed(2);
+  if (totalOrderEl) totalOrderEl.textContent = "₹ " + expenseTotal.toFixed(2);
+  if (totalReceivedEl) totalReceivedEl.textContent = "₹ " + receivedTotal.toFixed(2);
+  if (totalProfitEl) totalProfitEl.textContent = "₹ " + profitTotal.toFixed(2);
+  if (totalPaidEl) totalPaidEl.textContent = "₹ " + totalPaid.toFixed(2);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+window.addEventListener('DOMContentLoaded', () => {
+  fetchOrdersFromSheet(); // Sheet मधून load कर
+});
+
+// App लोड झाल्यावर सगळे Paid Payments sheet मधून लोड होतील
+window.addEventListener('DOMContentLoaded', () => {
+  fetchPaidPaymentsFromSheet(); // Sheet मधून डेटा लोड करतो
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  fetchMeasurementsFromSheet(); // App सुरु होताच लोड होईल
+});
+
+
+window.onload = function () {
+  loadData();  // ✅ localStorage मधून सगळं load कर
+  renderAll(); // ✅ सगळं render कर
+
+  renderInvoiceDropdownForPayments(); // 🟢 आता हा call काम करेल
+};
+
+window.addEventListener("load", ()=>{
+  loadAllPaymentsFromSheet();
+});
+
+
+
+
+</script>
+
+
+</body>
+</html>
