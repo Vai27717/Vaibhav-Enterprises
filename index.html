@@ -835,7 +835,15 @@ function loadData(){
 function saveData(){ 
   localStorage.setItem(KEY, JSON.stringify(DATA)); 
   renderAll(); // Rerender all lists and summaries after saving
+
+  // Firestore मध्ये सुद्धा save करणे (availability check)
+  try {
+    if (typeof saveToFirestore === 'function') {
+      saveToFirestore();
+    }
+  } catch(e) { console.warn("Firestore save skipped:", e); }
 }
+
 
 
 // ✅ Universal Company Info Fetcher
@@ -4958,6 +4966,86 @@ window.addEventListener("DOMContentLoaded", addResetButtonToNavbar);
 
 
 
+ 
+
 </script>
+
+
+<!-- ========== Firebase Firestore integration (paste BEFORE </body>) ========== -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getFirestore, setDoc, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  // ====== तुमचा firebaseConfig ======
+  const firebaseConfig = {
+    apiKey: "AIzaSyBaaV8A69XqckjnVuMCy6F5GyEuqRJvt_Y",
+    authDomain: "vaibhav-enterprises-ee336.firebaseapp.com",
+    projectId: "vaibhav-enterprises-ee336",
+    storageBucket: "vaibhav-enterprises-ee336.firebasestorage.app",
+    messagingSenderId: "172689572436",
+    appId: "1:172689572436:web:5a68b14a5fea0eb44fa3c1",
+    measurementId: "G-V4MFRFH744"
+  };
+
+  // Initialize
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Document path — तुम्ही बदलू शकता (company-wise अलग करायचा तर)
+  const DOC_PATH = { collection: "apps", docId: "vaibhav_enterprises_data" };
+
+  // Save local DATA object into Firestore
+  async function saveToFirestore() {
+    try {
+      // write entire DATA object (simple approach)
+      await setDoc(doc(db, DOC_PATH.collection, DOC_PATH.docId), DATA);
+      console.log("✅ Firestore save success");
+    } catch (err) {
+      console.error("❌ Firestore save error:", err);
+    }
+  }
+
+  // Load data from Firestore into local DATA/localStorage
+  async function loadFromFirestore() {
+    try {
+      const snap = await getDoc(doc(db, DOC_PATH.collection, DOC_PATH.docId));
+      if (snap.exists()) {
+        const remote = snap.data();
+        // merge or overwrite — येथे मी overwrite करतो (सरल)
+        DATA = remote;
+        localStorage.setItem(KEY, JSON.stringify(DATA));
+        renderAll();
+        console.log("✅ Firestore data loaded");
+      } else {
+        console.log("⚠️ No Firestore document found at", DOC_PATH);
+      }
+    } catch (err) {
+      console.error("❌ Firestore load error:", err);
+    }
+  }
+
+  // छोटे helper: save on explicit call and when saveData() is invoked
+  window.saveToFirestore = saveToFirestore;
+  window.loadFromFirestore = loadFromFirestore;
+
+  // When page loads, try to load from Firestore (so mobile + desktop sync)
+  window.addEventListener("load", () => {
+    // only load if no local data or you want to overwrite local with cloud
+    const s = localStorage.getItem(KEY);
+    if (!s) {
+      loadFromFirestore();
+    } else {
+      // optional: if you prefer cloud wins always, uncomment next line
+      // loadFromFirestore();
+      console.log("Local data exists — keeping local. To force cloud load, call loadFromFirestore()");
+    }
+  });
+
+  // OPTIONAL: If you want automatic push on every local save, patch saveData() (see below)
+</script>
+<!-- ========== End Firebase Firestore integration ========== -->
+
+
+
 </body>
 </html>
