@@ -5028,18 +5028,12 @@ window.addEventListener("DOMContentLoaded", addResetButtonToNavbar);
   window.saveToFirestore = saveToFirestore;
   window.loadFromFirestore = loadFromFirestore;
 
-  // When page loads, try to load from Firestore (so mobile + desktop sync)
-  window.addEventListener("load", () => {
-    // only load if no local data or you want to overwrite local with cloud
-    const s = localStorage.getItem(KEY);
-    if (!s) {
-      loadFromFirestore();
-    } else {
-      // optional: if you prefer cloud wins always, uncomment next line
-      // loadFromFirestore();
-      console.log("Local data exists — keeping local. To force cloud load, call loadFromFirestore()");
-    }
-  });
+ // When page loads, always load from Firestore (so mobile + desktop stay in sync)
+window.addEventListener("load", () => {
+  console.log("🔄 Loading latest data from Firestore...");
+  loadFromFirestore();  // ✅ नेहमी Firestore मधून डेटा आणा
+});
+
 
   // OPTIONAL: If you want automatic push on every local save, patch saveData() (see below)
 </script>
