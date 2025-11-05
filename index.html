@@ -4275,13 +4275,12 @@ function addLabor(pref){
 function saveLabor(btn){
   const div = btn.closest('.p-3'); 
 
-  // 🆕 Ensure invoice dropdown is populated before reading value
   const invSel = div.querySelector('.lab-inv');
   if (invSel && !invSel.options.length) {
     populateLaborInvoiceDropdown(invSel);
   }
 
-  const invno  = invSel?.value || '';   // Invoice No field
+  const invno  = invSel?.value || '';  
   const client = div.querySelector('.lab-client').value || 'Unknown';
   const work   = div.querySelector('.lab-work').value || '';
   const name   = div.querySelector('.lab-name').value || 'Unknown';
@@ -4306,23 +4305,31 @@ function saveLabor(btn){
   const totalPay = totalDays * rate;
   const balance = Math.max(0, totalPay - totalAdvance);
 
-  // --- Duplicate check ---
-  const existingIndex = DATA.labor.findIndex(x=>x.client===client && x.work===work && x.start===start);
+  // ✅ Duplicate check: same name + work + start date असेल तर तेच अपडेट कर
+  const existingIndex = DATA.labor.findIndex(x => 
+    x.name === name && x.work === work && x.start === start
+  );
+
   let id;
-  if(existingIndex !== -1){
+  if (existingIndex !== -1) {
+    // 🔄 Update existing record
     id = DATA.labor[existingIndex].id;
     DATA.labor[existingIndex] = { id, invno, client, work, name, category, rate, range, start, end, days, totalDays, totalAdvance, totalTransport, totalPay, balance };
+    console.log(`🔁 Updated existing Labor: ${id}`);
   } else {
+    // 🆕 New record
     DATA.counters.lab++; 
     id = 'LAB-' + String(DATA.counters.lab).padStart(4,'0');
     DATA.labor.push({ id, invno, client, work, name, category, rate, range, start, end, days, totalDays, totalAdvance, totalTransport, totalPay, balance });
+    console.log(`🆕 Added new Labor: ${id}`);
   }
 
   saveData(); 
-  alert('Labor saved: ' + id);
+  alert('✅ Labor saved: ' + id);
   updateLaborTotals(div);
-  resetLaborIds(); // numbering reset
+  resetLaborIds(); 
 }
+
 
 
 /* ---------- Reset numbering after delete ---------- */
@@ -4441,10 +4448,40 @@ function loadLabor(id){
 
 
 
+async function deleteLabor(id) {
+  if (!confirm('Delete this attendance?')) return;
+
+  // 🔸 Local DATA मधून काढा
+  DATA.labor = DATA.labor.filter(x => x.id !== id);
+
+  // 🔸 Sequential IDs reset करा
+  DATA.labor.forEach((e, i) => e.id = 'LAB-' + String(i + 1).padStart(4, '0'));
+  DATA.counters.lab = DATA.labor.length;
+
+  // 🔸 Local save करा
+  saveData();
+
+  // 🔸 Firestore मध्ये update करा (overwrite)
+  try {
+    if (typeof saveToFirestore === 'function') {
+      await saveToFirestore();
+      console.log('✅ Firestore updated after delete');
+    } else {
+      console.warn('saveToFirestore not found');
+    }
+  } catch (err) {
+    console.error('❌ Firestore update error:', err);
+  }
+
+  // 🔸 UI refresh करा
+  if (typeof renderAll === 'function') renderAll();
+
+  alert('🗑️ Labor entry deleted successfully.');
+}
 
 
 
-function deleteLabor(id){ if(!confirm('Delete?')) return; DATA.labor = DATA.labor.filter(x=> x.id !== id); saveData(); }
+
 function shareLabor(id){
   // --- COMPANY INFO ---
   const c = DATA.company || {};
