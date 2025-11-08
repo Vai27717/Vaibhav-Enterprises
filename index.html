@@ -2372,27 +2372,34 @@ function addExpenseRow(data = {}) {
 }
 
 function filterCategorySuggestions(input) {
-    const container = input.nextElementSibling; // suggestions div
-    const search = input.value.toLowerCase();
-    const matches = (DATA.categories || []).filter(cat => cat.toLowerCase().includes(search));
+  const container = input.nextElementSibling; // suggestions div
+  const search = input.value.toLowerCase();
+  const matches = (DATA.categories || []).filter(cat => cat.toLowerCase().includes(search));
 
-    // If no matches or empty, hide
-    if (!search || matches.length === 0) {
-        container.classList.add('hidden');
-        return;
-    }
+  // If no matches or empty, hide
+  if (!search || matches.length === 0) {
+    container.classList.add("hidden");
+    return;
+  }
 
-    // Create suggestion list
-    container.innerHTML = matches.map(cat => `<div class="cat-item p-1 hover:bg-gray-200 cursor-pointer">${cat}</div>`).join('');
-    container.classList.remove('hidden');
+  // Create suggestion list
+  container.innerHTML = matches
+    .map(cat => `<div class="cat-item p-1 hover:bg-gray-200 cursor-pointer">${cat}</div>`)
+    .join("");
+  container.classList.remove("hidden");
 
-    // Click to select
-    container.querySelectorAll('.cat-item').forEach(item => {
-        item.onclick = () => {
-            input.value = item.textContent;
-            container.classList.add('hidden');
-        };
-    });
+  // Click to select
+  container.querySelectorAll(".cat-item").forEach(item => {
+    item.onclick = () => {
+      input.value = item.textContent;
+      container.classList.add("hidden");
+    };
+  });
+
+  // ✅ Hide suggestions after blur (user focus बदलल्यावर)
+  input.addEventListener("blur", () => {
+    setTimeout(() => container.classList.add("hidden"), 200);
+  });
 }
 
 
@@ -2411,56 +2418,67 @@ function calculateExpenseAmount(input) {
 }
 
 function saveExpenses() {
-  const invoiceNo = el('exp-invoice-select').value;
+  const invoiceNo = el("exp-invoice-select").value;
   if (!invoiceNo) return alert("Please select an Invoice No.");
 
+  if (!Array.isArray(DATA.categories)) DATA.categories = [];
+
   const items = [];
-  document.querySelectorAll('#exp-rows .expense-row').forEach(row => {
-    const name = row.querySelector('.exp-name').value.trim();
-    const qty = row.querySelector('.exp-qty').value.trim();
-    const unit = row.querySelector('.exp-unit').value.trim();
-    const rate = row.querySelector('.exp-rate').value.trim();
-    const amount = parseFloat(row.querySelector('.exp-amount').value) || 0;
-    const category = row.querySelector('.exp-cat').value;
-    const date = row.querySelector('.exp-date').value;
+  const allCats = [];
+
+  document.querySelectorAll("#exp-rows .expense-row").forEach(row => {
+    const name = row.querySelector(".exp-name").value.trim();
+    const qty = row.querySelector(".exp-qty").value.trim();
+    const unit = row.querySelector(".exp-unit").value.trim();
+    const rate = row.querySelector(".exp-rate").value.trim();
+    const amount = parseFloat(row.querySelector(".exp-amount").value) || 0;
+    const category = row.querySelector(".exp-cat").value.trim();
+    const date = row.querySelector(".exp-date").value;
 
     if (name && amount > 0) {
       items.push({ date, category, name, qty, unit, rate, amount });
+      if (category) allCats.push(category);
+      if (category && !DATA.categories.includes(category)) {
+        DATA.categories.push(category);
+      }
     }
   });
 
   if (!items.length) return alert("Please add at least one valid expense item.");
 
-  // merge all into one record
   const merged = {
-    id: 'EXP-' + String(++DATA.counters.exp).padStart(6, '0'),
-    date: items.map(i => i.date).join(', '),
+    id: "EXP-" + String(++DATA.counters.exp).padStart(6, "0"),
     invoiceNo,
-    category: [...new Set(items.map(i => i.category))].join(', '),
-    name: items.map(i => i.name).join(', '),
-    quantity: items.map(i => i.qty).join(', '),
-    unit: items.map(i => i.unit).join(', '),
-    rate: items.map(i => i.rate).join(', '),
+    date: items.map(i => i.date).join(", "),
+    category: allCats.join(", "),
+    name: items.map(i => i.name).join(", "),
+    quantity: items.map(i => i.qty).join(", "),
+    unit: items.map(i => i.unit).join(", "),
+    rate: items.map(i => i.rate).join(", "),
     amount: items.reduce((sum, i) => sum + i.amount, 0).toFixed(2)
   };
 
-  // ✅ Update existing (by invoice)
+  // ✅ जर आधीच हाच invoiceNo अस्तित्वात असेल, तर जुनी entry replace करा
   const existingIndex = DATA.expenses.findIndex(e => e.invoiceNo === invoiceNo);
   if (existingIndex !== -1) {
+    merged.id = DATA.expenses[existingIndex].id; // जुना ID ठेव
     DATA.expenses[existingIndex] = merged;
-    alert(`Expenses updated for Invoice ${invoiceNo}`);
+    alert(`✅ Updated: Invoice ${invoiceNo} (Replaced old entry)`);
   } else {
     DATA.expenses.push(merged);
-    alert(`Expenses saved for Invoice ${invoiceNo}`);
+    alert(`✅ Saved new Expense for Invoice ${invoiceNo}`);
   }
 
   saveData();
-  el('exp-rows').innerHTML = '';
-  el('exp-total').textContent = '0.00';
+  renderCategoryList();
+  el("exp-rows").innerHTML = "";
+  el("exp-total").textContent = "0.00";
   renderExpensesList();
   renderInvoiceProfits();
   updateHomeSummary();
 }
+
+
 
 function loadExpense(id) {
   const rec = DATA.expenses.find(e => e.id === id);
@@ -3759,6 +3777,8 @@ function savePaidPayment() {
     el('pp-rows').innerHTML = '';
     addPaidRow();
 }
+
+
 
 function renderPaidPayments() {
     const box = el('saved-paid');
