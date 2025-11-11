@@ -3031,10 +3031,18 @@ function shareMeasurement(id) {
 let selectedOrderId = null;
 
 // ✅ प्रत्येक item-row मध्ये Category field जोडले
+// ✅ प्रत्येक item-row मध्ये Category field जोडले
 function addOrderRow(data = {}) {
   const parent = el('order-items');
   const row = document.createElement('div');
-  row.className = 'order-row grid grid-cols-7 gap-2 border-b py-2'; // वाढवलेले grid-cols 7
+  
+  // 💡 दुरुस्ती:
+  // Mobile (Default): 2 Columns (Qty/Rate एका ओळीत) किंवा 3 columns
+  // Desktop (lg:): 7 Columns
+  row.className = 'order-row grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 border-b py-2'; 
+                                                                                        // ↑ lg:grid-cols-7 Desktop साठी 
+                                                                                        // ↑ sm:grid-cols-3 (टॅब्लेटसाठी ३)
+                                                                                        // ↑ grid-cols-2 (Mobile साठी २)
 
   const part = data.part || '';
   const category = data.category || '';
@@ -3044,21 +3052,26 @@ function addOrderRow(data = {}) {
   const amount = (qty * rate).toFixed(2);
 
   row.innerHTML = `
-    <input list="materials" class="ord-part w-full p-2 border rounded col-span-2" placeholder="Particular" value="${part}">
-    <select class="ord-category p-2 border rounded col-span-1">
+    <input list="materials" class="ord-part w-full p-2 border rounded col-span-2 lg:col-span-2" placeholder="Particular" value="${part}">
+    
+    <select class="ord-category p-2 border rounded col-span-2 sm:col-span-1 lg:col-span-1">
       <option value="">Select Cat</option>
       ${(DATA.categories || []).map(c => 
         `<option value="${c}" ${c === category ? 'selected' : ''}>${c}</option>`
       ).join('')}
     </select>
-    <input type="number" class="ord-qty p-2 border rounded col-span-1" placeholder="Qty" value="${qty}">
-    <input class="ord-unit p-2 border rounded col-span-1" placeholder="Unit" value="${unit}">
-    <input type="number" class="ord-rate p-2 border rounded col-span-1" placeholder="Rate" value="${rate}">
-    <div class="flex items-center justify-between col-span-1">
-      <span class="ord-amt font-semibold text-right pr-2">${amount}</span>
-      <button class="smallbtn bg-red-500 text-white" onclick="this.closest('.order-row').remove()">✕</button>
+    
+    <input type="number" class="ord-qty p-2 border rounded col-span-1 lg:col-span-1" placeholder="Qty" value="${qty}">
+    <input class="ord-unit p-2 border rounded col-span-1 lg:col-span-1" placeholder="Unit" value="${unit}">
+    
+    <input type="number" class="ord-rate p-2 border rounded col-span-2 sm:col-span-1 lg:col-span-1" placeholder="Rate" value="${rate}">
+    
+    <div class="flex items-center justify-between col-span-2 sm:col-span-3 lg:col-span-1"> 
+        <span class="ord-amt font-semibold text-right pr-2">${amount}</span>
+        <button class="smallbtn bg-red-500 text-white" onclick="this.closest('.order-row').remove()">✕</button>
     </div>
   `;
+  // ... (बाकीचा calcAmount logic जसाच्या तसा ठेवा)
 
   const qtyInput = row.querySelector('.ord-qty');
   const rateInput = row.querySelector('.ord-rate');
@@ -3741,44 +3754,60 @@ function savePaidPayment() {
     });
 
     if (newEntries.length === 0) return alert('Add at least one payment entry (Amount > 0)');
-
-    // Grouping by (Invoice No AND Order ID)
-    const groupingKey = `${invNo}_${orderId}`;
     
-    // Delete all existing payments for this group in the local DATA
-    DATA.paidPayments = DATA.paidPayments.filter(pp => !(pp.invoiceNo === invNo && pp.orderId === orderId));
+    // 💡 दुरुस्ती: जुने रेकॉर्ड डिलिट करण्याची अट
+    if (orderId && orderId !== 'N/A' && orderId !== '') {
+        // केस 1: Order ID असेल, तर फक्त Order ID आणि Invoice नुसार डिलिट करा. (तुमचा जुना नियम)
+        DATA.paidPayments = DATA.paidPayments.filter(pp => !(pp.invoiceNo === invNo && pp.orderId === orderId));
+    } else {
+        // केस 2: Order ID नसेल (मॅन्युअल एंट्री), तर Invoice No. आणि Name/Labor नुसार डिलिट करा.
+        // यामुळे Rohan ची एंट्री Santosh च्या एंट्रीने रिप्लेस होणार नाही.
+        DATA.paidPayments = DATA.paidPayments.filter(pp => !(
+            pp.invoiceNo === invNo && 
+            (!pp.orderId || pp.orderId === 'N/A') && 
+            pp.name === name && 
+            pp.labor === labor
+        ));
+    }
 
-    let id;
-    DATA.counters.pp = (DATA.counters.pp || 0) + 1;
-    id = 'PP-' + String(DATA.counters.pp).padStart(6, '0');
-
+    // ID जनरेशन आणि रेकॉर्ड पुशिंग (तुमचे कालचे दुरुस्त केलेले कोड)
     newEntries.forEach(en => {
-        const record = { 
-            id: id, 
-            invoiceNo: invNo, 
-            orderId: orderId,
-            client, 
-            work, 
-            name, 
+        DATA.counters.pp = (DATA.counters.pp || 0) + 1;
+        const id = 'PP-' + String(DATA.counters.pp).padStart(6, '0'); 
+        
+        const record = { 
+            id: id,
+            invoiceNo: invNo, 
+            orderId: orderId || 'N/A', // ऑर्डर ID नसेल तर 'N/A' सेट करा
+            client, 
+            work, 
+            name, 
             labor,
-            date: en.date, 
-            amount: en.amount.toFixed(2), 
-            note: en.note 
+            date: en.date, 
+            amount: en.amount.toFixed(2), 
+            note: en.note 
         };
         DATA.paidPayments.push(record);
-        // Advance counter for next unique payment row
-        DATA.counters.pp++; 
     });
 
-    saveData(); 
+    saveData(); 
     alert(`Paid Payments saved/updated for: ${invNo || orderId}`);
-    
-    // Clear form rows (keep headers for context)
+
+    // Order ID साठी Payment Status "Paid" करा (हा भाग जसाच्या तसा ठेवा)
+    if (orderId && orderId !== "N/A") {
+      const ord = (DATA.orders || []).find(o => o.id === orderId);
+      if (ord) {
+        ord.paymentStatus = "Paid";
+        saveData();
+        renderOrders();
+      }
+    }
+
+    // Clear form rows 
     el('pp-rows').innerHTML = '';
     addPaidRow();
+    renderPaidPayments(); 
 }
-
-
 
 function renderPaidPayments() {
     const box = el('saved-paid');
@@ -3787,7 +3816,18 @@ function renderPaidPayments() {
     
     // Group payments by a composite key (InvoiceNo_OrderId)
     const groups = DATA.paidPayments.reduce((acc, pp) => {
-        const key = `${pp.invoiceNo || 'N/A'}_${pp.orderId || 'N/A'}`;
+        let key;
+        
+        // 💡 दुरुस्ती: मॅन्युअल एंट्रीसाठी (Order ID नसेल तेव्हा) Name आणि Labor चा वापर Key मध्ये करा.
+        if (!pp.orderId || pp.orderId === 'N/A' || pp.orderId === '') {
+            // New Key Format: InvNo^N/A^Name^Labor (separating manual payments)
+            // ' ^ ' चा वापर केला आहे जेणेकरून _ सोबत गोंधळ होणार नाही.
+            key = `${pp.invoiceNo || 'N/A'}^N/A^${pp.name || 'MANUAL'}^${pp.labor || 'N/A'}`; 
+        } else {
+            // Standard Key Format: InvNo_OrderId
+            key = `${pp.invoiceNo || 'N/A'}_${pp.orderId || 'N/A'}`;
+        }
+        
         if (!acc[key]) acc[key] = [];
         acc[key].push(pp);
         return acc;
@@ -3829,16 +3869,40 @@ function renderPaidPayments() {
     });
 }
 
+
 function loadPaidPayment(key) {
-    const [invNo, orderId] = key.split('_');
-    const recs = DATA.paidPayments.filter(pp => pp.invoiceNo === invNo && pp.orderId === orderId);
+    let recs;
+    
+    if (key.includes('^N/A^')) {
+        // 💡 दुरुस्ती: मॅन्युअल एंट्री Key Parsing
+        // Key Format: InvNo^N/A^Name^Labor
+        const parts = key.split('^');
+        const invNo = parts[0];
+        const name = parts[2];
+        const labor = parts[3];
+        
+        recs = DATA.paidPayments.filter(pp => 
+            pp.invoiceNo === invNo && 
+            (!pp.orderId || pp.orderId === 'N/A' || pp.orderId === '') && 
+            pp.name === name && 
+            pp.labor === labor
+        );
+        
+        el('pp-order-id').value = ''; // Order ID clear करा
+
+    } else {
+        // Standard Key Parsing
+        const [invNo, orderId] = key.split('_');
+        recs = DATA.paidPayments.filter(pp => pp.invoiceNo === invNo && pp.orderId === orderId);
+        el('pp-order-id').value = orderId;
+    }
+    
     if(recs.length === 0) return alert('Paid Payment records not found.');
 
     const r0 = recs[0];
     show('paid');
     
-    el('pp-invno').value = invNo;
-    el('pp-order-id').value = orderId;
+    el('pp-invno').value = r0.invoiceNo;
     el('pp-client').value = r0.client || '';
     el('pp-work').value = r0.work || '';
     el('pp-name').value = r0.name || '';
@@ -3850,54 +3914,110 @@ function loadPaidPayment(key) {
 
 function deletePaidPayment(key) {
     if (!confirm("Are you sure you want to delete ALL paid payment records for this group?")) return;
-    const [invNo, orderId] = key.split('_');
-    DATA.paidPayments = DATA.paidPayments.filter(pp => !(pp.invoiceNo === invNo && pp.orderId === orderId));
+    
+    if (key.includes('^N/A^')) {
+        // 💡 दुरुस्ती: मॅन्युअल एंट्री Key Parsing आणि Deletion
+        // Key Format: InvNo^N/A^Name^Labor
+        const parts = key.split('^');
+        const invNo = parts[0];
+        const name = parts[2];
+        const labor = parts[3];
+
+        DATA.paidPayments = DATA.paidPayments.filter(pp => !(
+            pp.invoiceNo === invNo && 
+            (!pp.orderId || pp.orderId === 'N/A' || pp.orderId === '') && 
+            pp.name === name && 
+            pp.labor === labor
+        ));
+
+    } else {
+        // Standard Deletion
+        const [invNo, orderId] = key.split('_');
+        DATA.paidPayments = DATA.paidPayments.filter(pp => !(pp.invoiceNo === invNo && pp.orderId === orderId));
+    }
+    
     saveData();
     alert(`All paid payments for ${key} deleted.`);
+    renderPaidPayments(); 
 }
 
 
 // ✅ Corrected Share Function (same message format, group-wise sharing)
-// ✅ Corrected Share Function (same message format, group-wise sharing)
 function sharePaidPayment(key) {
-  // --- COMPANY INFO (navin add kele) ---
-  const c = DATA.company || {};
-  const cname = c.name || "Vaibhav Enterprises"; // Company name dynamically get kela
-  
-  const [invNo, orderId] = key.split('_');
-  const recs = (DATA.paidPayments || []).filter(
-    x => (x.invoiceNo === invNo) && (x.orderId === orderId)
-  );
+    // --- COMPANY INFO ---
+    const c = DATA.company || {};
+    const cname = c.name || "Vaibhav Enterprises";
+    
+    let invNo, orderId, name, labor;
+    let recs;
 
-  // ✅ जर manual entry (Order ID नाही किंवा 'N/A')
-  if (!orderId || orderId === "N/A" || recs.length === 0) {
-    const manualRecs = (DATA.paidPayments || []).filter(
-      x => x.invoiceNo === invNo && (!x.orderId || x.orderId === "N/A")
-    );
-    if (!manualRecs.length) return alert("No Paid Payment found for " + key);
+    // 💡 दुरुस्ती 1: Key Parsing Logic (renderPaidPayments प्रमाणे)
+    if (key.includes('^N/A^')) {
+        // मॅन्युअल एंट्री Key Format: InvNo^N/A^Name^Labor
+        const parts = key.split('^');
+        invNo = parts[0];
+        orderId = 'N/A'; // For display purposes
+        name = parts[2];
+        labor = parts[3];
+        
+        // 💡 दुरुस्ती 2: मॅन्युअल रेकॉर्ड शोधण्यासाठी योग्य फिल्टर
+        recs = (DATA.paidPayments || []).filter(x => 
+            x.invoiceNo === invNo && 
+            (!x.orderId || x.orderId === 'N/A' || x.orderId === '') &&
+            x.name === name && 
+            x.labor === labor
+        );
+        
+    } else {
+        // Order ID असलेले स्टँडर्ड रेकॉर्ड Key Format: InvNo_OrderId
+        [invNo, orderId] = key.split('_');
+        recs = (DATA.paidPayments || []).filter(x => 
+            (x.invoiceNo === invNo) && (x.orderId === orderId)
+        );
+    }
 
-    const r = manualRecs[0];
-    const total = manualRecs.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    if (recs.length === 0) {
+        return alert("No Paid Payment found for " + key);
+    }
+    
+    // ---------------------------------------------------
+    // मेसेज तयार करण्याची प्रोसेस (आता दोन्ही प्रकारच्या एंट्रीसाठी समान Logic वापरता येईल)
+    // ---------------------------------------------------
+
+    const r = recs[0];
+    const total = recs.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
 
     const lines = [];
     lines.push("💶 Paid Payment Details");
     lines.push("");
     lines.push("Paid Payment ID: " + (r.id || "N/A"));
-    lines.push((r.client || "N/A") + " (" + (r.work || "N/A") + ")");
-    lines.push("Name: " + (r.name || "N/A"));
-    lines.push("Labor/Contractor: " + (r.labor || "N/A"));
+    
+    // मॅन्युअल / ऑर्डर नुसार डिस्प्ले
+    if (orderId === "N/A" || !orderId || orderId === '') {
+        // मॅन्युअल एंट्री डिस्प्ले
+        lines.push(`Invoice: ${r.invoiceNo || 'N/A'}`);
+        lines.push((r.client || "N/A") + " (" + (r.work || "N/A") + ")");
+        lines.push("Name: " + (r.name || "N/A"));
+        lines.push("Labor/Contractor: " + (r.labor || "N/A"));
+    } else {
+        // ऑर्डर ID एंट्री डिस्प्ले
+        lines.push("Order: " + (r.orderId || "N/A"));
+        lines.push("Name: " + (r.name || "N/A"));
+    }
+    
     lines.push("");
-    lines.push("S.No |    Date    |   Amt    | Type");
+    lines.push("S.No |    Date    |    Amt    | Note/Purpose");
     lines.push("------------------------------------");
 
-    manualRecs.forEach((p, i) => {
+    recs.forEach((p, i) => {
       const date = p.date ? new Date(p.date).toLocaleDateString("en-CA") : "N/A";
+      // float to 2 decimal places वापरला
       const amount = "₹" + (window.money ? money(p.amount) : parseFloat(p.amount).toFixed(2));
-      const type = p.note || "N/A";
+      const note = p.note || "N/A";
       const serial = String(i + 1).padEnd(5, " ");
       const dateStr = date.padEnd(10, " ");
       const amtStr = amount.padEnd(9, " ");
-      lines.push(`${serial}| ${dateStr} | ${amtStr} | ${type}`);
+      lines.push(`${serial}| ${dateStr} | ${amtStr} | ${note}`);
     });
 
     lines.push("------------------------------------");
@@ -3905,118 +4025,13 @@ function sharePaidPayment(key) {
     lines.push("👉 Total Paid: ₹" + (window.money ? money(total) : total.toFixed(2)));
     lines.push("");
     lines.push("Regards,");
-    lines.push(cname); // ✅ Company name change kela
+    lines.push(cname);
 
     const msg = lines.join("\n");
     const url = "https://wa.me/?text=" + encodeURIComponent(msg);
     window.open(url, "_blank");
-    return;
-  }
-
-  // ✅ जर Order ID असेल
-  const r = recs[0];
-  const total = recs.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-
-  const lines = [];
-  lines.push("💶 Paid Payment Details");
-  lines.push("");
-  lines.push("Paid Payment ID: " + (r.id || "N/A"));
-  lines.push("Order: " + (r.orderId || "N/A"));
-  //lines.push("Client: " + (r.client || "N/A"));
-  //lines.push("Work: " + (r.work || "N/A"));
-  lines.push("Name: " + (r.name || "N/A"));
-  lines.push("");
-  lines.push("S.No |    Date    |   Amt    | Note");
-  lines.push("------------------------------------");
-
-  recs.forEach((p, i) => {
-    const date = p.date ? new Date(p.date).toLocaleDateString("en-CA") : "N/A";
-    const amount = "₹" + (window.money ? money(p.amount) : parseFloat(p.amount).toFixed(2));
-    const note = p.note || "N/A";
-    const serial = String(i + 1).padEnd(5, " ");
-    const dateStr = date.padEnd(10, " ");
-    const amtStr = amount.padEnd(9, " ");
-    lines.push(`${serial}| ${dateStr} | ${amtStr} | ${note}`);
-  });
-
-  lines.push("------------------------------------");
-  lines.push("");
-  lines.push("👉 Total Paid: ₹" + (window.money ? money(total) : total.toFixed(2)));
-  lines.push("");
-  lines.push("Regards,");
-  lines.push(cname); // ✅ Company name change kela
-
-  const msg = lines.join("\n");
-  const url = "https://wa.me/?text=" + encodeURIComponent(msg);
-  window.open(url, "_blank");
 }
 
-  function savePaidPayment() {
-    const invNo = el('pp-invno').value.trim();
-    const orderId = el('pp-order-id').value.trim();
-    const client = el('pp-client').value.trim();
-    const work = el('pp-work').value.trim();
-    const name = el('pp-name').value.trim();
-    const labor = el('pp-labor').value.trim();
-
-    if (!invNo && !orderId) return alert("Please select Invoice No. or Order ID.");
-    if (!name && !labor) return alert("Enter Name or Labor/Contractor.");
-
-    const newEntries = [];
-    document.querySelectorAll('#pp-rows .pp-row').forEach(r => {
-        const date = r.querySelector('.pp-date').value || new Date().toISOString().split('T')[0];
-        const amount = parseFloat(r.querySelector('.pp-amount').value) || 0;
-        const note = r.querySelector('.pp-note').value || '';
-        if (amount > 0 || note) newEntries.push({ date, amount, note });
-    });
-
-    if (newEntries.length === 0) return alert('Add at least one payment entry (Amount > 0)');
-
-    // Grouping by (Invoice No AND Order ID)
-    const groupingKey = `${invNo}_${orderId}`;
-    
-    // Delete all existing payments for this group in the local DATA
-    DATA.paidPayments = DATA.paidPayments.filter(pp => !(pp.invoiceNo === invNo && pp.orderId === orderId));
-
-    let id;
-    DATA.counters.pp = (DATA.counters.pp || 0) + 1;
-    id = 'PP-' + String(DATA.counters.pp).padStart(6, '0');
-
-    newEntries.forEach(en => {
-        const record = { 
-            id: id, 
-            invoiceNo: invNo, 
-            orderId: orderId,
-            client, 
-            work, 
-            name, 
-            labor,
-            date: en.date, 
-            amount: en.amount.toFixed(2), 
-            note: en.note 
-        };
-        DATA.paidPayments.push(record);
-        // Advance counter for next unique payment row
-        DATA.counters.pp++; 
-    });
-
-    saveData(); 
-    alert(`Paid Payments saved/updated for: ${invNo || orderId}`);
-
-    // ✅ Order ID साठी Payment Status "Paid" करा
-    if (orderId && orderId !== "N/A") {
-      const ord = (DATA.orders || []).find(o => o.id === orderId);
-      if (ord) {
-        ord.paymentStatus = "Paid";
-        saveData();
-        renderOrders(); // ✅ Order यादीत त्वरित दिसेल
-      }
-    }
-
-    // Clear form rows (keep headers for context)
-    el('pp-rows').innerHTML = '';
-    addPaidRow();
-}
 
 
 
