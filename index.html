@@ -3995,10 +3995,9 @@ function sharePaidPayment(key) {
     // मॅन्युअल / ऑर्डर नुसार डिस्प्ले
     if (orderId === "N/A" || !orderId || orderId === '') {
         // मॅन्युअल एंट्री डिस्प्ले
-        lines.push(`Invoice: ${r.invoiceNo || 'N/A'}`);
-        lines.push((r.client || "N/A") + " (" + (r.work || "N/A") + ")");
+        
         lines.push("Name: " + (r.name || "N/A"));
-        lines.push("Labor/Contractor: " + (r.labor || "N/A"));
+        lines.push("Purpose: " + (r.labor || "N/A"));
     } else {
         // ऑर्डर ID एंट्री डिस्प्ले
         lines.push("Order: " + (r.orderId || "N/A"));
@@ -4006,7 +4005,7 @@ function sharePaidPayment(key) {
     }
     
     lines.push("");
-    lines.push("S.No |    Date    |    Amt    | Note/Purpose");
+    lines.push("S.No |    Date    |    Amt    | Note");
     lines.push("------------------------------------");
 
     recs.forEach((p, i) => {
