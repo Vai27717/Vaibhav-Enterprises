@@ -3304,19 +3304,24 @@ function syncReceivedOrdersToExpensesCombined() {
         const existingDates = existing.date.split(',').map(s => s.trim());
 
         newData.items.forEach(it => {
-          const lowerName = it.name.trim().toLowerCase();
-          const alreadyExists = existingNames.includes(lowerName);
+    const lowerName = it.name.trim().toLowerCase();
 
-          if (!alreadyExists) {
-            existingNames.push(lowerName);
-            existingQtys.push(it.qty);
-            existingUnits.push(it.unit);
-            existingRates.push(it.rate);
-            // ✅ प्रत्येक item ची category सेव्ह करा
-            existingCats.push(it.category || newData.category);
-            existingDates.push(newData.date);
-          }
-        });
+    const alreadyExists =
+        existingNames.includes(lowerName) &&
+        existingQtys.includes(String(it.qty)) &&
+        existingRates.includes(String(it.rate)) &&
+        existingDates.includes(newData.date);
+
+    if (!alreadyExists) {
+        existingNames.push(lowerName);
+        existingQtys.push(it.qty);
+        existingUnits.push(it.unit);
+        existingRates.push(it.rate);
+        existingCats.push(it.category || newData.category);
+        existingDates.push(newData.date);
+    }
+});
+
 
         // --- एकूण रक्कम पुन्हा मोजा ---
         const allAmounts = [];
