@@ -4075,16 +4075,26 @@ function sharePaidPayment(key) {
 let dailyReportIdToEdit = null;
 
 function addDailyRow(data = {}) {
-    const parent = el('daily-rows');
-    const row = document.createElement('div');
-    row.className = 'daily-row p-3 border rounded bg-gray-700 grid grid-cols-3 gap-2 text-sm';
-    row.innerHTML = `
-        <input type="text" class="dr-task w-full col-span-3 md:col-span-1" placeholder="Task/Activity" value="${data.task || ''}">
-        <input type="number" class="dr-progress w-full col-span-3 md:col-span-1" placeholder="Progress (%)" value="${data.progress || ''}">
-        <input type="text" class="dr-note w-full col-span-3 md:col-span-1" placeholder="Notes/Issue" value="${data.note || ''}">
-        <button class="smallbtn bg-red-500 col-span-3" onclick="this.closest('.daily-row').remove()">✕</button>
-    `;
-    parent.appendChild(row);
+  const parent = el('daily-rows');
+  const row = document.createElement('div');
+  row.className = 'daily-row p-3 border rounded bg-gray-700 grid gap-2 text-sm';
+
+  row.innerHTML = `
+    <!-- DATE -->
+    <input type="date"
+      class="dr-date p-2 border rounded"
+      value="${data.date || new Date().toISOString().slice(0,10)}">
+
+    <!-- LONG ANSWER -->
+    <textarea
+      class="dr-desc p-2 border rounded"
+      rows="4"
+      placeholder="Daily rojnishi / long work details...">${data.desc || ''}</textarea>
+
+    <button class="smallbtn bg-red-500" onclick="this.closest('.daily-row').remove()">✕</button>
+  `;
+
+  parent.appendChild(row);
 }
 
 function saveDaily() {
@@ -4094,15 +4104,16 @@ function saveDaily() {
 
     if (!client || !work) return alert("Please enter Client Name and Work Title.");
 
-    const items = [];
-    document.querySelectorAll('#daily-rows .daily-row').forEach(row => {
-        const task = row.querySelector('.dr-task').value.trim();
-        const progress = row.querySelector('.dr-progress').value.trim();
-        const note = row.querySelector('.dr-note').value.trim();
-        if (task) {
-            items.push({ task, progress, note });
-        }
-    });
+ const items = [];
+document.querySelectorAll('#daily-rows .daily-row').forEach(row => {
+  const date = row.querySelector('.dr-date').value;
+  const desc = row.querySelector('.dr-desc').value.trim();
+
+  if (desc) {
+    items.push({ date, desc });
+  }
+});
+
 
     if (items.length === 0) return alert("Please add at least one task/activity.");
 
@@ -4150,15 +4161,20 @@ function renderDailyReports() {
             <ul class="list-disc list-inside ml-4 text-xs mt-1">
         `;
 
-        r.items.forEach(it => {
-            html += `
-                <li>${it.task} - ${it.progress}% Complete (${it.note || 'No notes'})</li>
-            `;
-        });
+       r.items.forEach(it => {
+  html += `
+    <li>
+      <b>${it.date}</b><br>
+      ${it.desc}
+    </li>
+  `;
+});
+
         
         html += `
             </ul>
             <div class="flex gap-2 mt-2">
+                <button class="smallbtn" onclick="loadDailyReport('${r.id}')">Load</button>
                 <button class="smallbtn bg-red-500" onclick="deleteDailyReport('${r.id}')">Delete</button>
             </div>
         `;
@@ -4166,6 +4182,26 @@ function renderDailyReports() {
         box.appendChild(div);
     });
 }
+
+
+function loadDailyReport(id) {
+  const r = DATA.daily.find(x => x.id === id);
+  if (!r) return;
+
+  dailyReportIdToEdit = id;
+
+  // 🔥 HEADER FIELDS LOAD
+  el('dr-client').value = r.client || '';
+  el('dr-contact').value = r.contact || '';
+  el('dr-work').value = r.work || '';
+
+  el('daily-rows').innerHTML = '';
+  r.items.forEach(item => addDailyRow(item));
+}
+
+
+
+
 
 function deleteDailyReport(id) {
     if (!confirm("Are you sure you want to delete this Daily Report?")) return;
