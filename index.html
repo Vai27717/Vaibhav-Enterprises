@@ -4179,7 +4179,9 @@ function deleteDailyReport(id) {
  * 9️⃣ LABOR (Already using Local Storage, ensuring proper save/render)
  * ------------------------------------------------------------- */
 function addLabor(pref){
-  const parent = el('labor-rows');
+ el('labor-rows').innerHTML = '';
+
+ const parent = el('labor-rows');
   const div = document.createElement('div'); 
   div.className='p-3 border rounded bg-gray-50';
 
@@ -4372,29 +4374,31 @@ function saveLabor(btn){
   const balance = Math.max(0, totalPay - totalAdvance);
 
 // ✅ SAME NAME = SAME ID (case-insensitive)
-const existingIndex = DATA.labor.findIndex(x =>
-  x.name.trim().toLowerCase() === name.trim().toLowerCase()
-);
 
 
 let id;
 
-if (existingIndex !== -1) {
-  // 🔁 Same labor → SAME ID
-  id = DATA.labor[existingIndex].id;
+// 🔁 UPDATE MODE
+if (window.currentLaborEditId) {
 
-  // फक्त नवीन period add होईल
-  DATA.labor.push({
-    id, invno, client, work, name, category,
-    rate, range, start, end, days,
-    totalDays, totalAdvance, totalTransport,
-    totalPay, balance
-  });
+  id = window.currentLaborEditId;
 
-  console.log(`🔁 Existing Labor reused ID: ${id}`);
+  const index = DATA.labor.findIndex(x => x.id === id);
 
-} else {
-  // 🆕 Brand new labor
+  if (index !== -1) {
+    DATA.labor[index] = {
+      id, invno, client, work, name, category,
+      rate, range, start, end, days,
+      totalDays, totalAdvance, totalTransport,
+      totalPay, balance
+    };
+  }
+
+  // edit complete
+  window.currentLaborEditId = null;
+}
+// 🆕 NEW LABOR
+else {
   DATA.counters.lab = DATA.counters.lab || 0;
   DATA.counters.lab++;
 
@@ -4406,16 +4410,25 @@ if (existingIndex !== -1) {
     totalDays, totalAdvance, totalTransport,
     totalPay, balance
   });
-
-  console.log(`🆕 New Labor Created: ${id}`);
 }
+
+
 
 
   saveData(); 
   alert('✅ Labor saved: ' + id);
   updateLaborTotals(div);
-  resetLaborIds(); 
+   
+// 🔁 AUTO RESET AFTER SAVE
+setTimeout(() => {
+  div.remove();              // current edit card काढून टाका
+  addLabor();                // fresh empty labor form
+}, 100);
+
+
 }
+
+
 
 
 
@@ -4492,6 +4505,7 @@ function deleteLabor(id){
   DATA.labor = DATA.labor.filter(x => x.id !== id);
 
   saveData();
+  renderAll();
 
   if (typeof renderAll === 'function') renderAll();
   if (typeof renderLaborList === 'function') renderLaborList();
@@ -4505,7 +4519,11 @@ function loadLabor(id){
   const r = DATA.labor.find(x=> x.id === id);
   if(!r) return;
   addLabor(r);
+    // 🔑 THIS LINE IS MANDATORY
+  window.currentLaborEditId = id;
+
   show('labor');
+
 
   // 🆕 Invoice No auto-select patch (guaranteed timing)
   setTimeout(() => {
@@ -4731,7 +4749,7 @@ function exportLaborReport() {
     reportList = DATA.labor.filter(x =>
       x.name && x.name.toLowerCase().includes(q)
     );
-    title = `Full Report for Labor: ${searchInput.value}`;
+    title = `Full Report for: ${searchInput.value}`;
   }
   // 🔸 काहीच दिलं नसेल → सर्व labor
   else {
@@ -4754,10 +4772,7 @@ function exportLaborReport() {
   let text = `📋 ${title}\n\n`;
 
   reportList.forEach(r => {
-    text += `🧾 ${r.id}\n`;
-    if (r.invno) text += `Invoice: ${r.invno}\n`;
-    text += `Client: ${r.client}\n`;
-    text += `Work: ${r.work}\n`;
+    
     text += `Name: ${r.name}\n`;
     text += `Rate: ₹${r.rate}\n`;
     text += `Start: ${r.start} | End: ${r.end}\n`;
@@ -4775,14 +4790,14 @@ function exportLaborReport() {
  const grandBalance = grandPay - grandAdvance;
 
 // --- FINAL SUMMARY ADD ---
-text += `\n==============================\n`;
+text += `\n==========================\n`;
 text += `📊 FINAL SUMMARY\n`;
-text += `==============================\n`;
+text += `==========================\n`;
 text += `Total Days        : ${grandDays}\n`;
 text += `Total Advance     : ₹${grandAdvance}\n`;
 text += `Total Transport   : ₹${grandTransport}\n`;
 text += `Total Balance     : ₹${grandBalance}\n`;
-text += `==============================\n`;
+text += `==========================\n`;
 
 
   // --- Share / Export via WhatsApp ---
