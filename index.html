@@ -589,16 +589,26 @@ table tbody tr:hover {
 <!-- LABOR -->
 <div id="labor" class="card max-w-4xl mx-auto" style="display:none">
   <h2>Labor Attendance</h2>
+
   <div class="flex gap-2 mb-2">
-  <button class="smallbtn" onclick="addLabor()">+ New Labor</button>
-  <input id="labor-search" class="p-2 border rounded flex-1" placeholder="Search by Client or Work" oninput="filterLabor()">
-  <button class="smallbtn" onclick="exportLaborReport()">Report</button>
-</div>
+    <button class="smallbtn" onclick="addLabor()">+ New Labor</button>
+
+    <input id="labor-search"
+           class="p-2 border rounded flex-1"
+           placeholder="Search by Client or Work"
+           list="labor-suggestions"
+           oninput="updateLaborSuggestions(this.value); filterLabor();">
+
+    <datalist id="labor-suggestions"></datalist>
+
+    <button class="smallbtn" onclick="exportLaborReport()">Report</button>
+  </div>
 
   <div id="labor-rows" class="space-y-3"></div>
   <h3 class="mt-4">Saved Attendance</h3>
   <div id="saved-labor" class="mt-2"></div>
 </div>
+
 
 
 
@@ -4361,24 +4371,45 @@ function saveLabor(btn){
   const totalPay = totalDays * rate;
   const balance = Math.max(0, totalPay - totalAdvance);
 
-  // ✅ Duplicate check: same name + work + start date असेल तर तेच अपडेट कर
-  const existingIndex = DATA.labor.findIndex(x => 
-    x.name === name && x.work === work && x.start === start
-  );
+// ✅ SAME NAME = SAME ID (case-insensitive)
+const existingIndex = DATA.labor.findIndex(x =>
+  x.name.trim().toLowerCase() === name.trim().toLowerCase()
+);
 
-  let id;
-  if (existingIndex !== -1) {
-    // 🔄 Update existing record
-    id = DATA.labor[existingIndex].id;
-    DATA.labor[existingIndex] = { id, invno, client, work, name, category, rate, range, start, end, days, totalDays, totalAdvance, totalTransport, totalPay, balance };
-    console.log(`🔁 Updated existing Labor: ${id}`);
-  } else {
-    // 🆕 New record
-    DATA.counters.lab++; 
-    id = 'LAB-' + String(DATA.counters.lab).padStart(4,'0');
-    DATA.labor.push({ id, invno, client, work, name, category, rate, range, start, end, days, totalDays, totalAdvance, totalTransport, totalPay, balance });
-    console.log(`🆕 Added new Labor: ${id}`);
-  }
+
+let id;
+
+if (existingIndex !== -1) {
+  // 🔁 Same labor → SAME ID
+  id = DATA.labor[existingIndex].id;
+
+  // फक्त नवीन period add होईल
+  DATA.labor.push({
+    id, invno, client, work, name, category,
+    rate, range, start, end, days,
+    totalDays, totalAdvance, totalTransport,
+    totalPay, balance
+  });
+
+  console.log(`🔁 Existing Labor reused ID: ${id}`);
+
+} else {
+  // 🆕 Brand new labor
+  DATA.counters.lab = DATA.counters.lab || 0;
+  DATA.counters.lab++;
+
+  id = 'LAB-' + String(DATA.counters.lab).padStart(4,'0');
+
+  DATA.labor.push({
+    id, invno, client, work, name, category,
+    rate, range, start, end, days,
+    totalDays, totalAdvance, totalTransport,
+    totalPay, balance
+  });
+
+  console.log(`🆕 New Labor Created: ${id}`);
+}
+
 
   saveData(); 
   alert('✅ Labor saved: ' + id);
@@ -4457,16 +4488,17 @@ function removeCategory(){
 /* ---------- Delete & Reassign IDs (Labor) ---------- */
 function deleteLabor(id){
   if(!confirm('Delete this attendance?')) return;
+
   DATA.labor = DATA.labor.filter(x => x.id !== id);
 
-  // reassign sequential IDs and reset counter
-  DATA.labor.forEach((e,i)=> e.id = 'LAB-' + String(i+1).padStart(4,'0'));
-  DATA.counters.lab = DATA.labor.length;
   saveData();
 
-  if(typeof renderAll === 'function') renderAll();
-  if(typeof renderLaborList === 'function') renderLaborList();
+  if (typeof renderAll === 'function') renderAll();
+  if (typeof renderLaborList === 'function') renderLaborList();
+
+  alert('🗑️ Labor entry deleted');
 }
+
 
 
 function loadLabor(id){
@@ -4501,6 +4533,43 @@ function loadLabor(id){
     }
   }, 300);
 }
+
+
+function getLaborSummaryByName(laborName) {
+
+  const records = DATA.labor.filter(l =>
+    l.name.trim().toLowerCase() === laborName.trim().toLowerCase()
+  );
+
+  let totalDays = 0;
+  let totalAdvance = 0;
+  let totalTransport = 0;
+  let totalPay = 0;
+
+  records.forEach(r => {
+    totalDays += r.totalDays || 0;
+    totalAdvance += r.totalAdvance || 0;
+    totalTransport += r.totalTransport || 0;
+    totalPay += r.totalPay || 0;
+  });
+
+  const balance = Math.max(0, totalPay - totalAdvance);
+
+  return {
+    totalDays,
+    totalAdvance,
+    totalTransport,
+    totalPay,
+    balance
+  };
+}
+
+
+
+
+
+
+
 
 
 
@@ -4609,6 +4678,45 @@ function handleLaborInvoiceSelectRow(sel) {
 }
 
 
+function updateLaborSuggestions(q) {
+  const dl = document.getElementById('labor-suggestions');
+  if (!dl) return;
+
+  dl.innerHTML = '';
+  if (!q || q.length < 1) return;
+
+  const seen = new Set();
+  const query = q.toLowerCase();
+
+  DATA.labor.forEach(r => {
+
+    // 🔹 Labor Name
+    if (r.name && r.name.toLowerCase().includes(query) && !seen.has(r.name)) {
+      seen.add(r.name);
+      const opt = document.createElement('option');
+      opt.value = r.name;
+      dl.appendChild(opt);
+    }
+
+    // 🔹 Client Name
+    if (r.client && r.client.toLowerCase().includes(query) && !seen.has(r.client)) {
+      seen.add(r.client);
+      const opt = document.createElement('option');
+      opt.value = r.client;
+      dl.appendChild(opt);
+    }
+
+    // 🔹 Work Title
+    if (r.work && r.work.toLowerCase().includes(query) && !seen.has(r.work)) {
+      seen.add(r.work);
+      const opt = document.createElement('option');
+      opt.value = r.work;
+      dl.appendChild(opt);
+    }
+  });
+}
+
+
 
 /* ---------- Export / Report (Name wise All Report) ---------- */
 function exportLaborReport() {
@@ -4618,12 +4726,14 @@ function exportLaborReport() {
   let reportList = [];
   let title = '';
 
-  // ✅ फक्त Name दिलंय → त्या नावाचे सर्व invoices report मध्ये येतील
+  // ✅ फक्त Name दिलंय → त्या नावाचे सर्व records
   if (q) {
-    reportList = DATA.labor.filter(x => x.name.toLowerCase().includes(q));
+    reportList = DATA.labor.filter(x =>
+      x.name && x.name.toLowerCase().includes(q)
+    );
     title = `Full Report for Labor: ${searchInput.value}`;
   }
-  // 🔸 जर काहीच टाकलं नसेल → full report (backup)
+  // 🔸 काहीच दिलं नसेल → सर्व labor
   else {
     reportList = DATA.labor;
     title = 'All Labor Attendance Report';
@@ -4634,17 +4744,46 @@ function exportLaborReport() {
     return;
   }
 
+  // --- Totals (SUMMARY) ---
+  let grandDays = 0;
+  let grandAdvance = 0;
+  let grandTransport = 0;
+  let grandPay = 0;
+
   // --- Generate report text ---
   let text = `📋 ${title}\n\n`;
+
   reportList.forEach(r => {
     text += `🧾 ${r.id}\n`;
     if (r.invno) text += `Invoice: ${r.invno}\n`;
-    text += `Client: ${r.client}\nWork: ${r.work}\nName: ${r.name}\nRate: ₹${r.rate}\n`;
+    text += `Client: ${r.client}\n`;
+    text += `Work: ${r.work}\n`;
+    text += `Name: ${r.name}\n`;
+    text += `Rate: ₹${r.rate}\n`;
     text += `Start: ${r.start} | End: ${r.end}\n`;
     text += `Days: ${r.totalDays} | Adv: ₹${r.totalAdvance} | Transport: ₹${r.totalTransport}\n`;
     text += `Balance: ₹${r.balance}\n`;
     text += `---------------------------------\n`;
+
+    // ➕ Grand Totals
+    grandDays += r.totalDays || 0;
+    grandAdvance += r.totalAdvance || 0;
+    grandTransport += r.totalTransport || 0;
+    grandPay += r.totalPay || (r.totalDays * r.rate);
   });
+
+ const grandBalance = grandPay - grandAdvance;
+
+// --- FINAL SUMMARY ADD ---
+text += `\n==============================\n`;
+text += `📊 FINAL SUMMARY\n`;
+text += `==============================\n`;
+text += `Total Days        : ${grandDays}\n`;
+text += `Total Advance     : ₹${grandAdvance}\n`;
+text += `Total Transport   : ₹${grandTransport}\n`;
+text += `Total Balance     : ₹${grandBalance}\n`;
+text += `==============================\n`;
+
 
   // --- Share / Export via WhatsApp ---
   window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
