@@ -494,8 +494,15 @@ table tbody tr:hover {
       <label class="muted">Invoice (select)</label>
       <select id="exp-invoice-select" class="p-2 border rounded w-full"></select>
     </div>
+     
+     <input
+  type="date"
+  id="exp-filter-date"
+  class="p-2 border rounded"
+  title="Filter by Date"
+/>
 
-    <div>
+   <div>
       <label class="muted">Main Category</label>
       <div class="flex gap-2">
         <select id="cat-select" class="p-2 border rounded flex-1"></select>
@@ -2355,6 +2362,21 @@ window.addEventListener('load', () => {
 
 let expenseIdToEdit = null;
 
+/* 👇👇 इथे paste कर 👇👇 */
+el('exp-invoice-select').addEventListener('change', () => {
+  // NEW ENTRY MODE
+  expenseIdToEdit = null;
+
+  // Clear rows
+  el('exp-rows').innerHTML = '';
+
+  // Reset total
+  el('exp-total').textContent = '0.00';
+});
+
+
+
+
 function addExpenseRow(data = {}) {
     const parent = el('exp-rows');
     const row = document.createElement('tr');
@@ -2431,8 +2453,6 @@ function saveExpenses() {
   const invoiceNo = el("exp-invoice-select").value;
   if (!invoiceNo) return alert("Please select an Invoice No.");
 
-  if (!Array.isArray(DATA.categories)) DATA.categories = [];
-
   const items = [];
   const allCats = [];
 
@@ -2448,39 +2468,108 @@ function saveExpenses() {
     if (name && amount > 0) {
       items.push({ date, category, name, qty, unit, rate, amount });
       if (category) allCats.push(category);
-      if (category && !DATA.categories.includes(category)) {
-        DATA.categories.push(category);
-      }
     }
   });
 
   if (!items.length) return alert("Please add at least one valid expense item.");
 
-  const merged = {
-    id: "EXP-" + String(++DATA.counters.exp).padStart(6, "0"),
-    invoiceNo,
-    date: items.map(i => i.date).join(", "),
-    category: allCats.join(", "),
-    name: items.map(i => i.name).join(", "),
-    quantity: items.map(i => i.qty).join(", "),
-    unit: items.map(i => i.unit).join(", "),
-    rate: items.map(i => i.rate).join(", "),
-    amount: items.reduce((sum, i) => sum + i.amount, 0).toFixed(2)
-  };
+  const existing = DATA.expenses.find(e => e.invoiceNo === invoiceNo);
 
-  // ✅ जर आधीच हाच invoiceNo अस्तित्वात असेल, तर जुनी entry replace करा
-  const existingIndex = DATA.expenses.findIndex(e => e.invoiceNo === invoiceNo);
-  if (existingIndex !== -1) {
-    merged.id = DATA.expenses[existingIndex].id; // जुना ID ठेव
-    DATA.expenses[existingIndex] = merged;
-    alert(`✅ Updated: Invoice ${invoiceNo} (Replaced old entry)`);
-  } else {
-    DATA.expenses.push(merged);
-    alert(`✅ Saved new Expense for Invoice ${invoiceNo}`);
+  // 🔄 UPDATE MODE (Load → Save)
+  if (expenseIdToEdit && existing && existing.id === expenseIdToEdit) {
+
+  const oldDates = existing.date.split(',').map(s => s.trim());
+  const oldNames = existing.name.split(',').map(s => s.trim());
+  const oldQtys  = existing.quantity.split(',').map(s => s.trim());
+  const oldUnits = existing.unit.split(',').map(s => s.trim());
+  const oldRates = existing.rate.split(',').map(s => s.trim());
+  const oldCats  = existing.category.split(',').map(s => s.trim());
+
+  const selDate = el('exp-filter-date').value;
+
+  const newDates = [];
+  const newNames = [];
+  const newQtys  = [];
+  const newUnits = [];
+  const newRates = [];
+  const newCats  = [];
+
+  // keep other dates
+  oldDates.forEach((d, i) => {
+    if (d !== selDate) {
+      newDates.push(d);
+      newNames.push(oldNames[i]);
+      newQtys.push(oldQtys[i]);
+      newUnits.push(oldUnits[i]);
+      newRates.push(oldRates[i]);
+      newCats.push(oldCats[i]);
+    }
+  });
+
+  // add edited rows
+  items.forEach(it => {
+    newDates.push(it.date);
+    newNames.push(it.name);
+    newQtys.push(it.qty);
+    newUnits.push(it.unit);
+    newRates.push(it.rate);
+    newCats.push(it.category);
+  });
+
+  existing.date = newDates.join(', ');
+  existing.name = newNames.join(', ');
+  existing.quantity = newQtys.join(', ');
+  existing.unit = newUnits.join(', ');
+  existing.rate = newRates.join(', ');
+  existing.category = newCats.join(', ');
+  existing.amount = newRates.reduce(
+    (s, r, i) => s + (parseFloat(r) || 0) * (parseFloat(newQtys[i]) || 1),
+    0
+  ).toFixed(2);
+
+  expenseIdToEdit = null;
+  alert("✅ Expense Updated for Selected Date");
+}
+
+
+  // ➕ NEW ENTRY → MERGE INTO SAME INVOICE
+  else if (existing) {
+
+    existing.date     += ", " + items.map(i => i.date).join(", ");
+    existing.category += ", " + allCats.join(", ");
+    existing.name     += ", " + items.map(i => i.name).join(", ");
+    existing.quantity += ", " + items.map(i => i.qty).join(", ");
+    existing.unit     += ", " + items.map(i => i.unit).join(", ");
+    existing.rate     += ", " + items.map(i => i.rate).join(", ");
+    existing.amount = (
+      parseFloat(existing.amount) +
+      items.reduce((s,i)=>s+i.amount,0)
+    ).toFixed(2);
+
+    alert("✅ New Items Added to Invoice");
+  }
+
+  // 🆕 FIRST TIME INVOICE
+  else {
+    DATA.counters.exp = DATA.counters.exp || 0;
+    DATA.counters.exp++;
+
+    DATA.expenses.push({
+      id: "EXP-" + String(DATA.counters.exp).padStart(6, "0"),
+      invoiceNo,
+      date: items.map(i => i.date).join(", "),
+      category: allCats.join(", "),
+      name: items.map(i => i.name).join(", "),
+      quantity: items.map(i => i.qty).join(", "),
+      unit: items.map(i => i.unit).join(", "),
+      rate: items.map(i => i.rate).join(", "),
+      amount: items.reduce((s,i)=>s+i.amount,0).toFixed(2)
+    });
+
+    alert("✅ First Expense Saved for Invoice");
   }
 
   saveData();
-  renderCategoryList();
   el("exp-rows").innerHTML = "";
   el("exp-total").textContent = "0.00";
   renderExpensesList();
@@ -2490,9 +2579,13 @@ function saveExpenses() {
 
 
 
+
+
 function loadExpense(id) {
   const rec = DATA.expenses.find(e => e.id === id);
   if (!rec) return alert("Expense not found!");
+
+  expenseIdToEdit = rec.id;   // 🔥 MOST IMPORTANT LINE
 
   show('exp');
   el('exp-invoice-select').value = rec.invoiceNo;
@@ -2500,26 +2593,24 @@ function loadExpense(id) {
 
   const dates = rec.date.split(',').map(s => s.trim());
   const items = rec.name.split(',').map(s => s.trim());
-  const qtys = rec.quantity.split(',').map(s => s.trim());
+  const qtys  = rec.quantity.split(',').map(s => s.trim());
   const units = rec.unit.split(',').map(s => s.trim());
   const rates = rec.rate.split(',').map(s => s.trim());
-  const cats = rec.category.split(',').map(s => s.trim());
+  const cats  = rec.category.split(',').map(s => s.trim());
 
-  const len = Math.max(items.length, qtys.length, rates.length);
-
-  for (let i = 0; i < len; i++) {
+  for (let i = 0; i < items.length; i++) {
     addExpenseRow({
-      date: dates[i] || new Date().toISOString().slice(0, 10),
-      name: items[i] || '',
-      category: cats[i] || '',        // ✅ use 'category' instead of 'cat'
-      quantity: qtys[i] || 1,
-      unit: units[i] || '',
-      rate: rates[i] || 0
+      date: dates[i],
+      name: items[i],
+      category: cats[i],
+      quantity: qtys[i],
+      unit: units[i],
+      rate: rates[i]
     });
   }
-
-  expenseIdToEdit = id;
 }
+
+
 
 
 
@@ -2834,6 +2925,43 @@ function loadExpensesByInvoice(invoiceNo) {
     });
 }
 
+el('exp-filter-date').addEventListener('change', () => {
+  const invoiceNo = el('exp-invoice-select').value;
+  const selDate = el('exp-filter-date').value;
+  if (!invoiceNo || !selDate) return;
+
+  const rec = DATA.expenses.find(e => e.invoiceNo === invoiceNo);
+  if (!rec) return alert("No data for this invoice");
+  expenseIdToEdit = rec.id;   // ✅ ADD THIS LINE
+  // clear rows
+  el('exp-rows').innerHTML = '';
+  el('exp-total').textContent = '0.00';
+
+  const dates = rec.date.split(',').map(s => s.trim());
+  const names = rec.name.split(',').map(s => s.trim());
+  const qtys  = rec.quantity.split(',').map(s => s.trim());
+  const units = rec.unit.split(',').map(s => s.trim());
+  const rates = rec.rate.split(',').map(s => s.trim());
+  const cats  = rec.category.split(',').map(s => s.trim());
+
+  let total = 0;
+
+  dates.forEach((d, i) => {
+    if (d === selDate) {
+      addExpenseRow({
+        date: d,
+        name: names[i],
+        quantity: qtys[i],
+        unit: units[i],
+        rate: rates[i],
+        category: cats[i]
+      });
+      total += parseFloat(rates[i] || 0) * parseFloat(qtys[i] || 1);
+    }
+  });
+
+  el('exp-total').textContent = total.toFixed(2);
+});
 
 
 
@@ -3102,6 +3230,8 @@ function addOrderRow(data = {}) {
 
 // ✅ SAVE function (Category per item save होईल)
 function saveOrder() {
+  const filterDate = el('exp-filter-date')?.value || '';
+  const invoiceNo = el("exp-invoice-select").value;
   const date = el('ord-date').value;
   const client = el('ord-client').value.trim();
   const work = el('ord-work').value.trim();
@@ -3134,15 +3264,31 @@ function saveOrder() {
 }
 
 
-  const rec = {
-    id, date, client, work, status, invoiceId,
-    merchantName, merchantContact, paymentStatus, items
-  };
+const rec = {
+  id,
+  date,
+  client,
+  work,
+  status,
+  invoiceId,
+  merchantName,
+  merchantContact,
+  paymentStatus,
+  items,
+  expenseTransferred: false   // ✅ MUST
+};
+
+
+
 
   const idx = DATA.orders.findIndex(o => o.id === id);
   if (idx !== -1) {
     DATA.orders[idx] = rec;
+    if (rec.expenseTransferred) {
+    updateExpenseFromOrder(rec);
+  }
     alert("ऑर्डर अपडेट झाली ✅: " + id);
+  
   } else {
     DATA.orders.push(rec);
     alert("ऑर्डर सेव्ह झाली ✅: " + id);
@@ -3150,7 +3296,7 @@ function saveOrder() {
 
   selectedOrderId = null;
   saveData();
-  syncReceivedOrdersToExpensesCombined();
+  //syncReceivedOrdersToExpensesCombined();
   renderOrders();
 
   // form clear
@@ -3192,10 +3338,22 @@ function renderOrders() {
         html += `
             </ul>
             <div class="flex gap-2 mt-2"> 
-                <button class="smallbtn" onclick="loadOrder('${r.id}')">Load</button> 
-                <button class="smallbtn" onclick="shareOrder('${r.id}')">Share</button> 
-                <button class="smallbtn bg-red-500" onclick="deleteOrder('${r.id}')">Delete</button> 
-            </div>
+  <button class="smallbtn" onclick="loadOrder('${r.id}')">Load</button> 
+  <button class="smallbtn" onclick="shareOrder('${r.id}')">Share</button> 
+
+  ${
+    r.expenseTransferred
+      ? `<button class="smallbtn bg-gray-500" disabled>Transferred</button>`
+      : `<button class="smallbtn bg-green-600"
+          onclick="transferOrderToExpenses('${r.id}')">
+          Transfer
+        </button>`
+  }
+
+  <button class="smallbtn bg-red-500" onclick="deleteOrder('${r.id}')">Delete</button> 
+</div>
+
+
         `;
         div.innerHTML = html;
         box.appendChild(div);
@@ -3472,6 +3630,147 @@ function getNextOrderId() {
 }
 
 
+function transferOrderToExpenses(orderId) {
+  const order = DATA.orders.find(o => o.id === orderId);
+  if (!order) return alert("Order not found");
+
+  if (order.expenseTransferred)
+    return alert("हा Order आधीच Expenses मध्ये टाकला आहे");
+
+  if (!order.invoiceId)
+    return alert("Invoice No नाही");
+
+  const invoiceNo = order.invoiceId;
+  const items = order.items || [];
+
+  let existing = DATA.expenses.find(
+    e => e.invoiceNo === invoiceNo && e.source === "order"
+  );
+
+  // --- Merge into ONE row ---
+  if (existing) {
+    const names = existing.name.split(',').map(s => s.trim());
+    const qtys = existing.quantity.split(',').map(s => s.trim());
+    const units = existing.unit.split(',').map(s => s.trim());
+    const rates = existing.rate.split(',').map(s => s.trim());
+    const cats = existing.category.split(',').map(s => s.trim());
+
+    items.forEach(it => {
+      names.push(it.part);
+      qtys.push(it.qty);
+      units.push(it.unit);
+      rates.push(it.rate);
+      cats.push(it.category || "Order Material");
+    });
+
+    existing.name = names.join(', ');
+    existing.quantity = qtys.join(', ');
+    existing.unit = units.join(', ');
+    existing.rate = rates.join(', ');
+    existing.category = cats.join(', ');
+
+    existing.amount = names.reduce((sum, _, i) => {
+      return sum + (parseFloat(qtys[i]) || 0) * (parseFloat(rates[i]) || 0);
+    }, 0).toFixed(2);
+
+  } else {
+    const totalAmt = items.reduce(
+      (s, it) => s + (parseFloat(it.amount) || 0), 0
+    );
+
+    DATA.expenses.push({
+      id: 'EXP-' + String(++DATA.counters.exp).padStart(6, '0'),
+      invoiceNo,
+      date: order.date,
+      category: items.map(i => i.category || "Order Material").join(', '),
+      name: items.map(i => i.part).join(', '),
+      quantity: items.map(i => i.qty).join(', '),
+      unit: items.map(i => i.unit).join(', '),
+      rate: items.map(i => i.rate).join(', '),
+      amount: totalAmt.toFixed(2),
+      source: "order",
+      orderId: order.id
+    });
+  }
+
+  // ✅ lock the order
+  order.expenseTransferred = true;
+
+  saveData();
+  renderOrders();
+  renderExpensesList();
+
+  alert("Order Expenses मध्ये transfer झाला ✔");
+}
+
+
+
+function updateExpenseFromOrder(order) {
+  if (!order.invoiceId) return;
+
+  const exp = DATA.expenses.find(
+    e => e.source === "order" && e.orderId === order.id
+  );
+
+  if (!exp) return; // safety
+
+  const items = order.items || [];
+
+  exp.date = order.date;
+  exp.category = items.map(i => i.category || "Order Material").join(', ');
+  exp.name = items.map(i => i.part).join(', ');
+  exp.quantity = items.map(i => i.qty).join(', ');
+  exp.unit = items.map(i => i.unit).join(', ');
+  exp.rate = items.map(i => i.rate).join(', ');
+
+  exp.amount = items.reduce((sum, it) => {
+    return sum + (parseFloat(it.qty) || 0) * (parseFloat(it.rate) || 0);
+  }, 0).toFixed(2);
+}
+
+
+
+
+el('exp-filter-date').addEventListener('change', () => {
+  const invoiceNo = el('exp-invoice-select').value;
+  const selDate = el('exp-filter-date').value;
+  if (!invoiceNo || !selDate) return;
+
+  const rec = DATA.expenses.find(e => e.invoiceNo === invoiceNo);
+  if (!rec) return alert("No data for this invoice");
+
+  // clear rows
+  el('exp-rows').innerHTML = '';
+  el('exp-total').textContent = '0.00';
+
+  const dates = rec.date.split(',').map(s => s.trim());
+  const names = rec.name.split(',').map(s => s.trim());
+  const qtys  = rec.quantity.split(',').map(s => s.trim());
+  const units = rec.unit.split(',').map(s => s.trim());
+  const rates = rec.rate.split(',').map(s => s.trim());
+  const cats  = rec.category.split(',').map(s => s.trim());
+
+  let total = 0;
+
+  dates.forEach((d, i) => {
+    if (d === selDate) {
+      addExpenseRow({
+        date: d,
+        name: names[i],
+        quantity: qtys[i],
+        unit: units[i],
+        rate: rates[i],
+        category: cats[i]
+      });
+      total += parseFloat(rates[i] || 0) * parseFloat(qtys[i] || 1);
+    }
+  });
+
+  el('exp-total').textContent = total.toFixed(2);
+});
+
+
+
 /* -------------------------------------------------------------
  * 6️⃣ PAYMENTS (Received Payments) (Local Storage Implementation)
  * ------------------------------------------------------------- */
@@ -3546,23 +3845,21 @@ function savePayments() {
     id = 'PAY-' + String(DATA.counters.pay).padStart(4,'0');
     
     // 2. Add new entries with the new ID (or existing ID if there was a group before deletion, though the previous delete step handles the clearing)
-    newEntries.forEach((en, i) => {
-        // For simplicity, we assign a unique ID to the entire group/invoice set in Payments.
-        // If we want each row to be independent (like Expenses), we need a different ID generation.
-        // Sticking to original logic: The ID is the 'grouping' ID.
-        const record = { 
-            id: invNo, // Using Invoice No as the grouping ID for simplicity and connection
-            client, 
-            contact, 
-            work, 
-            invoiceNo: invNo, 
-            projectCost: i===0 ? projectCost : 0, 
-            date: en.date, 
-            received: en.received, 
-            note: en.note 
-        };
-        DATA.payments.push(record);
-    });
+    newEntries.forEach(en => {
+    const record = { 
+        id: invNo,                 // grouping by invoice
+        client, 
+        contact, 
+        work, 
+        invoiceNo: invNo, 
+        projectCost: projectCost,  // ✅ ALWAYS UPDATE
+        date: en.date, 
+        received: en.received, 
+        note: en.note 
+    };
+    DATA.payments.push(record);
+});
+
 
     saveData(); 
     alert("Payments saved/updated for Invoice: " + invNo);
