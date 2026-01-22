@@ -2452,7 +2452,6 @@ function calculateExpenseAmount(input) {
 function saveExpenses() {
   const invoiceNo = el("exp-invoice-select").value;
   if (!invoiceNo) return alert("Please select an Invoice No.");
-
   const items = [];
   const allCats = [];
 
@@ -2478,73 +2477,77 @@ function saveExpenses() {
   // 🔄 UPDATE MODE (Load → Save)
   if (expenseIdToEdit && existing && existing.id === expenseIdToEdit) {
 
-  const oldDates = existing.date.split(',').map(s => s.trim());
-  const oldNames = existing.name.split(',').map(s => s.trim());
-  const oldQtys  = existing.quantity.split(',').map(s => s.trim());
-  const oldUnits = existing.unit.split(',').map(s => s.trim());
-  const oldRates = existing.rate.split(',').map(s => s.trim());
-  const oldCats  = existing.category.split(',').map(s => s.trim());
+    const oldDates = existing.date.split(',').map(s => s.trim());
+    const oldNames = existing.name.split(',').map(s => s.trim());
+    const oldQtys  = existing.quantity.split(',').map(s => s.trim());
+    const oldUnits = existing.unit.split(',').map(s => s.trim());
+    const oldRates = existing.rate.split(',').map(s => s.trim());
+    const oldCats  = existing.category.split(',').map(s => s.trim());
 
-  const selDate = el('exp-filter-date').value;
+    const selDate = el('exp-filter-date').value;
 
-  const newDates = [];
-  const newNames = [];
-  const newQtys  = [];
-  const newUnits = [];
-  const newRates = [];
-  const newCats  = [];
+    const newDates = [];
+    const newNames = [];
+    const newQtys  = [];
+    const newUnits = [];
+    const newRates = [];
+    const newCats  = [];
 
-  // keep other dates
-  oldDates.forEach((d, i) => {
-    if (d !== selDate) {
-      newDates.push(d);
-      newNames.push(oldNames[i]);
-      newQtys.push(oldQtys[i]);
-      newUnits.push(oldUnits[i]);
-      newRates.push(oldRates[i]);
-      newCats.push(oldCats[i]);
-    }
-  });
+    // ✅ keep only OTHER dates (same date removed)
+    oldDates.forEach((d, i) => {
+      if (String(d).trim() !== String(selDate).trim()) {
+        newDates.push(d);
+        newNames.push(oldNames[i]);
+        newQtys.push(oldQtys[i]);
+        newUnits.push(oldUnits[i]);
+        newRates.push(oldRates[i]);
+        newCats.push(oldCats[i]);
+      }
+    });
 
-  // add edited rows
-  items.forEach(it => {
-    newDates.push(it.date);
-    newNames.push(it.name);
-    newQtys.push(it.qty);
-    newUnits.push(it.unit);
-    newRates.push(it.rate);
-    newCats.push(it.category);
-  });
+    // add edited rows
+    items.forEach(it => {
+      newDates.push(it.date);
+      newNames.push(it.name);
+      newQtys.push(it.qty);
+      newUnits.push(it.unit);
+      newRates.push(it.rate);
+      newCats.push(it.category);
+    });
 
-  existing.date = newDates.join(', ');
-  existing.name = newNames.join(', ');
-  existing.quantity = newQtys.join(', ');
-  existing.unit = newUnits.join(', ');
-  existing.rate = newRates.join(', ');
-  existing.category = newCats.join(', ');
-  existing.amount = newRates.reduce(
-    (s, r, i) => s + (parseFloat(r) || 0) * (parseFloat(newQtys[i]) || 1),
-    0
-  ).toFixed(2);
+    existing.date = newDates.join(', ');
+    existing.name = newNames.join(', ');
+    existing.quantity = newQtys.join(', ');
+    existing.unit = newUnits.join(', ');
+    existing.rate = newRates.join(', ');
+    existing.category = newCats.join(', ');
+    existing.amount = newRates.reduce(
+      (s, r, i) => s + (parseFloat(r) || 0) * (parseFloat(newQtys[i]) || 1),
+      0
+    ).toFixed(2);
 
-  expenseIdToEdit = null;
-  alert("✅ Expense Updated for Selected Date");
-}
+    expenseIdToEdit = null;
+    alert("✅ Expense Updated for Selected Date");
+  }
 
-
-  // ➕ NEW ENTRY → MERGE INTO SAME INVOICE
+  // ➕ NEW ENTRY → MERGE INTO SAME INVOICE (NO DUPLICATE DATE)
   else if (existing) {
 
-    existing.date     += ", " + items.map(i => i.date).join(", ");
-    existing.category += ", " + allCats.join(", ");
-    existing.name     += ", " + items.map(i => i.name).join(", ");
-    existing.quantity += ", " + items.map(i => i.qty).join(", ");
-    existing.unit     += ", " + items.map(i => i.unit).join(", ");
-    existing.rate     += ", " + items.map(i => i.rate).join(", ");
-    existing.amount = (
-      parseFloat(existing.amount) +
-      items.reduce((s,i)=>s+i.amount,0)
-    ).toFixed(2);
+    const existingDates = existing.date.split(',').map(d => d.trim());
+
+    items.forEach(it => {
+      if (!existingDates.includes(it.date)) {
+        existing.date     += ", " + it.date;
+        existing.category += ", " + it.category;
+        existing.name     += ", " + it.name;
+        existing.quantity += ", " + it.qty;
+        existing.unit     += ", " + it.unit;
+        existing.rate     += ", " + it.rate;
+        existing.amount = (
+          parseFloat(existing.amount) + it.amount
+        ).toFixed(2);
+      }
+    });
 
     alert("✅ New Items Added to Invoice");
   }
@@ -2579,17 +2582,18 @@ function saveExpenses() {
 
 
 
-
-
 function loadExpense(id) {
   const rec = DATA.expenses.find(e => e.id === id);
   if (!rec) return alert("Expense not found!");
 
-  expenseIdToEdit = rec.id;   // 🔥 MOST IMPORTANT LINE
+  expenseIdToEdit = rec.id;   // 🔥 EDIT MODE ON
 
   show('exp');
   el('exp-invoice-select').value = rec.invoiceNo;
   el('exp-rows').innerHTML = '';
+
+  // 🔑 VERY IMPORTANT (WITHOUT THIS DUPLICATE WILL HAPPEN)
+  el("exp-filter-date").value = rec.date.split(',')[0].trim();
 
   const dates = rec.date.split(',').map(s => s.trim());
   const items = rec.name.split(',').map(s => s.trim());
@@ -2609,6 +2613,7 @@ function loadExpense(id) {
     });
   }
 }
+
 
 
 
@@ -3644,8 +3649,9 @@ function transferOrderToExpenses(orderId) {
   const items = order.items || [];
 
   let existing = DATA.expenses.find(
-    e => e.invoiceNo === invoiceNo && e.source === "order"
-  );
+  e => e.invoiceNo === invoiceNo
+);
+
 
   // --- Merge into ONE row ---
   if (existing) {
