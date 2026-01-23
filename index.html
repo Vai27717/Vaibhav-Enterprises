@@ -2584,35 +2584,31 @@ function saveExpenses() {
 
 function loadExpense(id) {
   const rec = DATA.expenses.find(e => e.id === id);
-  if (!rec) return alert("Expense not found!");
-
-  expenseIdToEdit = rec.id;   // 🔥 EDIT MODE ON
-
-  show('exp');
-  el('exp-invoice-select').value = rec.invoiceNo;
-  el('exp-rows').innerHTML = '';
-
-  // 🔑 VERY IMPORTANT (WITHOUT THIS DUPLICATE WILL HAPPEN)
-  el("exp-filter-date").value = rec.date.split(',')[0].trim();
-
-  const dates = rec.date.split(',').map(s => s.trim());
-  const items = rec.name.split(',').map(s => s.trim());
-  const qtys  = rec.quantity.split(',').map(s => s.trim());
-  const units = rec.unit.split(',').map(s => s.trim());
-  const rates = rec.rate.split(',').map(s => s.trim());
-  const cats  = rec.category.split(',').map(s => s.trim());
-
-  for (let i = 0; i < items.length; i++) {
-    addExpenseRow({
-      date: dates[i],
-      name: items[i],
-      category: cats[i],
-      quantity: qtys[i],
-      unit: units[i],
-      rate: rates[i]
-    });
+  if (!rec) {
+    alert("Expense not found!");
+    return;
   }
+
+  // 🔥 EDIT MODE ON (खूप महत्त्वाचं)
+  expenseIdToEdit = rec.id;
+
+  // Expenses section उघडा
+  show('exp');
+
+  // Invoice set करा
+  el('exp-invoice-select').value = rec.invoiceNo;
+
+  // ❌ Rows लगेच दाखवू नका
+  el('exp-rows').innerHTML = "";
+
+  // ❌ Date clear करा (user नेच select करावी)
+  el('exp-filter-date').value = "";
+
+  // ℹ️ User ला clear message
+  alert("ℹ️ Date select करा, मग expenses edit करून Save करा");
 }
+
+
 
 
 
@@ -2936,9 +2932,11 @@ el('exp-filter-date').addEventListener('change', () => {
   if (!invoiceNo || !selDate) return;
 
   const rec = DATA.expenses.find(e => e.invoiceNo === invoiceNo);
-  if (!rec) return alert("No data for this invoice");
-  expenseIdToEdit = rec.id;   // ✅ ADD THIS LINE
-  // clear rows
+  if (!rec) {
+    alert("ℹ️ या Date साठी Expenses नाहीत");
+    return;
+  }
+
   el('exp-rows').innerHTML = '';
   el('exp-total').textContent = '0.00';
 
@@ -2949,10 +2947,17 @@ el('exp-filter-date').addEventListener('change', () => {
   const rates = rec.rate.split(',').map(s => s.trim());
   const cats  = rec.category.split(',').map(s => s.trim());
 
+  // 🛡️ SAFETY — old broken data साठी
+  while (dates.length < names.length) {
+    dates.push(dates[0]);
+  }
+
   let total = 0;
+  let found = false;
 
   dates.forEach((d, i) => {
     if (d === selDate) {
+      found = true;
       addExpenseRow({
         date: d,
         name: names[i],
@@ -2961,13 +2966,88 @@ el('exp-filter-date').addEventListener('change', () => {
         rate: rates[i],
         category: cats[i]
       });
-      total += parseFloat(rates[i] || 0) * parseFloat(qtys[i] || 1);
+
+      total +=
+        (parseFloat(qtys[i]) || 0) *
+        (parseFloat(rates[i]) || 0);
     }
   });
+
+  if (!found) {
+    alert("ℹ️ या Date साठी Expenses नाहीत");
+  }
 
   el('exp-total').textContent = total.toFixed(2);
 });
 
+
+function loadExpenseByDate() {
+  const invoiceNo = el("exp-invoice-select").value;
+  const selDate   = el("exp-filter-date").value;
+  if (!invoiceNo || !selDate) return;
+
+  const rec = DATA.expenses.find(e => e.invoiceNo === invoiceNo);
+  if (!rec) return;
+
+  // 🔥 EDIT MODE
+  expenseIdToEdit = rec.id;
+
+  // clear UI rows
+  el("exp-rows").innerHTML = "";
+
+  const dates = rec.date.split(',').map(s => s.trim());
+  const names = rec.name.split(',').map(s => s.trim());
+  const qtys  = rec.quantity.split(',').map(s => s.trim());
+  const units = rec.unit.split(',').map(s => s.trim());
+  const rates = rec.rate.split(',').map(s => s.trim());
+  const cats  = rec.category.split(',').map(s => s.trim());
+
+  let rowCount = 0;
+
+  for (let i = 0; i < names.length; i++) {
+    // ⭐ IMPORTANT FIX
+    // जर date array मध्ये एकच date असेल
+    // तर ती सर्व items साठी लागू करा
+    const rowDate = dates[i] || dates[0];
+
+    if (rowDate === selDate) {
+      rowCount++;
+      addExpenseRow({
+        date: rowDate,
+        name: names[i],
+        category: cats[i],
+        quantity: qtys[i],
+        unit: units[i],
+        rate: rates[i]
+      });
+    }
+  }
+
+  if (rowCount === 0) {
+    alert("ℹ️ या Date साठी Expenses नाहीत");
+  }
+}
+
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  el("exp-invoice-select")?.addEventListener("change", () => {
+    const inv = el("exp-invoice-select").value;
+    const rec = DATA.expenses.find(e => e.invoiceNo === inv);
+
+    expenseIdToEdit = rec ? rec.id : null;
+    el("exp-rows").innerHTML = ""; // clean slate
+  });
+
+});
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  el("exp-filter-date")?.addEventListener("change", loadExpenseByDate);
+});
 
 
 /* -------------------------------------------------------------
@@ -3636,6 +3716,8 @@ function getNextOrderId() {
 
 
 function transferOrderToExpenses(orderId) {
+  expenseIdToEdit = null;   // force NEW entry
+
   const order = DATA.orders.find(o => o.id === orderId);
   if (!order) return alert("Order not found");
 
@@ -3648,18 +3730,21 @@ function transferOrderToExpenses(orderId) {
   const invoiceNo = order.invoiceId;
   const items = order.items || [];
 
-  let existing = DATA.expenses.find(
-  e => e.invoiceNo === invoiceNo
-);
+  // 🔍 same invoice expense आहे का
+  let existing = DATA.expenses.find(e => e.invoiceNo === invoiceNo);
 
-
-  // --- Merge into ONE row ---
+  // ===============================
+  // 🔁 IF EXPENSE ALREADY EXISTS
+  // ===============================
   if (existing) {
     const names = existing.name.split(',').map(s => s.trim());
-    const qtys = existing.quantity.split(',').map(s => s.trim());
+    const qtys  = existing.quantity.split(',').map(s => s.trim());
     const units = existing.unit.split(',').map(s => s.trim());
     const rates = existing.rate.split(',').map(s => s.trim());
-    const cats = existing.category.split(',').map(s => s.trim());
+    const cats  = existing.category.split(',').map(s => s.trim());
+    const dates = existing.date
+      ? existing.date.split(',').map(s => s.trim())
+      : [];
 
     items.forEach(it => {
       names.push(it.part);
@@ -3667,6 +3752,9 @@ function transferOrderToExpenses(orderId) {
       units.push(it.unit);
       rates.push(it.rate);
       cats.push(it.category || "Order Material");
+
+      // ⭐⭐⭐ MOST IMPORTANT FIX ⭐⭐⭐
+      dates.push(order.date);
     });
 
     existing.name = names.join(', ');
@@ -3674,12 +3762,20 @@ function transferOrderToExpenses(orderId) {
     existing.unit = units.join(', ');
     existing.rate = rates.join(', ');
     existing.category = cats.join(', ');
+    existing.date = dates.join(', ');
 
+    // 🔢 amount recalc
     existing.amount = names.reduce((sum, _, i) => {
-      return sum + (parseFloat(qtys[i]) || 0) * (parseFloat(rates[i]) || 0);
+      return sum +
+        (parseFloat(qtys[i]) || 0) *
+        (parseFloat(rates[i]) || 0);
     }, 0).toFixed(2);
 
-  } else {
+  }
+  // ===============================
+  // ➕ NEW EXPENSE CREATE
+  // ===============================
+  else {
     const totalAmt = items.reduce(
       (s, it) => s + (parseFloat(it.amount) || 0), 0
     );
@@ -3687,19 +3783,23 @@ function transferOrderToExpenses(orderId) {
     DATA.expenses.push({
       id: 'EXP-' + String(++DATA.counters.exp).padStart(6, '0'),
       invoiceNo,
-      date: order.date,
+
+      // ⭐⭐⭐ EACH ITEM HAS DATE ⭐⭐⭐
+      date: items.map(() => order.date).join(', '),
+
       category: items.map(i => i.category || "Order Material").join(', '),
       name: items.map(i => i.part).join(', '),
       quantity: items.map(i => i.qty).join(', '),
       unit: items.map(i => i.unit).join(', '),
       rate: items.map(i => i.rate).join(', '),
       amount: totalAmt.toFixed(2),
+
       source: "order",
       orderId: order.id
     });
   }
 
-  // ✅ lock the order
+  // 🔒 order lock
   order.expenseTransferred = true;
 
   saveData();
