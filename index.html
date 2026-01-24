@@ -2452,29 +2452,39 @@ function calculateExpenseAmount(input) {
 function saveExpenses() {
   const invoiceNo = el("exp-invoice-select").value;
   if (!invoiceNo) return alert("Please select an Invoice No.");
+
   const items = [];
   const allCats = [];
 
   document.querySelectorAll("#exp-rows .expense-row").forEach(row => {
     const name = row.querySelector(".exp-name").value.trim();
-    const qty = row.querySelector(".exp-qty").value.trim();
+    const qty  = row.querySelector(".exp-qty").value.trim();
     const unit = row.querySelector(".exp-unit").value.trim();
     const rate = row.querySelector(".exp-rate").value.trim();
     const amount = parseFloat(row.querySelector(".exp-amount").value) || 0;
     const category = row.querySelector(".exp-cat").value.trim();
     const date = row.querySelector(".exp-date").value;
 
-    if (name && amount > 0) {
+    // ✅ STRICT validation (date compulsory)
+    if (name && amount > 0 && date) {
       items.push({ date, category, name, qty, unit, rate, amount });
       if (category) allCats.push(category);
     }
   });
 
-  if (!items.length) return alert("Please add at least one valid expense item.");
+  /* -------------------------
+     MANUAL ENTRY DATE CHECK
+  --------------------------*/
+  if (!expenseIdToEdit && items.length === 0) {
+    alert("Please select Date and add at least one expense item.");
+    return;
+  }
 
   const existing = DATA.expenses.find(e => e.invoiceNo === invoiceNo);
 
-  // 🔄 UPDATE MODE (Load → Save)
+  /* =========================
+     UPDATE MODE (Load → Save)
+  ==========================*/
   if (expenseIdToEdit && existing && existing.id === expenseIdToEdit) {
 
     const oldDates = existing.date.split(',').map(s => s.trim());
@@ -2484,7 +2494,7 @@ function saveExpenses() {
     const oldRates = existing.rate.split(',').map(s => s.trim());
     const oldCats  = existing.category.split(',').map(s => s.trim());
 
-    const selDate = el('exp-filter-date').value;
+    const selDate = el("exp-filter-date").value;
 
     const newDates = [];
     const newNames = [];
@@ -2493,9 +2503,9 @@ function saveExpenses() {
     const newRates = [];
     const newCats  = [];
 
-    // ✅ keep only OTHER dates (same date removed)
+    // ✅ Keep only OTHER dates
     oldDates.forEach((d, i) => {
-      if (String(d).trim() !== String(selDate).trim()) {
+      if (String(d) !== String(selDate)) {
         newDates.push(d);
         newNames.push(oldNames[i]);
         newQtys.push(oldQtys[i]);
@@ -2505,7 +2515,7 @@ function saveExpenses() {
       }
     });
 
-    // add edited rows
+    // ➕ Add edited rows
     items.forEach(it => {
       newDates.push(it.date);
       newNames.push(it.name);
@@ -2515,44 +2525,55 @@ function saveExpenses() {
       newCats.push(it.category);
     });
 
-    existing.date = newDates.join(', ');
-    existing.name = newNames.join(', ');
-    existing.quantity = newQtys.join(', ');
-    existing.unit = newUnits.join(', ');
-    existing.rate = newRates.join(', ');
-    existing.category = newCats.join(', ');
-    existing.amount = newRates.reduce(
-      (s, r, i) => s + (parseFloat(r) || 0) * (parseFloat(newQtys[i]) || 1),
-      0
-    ).toFixed(2);
+    // 🗑️ If everything deleted → remove invoice
+    if (newDates.length === 0) {
+      DATA.expenses = DATA.expenses.filter(e => e.id !== existing.id);
+      alert("✅ Expense Deleted Successfully");
+    } else {
+      existing.date     = newDates.join(", ");
+      existing.name     = newNames.join(", ");
+      existing.quantity = newQtys.join(", ");
+      existing.unit     = newUnits.join(", ");
+      existing.rate     = newRates.join(", ");
+      existing.category = newCats.join(", ");
+      existing.amount = newRates.reduce(
+        (s, r, i) => s + (parseFloat(r) || 0) * (parseFloat(newQtys[i]) || 1),
+        0
+      ).toFixed(2);
+
+      alert("✅ Expense Updated Successfully");
+    }
 
     expenseIdToEdit = null;
-    alert("✅ Expense Updated for Selected Date");
   }
 
-  // ➕ NEW ENTRY → MERGE INTO SAME INVOICE (NO DUPLICATE DATE)
+  /* =========================
+     NEW ENTRY → MERGE MODE
+  ==========================*/
   else if (existing) {
 
-    const existingDates = existing.date.split(',').map(d => d.trim());
+    const exDates = existing.date.split(',').map(d => d.trim());
 
     items.forEach(it => {
-      if (!existingDates.includes(it.date)) {
+      if (!exDates.includes(it.date)) {
         existing.date     += ", " + it.date;
-        existing.category += ", " + it.category;
         existing.name     += ", " + it.name;
         existing.quantity += ", " + it.qty;
         existing.unit     += ", " + it.unit;
         existing.rate     += ", " + it.rate;
+        existing.category += ", " + it.category;
         existing.amount = (
           parseFloat(existing.amount) + it.amount
         ).toFixed(2);
       }
     });
 
-    alert("✅ New Items Added to Invoice");
+    alert("✅ New Expense Added");
   }
 
-  // 🆕 FIRST TIME INVOICE
+  /* =========================
+     FIRST TIME SAVE
+  ==========================*/
   else {
     DATA.counters.exp = DATA.counters.exp || 0;
     DATA.counters.exp++;
@@ -2566,12 +2587,15 @@ function saveExpenses() {
       quantity: items.map(i => i.qty).join(", "),
       unit: items.map(i => i.unit).join(", "),
       rate: items.map(i => i.rate).join(", "),
-      amount: items.reduce((s,i)=>s+i.amount,0).toFixed(2)
+      amount: items.reduce((s, i) => s + i.amount, 0).toFixed(2)
     });
 
-    alert("✅ First Expense Saved for Invoice");
+    alert("✅ Expense Saved");
   }
 
+  /* =========================
+     FINAL RESET
+  ==========================*/
   saveData();
   el("exp-rows").innerHTML = "";
   el("exp-total").textContent = "0.00";
