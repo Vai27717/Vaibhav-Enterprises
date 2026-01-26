@@ -286,6 +286,105 @@ table tbody tr:hover {
 }
 
 
+
+
+.modal {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  z-index:999;
+}
+.modal-content {
+  background:#fff;
+  padding:20px;
+  width:480px;
+  margin:40px auto;
+  border-radius:8px;
+}
+.close { float:right; cursor:pointer; }
+
+
+/* Completion Modal – Proper Form Alignment */
+#completionModal input,
+#completionModal textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+/* Long answer field same width as form */
+#completionModal textarea {
+  resize: vertical;   /* user height बदलू शकतो */
+  min-height: 120px;
+}
+
+
+/* Common Modal */
+.modal {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  z-index:999;
+}
+
+/* Agreement Modal Card */
+/* AGREEMENT MODAL – FIXED & SCROLLABLE */
+
+#agreementModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000;
+}
+
+/* CARD */
+#agreementModal .modal-content {
+  background: #f2f2f2;          /* LIGHT GREY */
+  width: 520px;
+  max-height: 85vh;             /* 🔥 scroll enable */
+  overflow-y: auto;             /* 🔥 scroll enable */
+  padding: 20px;
+  margin: 40px auto;
+  border-radius: 8px;
+}
+
+/* LABELS */
+#agreementModal label {
+  display: block;
+  font-weight: bold;
+  margin-top: 10px;
+  margin-bottom: 4px;
+  color: #000;                  /* 🔥 visible */
+}
+
+/* INPUTS */
+#agreementModal input,
+#agreementModal textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #bbb;
+  font-size: 14px;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+  background: #fff;
+}
+
+/* BUTTONS */
+#agreementModal .agreement-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 15px;
+}
+
 </style>
 </head>
 <body class="p-4 md:p-8">
@@ -414,7 +513,16 @@ table tbody tr:hover {
   <div id="est-items" class="mt-3 space-y-2"></div>
   <div class="mt-2">
     <button class="smallbtn" type="button" onclick="addItem('est')">+ Add Item</button>
+    <button onclick="openCompletionModal()">Completions</button>
+       <select id="estimateSelect" onchange="onEstimateSelect()">
+  <option value="">-- Select Estimate --</option>
+  
+
+</select>
+
+<button onclick="openAgreementModal()">Agreement</button>
   </div>
+
 
   <div class="mt-3 flex justify-between items-center">
     <div class="muted">
@@ -436,12 +544,13 @@ table tbody tr:hover {
     <button class="smallbtn" type="button" onclick="exportEstimatePDF()">PDF</button>
     <button onclick="toggleSection('saved-est-list', this)" class="smallbtn mt-4">
   ➕ Show Saved Estimates
-    </div>
+   </div>
     
-<h3 class="mt-4 font-semibold">Saved Estimates</h3>
+    
+  <h3 class="mt-4 font-semibold">Saved Estimates</h3>
   <div id="saved-est-list" class="mt-2 space-y-2 hidden"></div>
-  
-</div>
+   
+   </div>
  
  
 
@@ -808,6 +917,101 @@ table tbody tr:hover {
 <h3 class="mt-4">Saved Reports</h3>
   <div id="saved-daily" class="mt-2 hidden"></div>
   </div>
+
+
+<div id="completionModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeCompletionModal()">×</span>
+
+    <h3>Work Completion</h3>
+
+    <input id="c_clientName" placeholder="Client Name">
+    <input id="c_clientAddress" placeholder="Client Address">
+    <input id="c_clientMobile" placeholder="Mobile">
+
+    <input id="c_subject" placeholder="Subject">
+
+    <textarea id="c_workDetails" rows="6" placeholder="Work Details (Manual)"></textarea>
+
+    <label>Start Date</label>
+    <input type="date" id="c_startDate">
+
+    <label>End Date</label>
+    <input type="date" id="c_endDate">
+
+    <input id="c_totalAmount" placeholder="Total Amount">
+
+    <button onclick="saveCompletion()">Save</button>
+    <button onclick="generateCompletionPDF()">PDF</button>
+  </div>
+</div>
+
+
+
+<div id="agreementModal" class="modal">
+  <div class="modal-content" style="background:#f2f2f2; max-height:85vh; overflow:auto;">
+
+    <span class="close" onclick="closeAgreementModal()">×</span>
+
+    <h3>Agreement</h3>
+
+    <!-- Client Info -->
+    <label>Name</label>
+    <input id="a_clientName" placeholder="Client Name">
+
+    <label>Address</label>
+    <textarea id="a_clientAddress" rows="2" placeholder="Client Address"></textarea>
+
+    <label>Mobile</label>
+    <input id="a_clientMobile" placeholder="Mobile Number">
+
+    <!-- Agreement Details -->
+    <label>Subject</label>
+    <input id="a_subject" placeholder="Subject">
+
+    <label>Room Dimensions</label>
+    <textarea id="a_rooms" rows="3" placeholder="Example: 12'X12'"></textarea>
+  
+    <label>Construction Cost (Per Sq.ft)</label>
+    <input id="a_costPerSqft" type="number" placeholder="Example: 1550">
+
+    <label>Total Square Feet</label>
+    <input id="a_totalSqft" readonly>
+
+    <label>Total Amount</label>
+    <input id="a_totalAmount" readonly>
+
+    <!-- Work Description -->
+    <label><b>Work Description</b></label>
+    <button type="button" onclick="insertWorkDesc()">Insert Default</button>
+    <textarea id="a_workDesc" rows="8"></textarea>
+
+    <!-- Material -->
+    <label><b>Material In Use This Project</b></label>
+    <button type="button" onclick="insertMaterial()">Insert Default</button>
+    <textarea id="a_material" rows="6"></textarea>
+
+    <!-- Payment -->
+    <label><b>Payment Schedule</b></label>
+    <button type="button" onclick="insertPayment()">Insert Default</button>
+    <textarea id="a_payment" rows="6"></textarea>
+
+    <!-- Working Period -->
+    <label>Working Period</label>
+    <input type="date" id="a_startDate">
+    <input type="date" id="a_endDate">
+
+    <div class="agreement-actions" style="margin-top:10px;">
+      <button onclick="saveAgreement()">Save</button>
+      <button onclick="printAgreement()">PDF</button>
+    </div>
+
+  </div>
+</div>
+
+
+
+
 
 <footer class="w-full mt-2 text-center muted">© Application Developed Vaibhav enterprises</footer>
 
@@ -1511,6 +1715,7 @@ async function syncEstimatesFromSheet() {
     DATA.estimates = converted;
     saveData(); // save to localStorage
     renderEstimatesList(); // refresh UI
+    loadEstimateDropdownFromDATA(); // ✅ ADD THIS
     console.log(`✅ Synced ${converted.length} estimates from Sheet.`);
   } catch (err) {
     console.error("❌ Failed to sync estimates:", err);
@@ -1851,6 +2056,702 @@ function money(v) {
     .toFixed(2)
     .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
+
+
+function loadEstimateDropdownFromDATA() {
+  const sel = document.getElementById("estimateSelect");
+  if (!sel) return;
+
+  sel.innerHTML = `<option value="">-- Select Estimate --</option>`;
+
+  (DATA.estimates || [])
+    .sort((a, b) => b.id.localeCompare(a.id))
+    .forEach(e => {
+      sel.innerHTML += `
+        <option value="${e.id}">
+          ${e.id} | ${e.client || "N/A"}
+        </option>
+      `;
+    });
+}
+
+
+
+
+
+
+function onEstimateSelect() {
+  const estId = estimateSelect.value;
+  if (!estId) return;
+
+  const rec = DATA.estimates.find(e => e.id === estId);
+  if (!rec) {
+    alert("Estimate not found");
+    return;
+  }
+
+  c_clientName.value = rec.client || "";
+  c_clientMobile.value = rec.contact || "";
+  c_subject.value = rec.work || "";
+  c_startDate.value = formatDateToInput(rec.date);
+  c_totalAmount.value = rec.grandTotal || "";
+
+  // Address estimate मध्ये नाही → manual
+  c_clientAddress.value = "";
+}
+
+
+
+function openCompletionModal(){
+  if(!estimateSelect.value){
+    alert("Estimate select kara");
+    return;
+  }
+  completionModal.style.display="block";
+}
+function closeCompletionModal(){
+  completionModal.style.display="none";
+}
+
+
+function saveCompletion(){
+  const data = {
+    estimateNo: estimateSelect.value,
+    clientName: c_clientName.value,
+    clientAddress: c_clientAddress.value,
+    clientMobile: c_clientMobile.value,
+    subject: c_subject.value,
+    workDetails: c_workDetails.value,
+    startDate: c_startDate.value,
+    endDate: c_endDate.value,
+    totalAmount: c_totalAmount.value,
+    createdAt: new Date()
+  };
+
+  // Local backup
+  localStorage.setItem("completion_"+data.estimateNo, JSON.stringify(data));
+
+  // Firestore
+  firebase.firestore()
+    .collection("completions")
+    .doc(data.estimateNo)
+    .set(data);
+
+  alert("Completion Saved ✅");
+}
+
+
+
+
+
+
+
+   // -------- Construction Type Logic --------
+function generateCompletionPDF() {
+  const d = JSON.parse(
+    localStorage.getItem("completion_" + estimateSelect.value)
+  );
+  if (!d) return alert("Save completion first");
+
+  // -------- Owner Name Logic --------
+  const ownerName = d.clientName || "House Owner";
+
+  // -------- Live Date Logic --------
+  const today = new Date();
+  const liveDate = today.toLocaleDateString("en-GB"); // DD/MM/YYYY
+
+  // -------- Relation Logic --------
+  let relationText =
+    `The contractor, Vaibhav Enterprises, has completed the assigned scope of work as agreed.
+     Any work, modification, repair, or maintenance required after the date of handing over
+     shall be the responsibility of the house owner.`;
+
+  if (ownerName.toLowerCase().includes("chande")) {
+    relationText =
+      `The contractor, Vaibhav Enterprises, owned by Mr. Vaibhav Dalvi, being a family member
+       of the house owner ${ownerName}, has completed the assigned scope of work as agreed.
+       Any work, modification, repair, or maintenance required after the date of handing over
+       shall be the sole responsibility of the house owner.`;
+  }
+
+  // -------- Handover Text Logic (Renovation vs New Construction) --------
+  let handoverText = "";
+  const subjectText = (d.subject || "").toLowerCase();
+
+  if (subjectText.includes("renovation")) {
+    handoverText = `
+      <p>
+        Vaibhav Enterprises has completed the work of our home within the given time.
+        The renovated premises were handed over to the homeowner ${ownerName}
+        on ${d.endDate}.
+      </p>
+    `;
+  } else {
+    handoverText = `
+      <p>
+        Vaibhav Enterprises has completed the work of our home within the given time.
+        And the key of the new building was handed over to the homeowner ${ownerName}
+        on ${d.endDate}.
+      </p>
+    `;
+  }
+
+  // -------- Item Formatting Logic --------
+  let formattedItems = "";
+  if (d.workDetails) {
+    formattedItems = d.workDetails
+      .replace(/(\d+\})/g, "<br><b>$1</b> ")
+      .replace(/([A-Z]\})/g, "<br>&nbsp;&nbsp;$1 ");
+  }
+
+  const w = window.open("", "", "width=900,height=700");
+
+  w.document.write(`
+  <html>
+  <head>
+    <title>Work Completion Certificate</title>
+    <style>
+      body { font-family: Arial; line-height:1.6; font-size:14px; }
+      .heading { text-align:center; }
+      .company { color:orange; font-size:26px; font-weight:bold; }
+      .line { margin:8px 0 15px; }
+      .sign-table { width:100%; margin-top:40px; }
+       p { margin: 4px 0; }
+    </style>
+  </head>
+
+  <body>
+
+    <div class="heading">
+      <div class="company">Vaibhav Enterprises</div>
+      <div>
+        All types Construction, Home Renovation Ss, Ms. Fabrication and Civil Work Done Will be here.<br>
+        Contact: 9049764945 / 8080588206 |
+        Email: dalvivaibhav456@gmail.com |
+        www.vaibhaventerprises.info
+      </div>
+    </div>
+
+    <div class="line">
+      ________________________________________________________________________________________
+    </div>
+
+    <!-- Registration & Date -->
+    <table style="width:100%; margin-bottom:10px;">
+      <tr>
+        <td style="color:red; font-weight:bold;">
+          Rg. No. MH-26-0106699
+        </td>
+        <td style="text-align:right; color:red; font-weight:bold;">
+          Date: ${liveDate}
+        </td>
+      </tr>
+    </table>
+
+    <p><b>To,</b></p>
+
+    <p><b>Name:</b> ${ownerName}</p>
+    <p><b>Address:</b> ${d.clientAddress || ""}</p>
+    <p><b>Mobile:</b> ${d.clientMobile || ""}</p>
+
+    <p><b>Subject:</b> ${d.subject}</p>
+    <p><b>Construction Period:</b> ${d.startDate} to ${d.endDate}</p>
+    <p><b>Total Amount:</b> ₹ ${d.totalAmount}</p>
+
+    <p><b>Work Details:</b></p>
+    <p>${formattedItems}</p>
+
+    <p>
+      We, the house owner ${ownerName}, have checked all the above points and we have no complaints.
+      All the above points have been done according to our wishes.
+    </p>
+
+    ${handoverText}
+
+    <p>${relationText}</p>
+
+    <table class="sign-table">
+      <tr>
+        <td style="vertical-align:top;">
+          <div style="height:50px;"></div>
+          <b>Owner</b><br>
+          ${ownerName}
+        </td>
+
+        <td style="text-align:center; vertical-align:top; padding-left:60px;">
+          <div style="height:50px;"></div>
+          <b>Thank You</b><br><br>
+          <b>For Vaibhav Enterprises</b>
+        </td>
+      </tr>
+    </table>
+
+  </body>
+  </html>
+  `);
+
+  w.print();
+}
+
+
+
+
+
+function fillAgreementFromEstimate() {
+  const estId = estimateSelect.value;
+  if (!estId) return;
+
+  const rec = DATA.estimates.find(e => e.id === estId);
+  if (!rec) return;
+
+  // Auto fill
+  a_clientName.value = rec.client || "";
+  a_clientMobile.value = rec.contact || "";
+  a_subject.value = rec.work || "";
+  a_startDate.value = formatDateToInput(rec.date);
+
+  // Address estimate मध्ये नसेल → manual
+  a_clientAddress.value = "";
+}
+
+
+
+function openAgreementModal(){
+  if(!estimateSelect.value){
+    alert("Estimate select kara");
+    return;
+  }
+
+  const rec = DATA.estimates.find(e=>e.id===estimateSelect.value);
+  if(rec){
+    a_clientName.value = rec.client || "";
+    a_clientMobile.value = rec.contact || "";
+    a_subject.value = rec.work || "";
+    a_startDate.value = formatDateToInput(rec.date);
+  }
+
+  // 🔥 AUTO Work Description from Estimate
+  const estWorkDesc = getWorkDescFromEstimate();
+  if (estWorkDesc && !a_workDesc.value) {
+    a_workDesc.value = estWorkDesc;
+  }
+
+  agreementModal.style.display="block";
+}
+
+
+function closeAgreementModal(){
+  agreementModal.style.display="none";
+}
+
+
+
+function saveAgreement() {
+
+  if (!estimateSelect.value) {
+    alert("Estimate select kara");
+    return;
+  }
+
+  const totalSqft = Number(a_totalSqft.value) || 0;
+  const rate = Number(a_costPerSqft.value) || 0;
+  const totalAmount = totalSqft * rate;
+
+  const data = {
+    estimateNo: estimateSelect.value,
+
+    clientName: a_clientName.value,
+    clientAddress: a_clientAddress.value,
+    clientMobile: a_clientMobile.value,
+
+    subject: a_subject.value,
+    roomDimensions: a_rooms.value,
+
+    // ✅ ADD THESE
+    totalSqft: totalSqft,
+    ratePerSqft: rate,
+    totalAmount: totalAmount,
+
+    workDescription: a_workDesc.value,
+    materialInUse: a_material.value,
+
+    startDate: a_startDate.value,
+    endDate: a_endDate.value,
+
+    paymentSchedule: a_payment.value,
+    createdAt: new Date()
+  };
+
+  localStorage.setItem(
+    "agreement_" + data.estimateNo,
+    JSON.stringify(data)
+  );
+
+  firebase.firestore()
+    .collection("agreements")
+    .doc(data.estimateNo)
+    .set(data);
+
+  alert("Agreement Saved ✅");
+}
+
+
+
+function printAgreement() {
+
+  const d = JSON.parse(
+    localStorage.getItem("agreement_" + estimateSelect.value)
+  );
+  if (!d) {
+    alert("Save Agreement first");
+    return;
+  }
+
+  const ownerName = d.clientName || "House Owner";
+  const today = new Date().toLocaleDateString("en-GB");
+
+    // ---- Total Amount Safe Logic ----
+let totalAmount = d.totalAmount;
+
+if (!totalAmount && d.totalSqft && d.ratePerSqft) {
+  totalAmount = d.totalSqft * d.ratePerSqft;
+}
+
+totalAmount = totalAmount || 0;
+
+
+  // -------- Ground Floor Logic --------
+  let groundBlock = "";
+  let groundSqft = 0;
+
+
+   
+
+  if (d.roomDimensions) {
+    d.roomDimensions.split("\n").forEach(line => {
+      const m = line.match(/(\d+)\s*['’]?\s*[xX]\s*(\d+)/);
+      if (/ground/i.test(line) && m) {
+        const sqft = parseInt(m[1]) * parseInt(m[2]);
+        groundSqft += sqft;
+
+        groundBlock += `
+          <p class="small">
+            *Ground floor ${m[1]}’x${m[2]}’ = ${sqft} square feet
+          </p>
+        `;
+      }
+    });
+
+    if (groundSqft > 0) {
+      groundBlock += `
+        <p class="small">
+          *footing {plinth} will be calculated in 50% of the ground floor area.
+          ${groundSqft / 2} square feet
+        </p>
+        <div class="line">
+          ________________________________________________________________________________________
+        </div>
+      `;
+    }
+  }
+
+  const w = window.open("", "", "width=900,height=700");
+
+  w.document.write(`
+  <html>
+  <head>
+    <title>Agreement</title>
+    <style>
+      body { font-family: Arial; font-size:14px; line-height:1.5; }
+      .company { color:orange; font-size:26px; font-weight:bold; text-align:center; }
+      .center { text-align:center; }
+      .line { margin:10px 0; }
+      p { margin:4px 0; }
+      .small { font-size:12px; }
+      .sign-table { width:100%; margin-top:40px; }
+    </style>
+  </head>
+
+  <body>
+
+    <div class="company">Vaibhav Enterprises</div>
+    <div class="center">
+      All types Construction, Home Renovation Ss, Ms. Fabrication and Civil Work Done Will be here.<br>
+      Contact: 9049764945 / 8080588206 |
+      Email: dalvivaibhav456@gmail.com |
+      www.vaibhaventerprises.info
+    </div>
+
+    <div class="line">
+      ________________________________________________________________________________________
+    </div>
+
+    <table style="width:100%;">
+      <tr>
+        <td style="color:red;font-weight:bold;">
+          Rg. No. MH-26-0106699
+        </td>
+        <td style="text-align:right;color:red;font-weight:bold;">
+          Date: ${today}
+        </td>
+      </tr>
+    </table>
+
+    <p><b>To,</b></p>
+    <p><b>Name:</b> ${ownerName}</p>
+    <p><b>Address:</b> ${d.clientAddress || ""}</p>
+    <p><b>Mobile:</b> ${d.clientMobile || ""}</p>
+
+    <p><b>Subject:</b> ${d.subject}</p>
+
+    <div class="line">
+      ________________________________________________________________________________________
+    </div>
+
+    <p><b>Room Dimensions:</b></p>
+    <p>${(d.roomDimensions || "").replace(/\n/g,"<br>")}</p>
+
+    <p style="color:red;"><b>Total Square Feet:</b> ${d.totalSqft}</p>
+    <p style="color:red;"><b>Total Amount:</b> ₹ ${totalAmount}</p>
+    <p><b>In Words:</b> Rupees ${numberToIndianWords(totalAmount)} Only</p>
+
+
+    <div class="line">
+      ________________________________________________________________________________________
+    </div>
+
+    ${groundBlock}
+
+    <p><b>Work Description:</b></p>
+    <p>${(d.workDescription || "").replace(/\n/g,"<br>")}</p>
+
+    <p><b>Material In Use This Project:</b></p>
+    <p>${(d.materialInUse || "").replace(/\n/g,"<br>")}</p>
+
+    <p><b>Working Period:</b></p>
+    <p>${d.startDate} to ${d.endDate}</p>
+
+    <p><b>Payment Schedule:</b></p>
+    <p>${(d.paymentSchedule || "").replace(/\n/g,"<br>")}</p>
+
+    <table class="sign-table">
+      <tr>
+        <td>
+          <div style="height:60px;"></div>
+          <b>Owner</b>
+        </td>
+
+      <td style="text-align:right;">
+  <div style="height:60px;"></div>
+  <div style="display:inline-block; text-align:center; margin-right:40px;">
+    <b>Thank You</b><br><br>
+    <b>For Vaibhav Enterprises</b>
+  </div>
+</td>
+
+
+
+      </tr>
+    </table>
+
+  </body>
+  </html>
+  `);
+
+  w.print();
+}
+
+
+
+const DEFAULT_WORK_DESC = `1.} Rcc Footing: - Rcc Footing Digging the foundation down to 4 feet.
+2.} Column: - Column size 9 inches by 18 inches.
+3.} Beam: - Plinth beam size 9 inches by 18 inches.
+4.} Slab: - Height 10 feet, thickness 6 inches.
+5.} Staircase: - RCC staircase with  railing.
+6.} Brick work: - 9" external, 6" internal.
+7.} Plaster: - Plaster sand 100%, In/Out 
+8.} Concrete: - Crush sand, 1" metal, 53 grade cement.
+9.} Doors: - Main Door Waterproof ply, PVC bathroom door.
+10.} Electrical: - Polycab wire, Anchor switches.
+11.} Flooring: - 2x2 tiles, marble staircase.
+12.} Plumbing: - Upvc Material (Prince/Ajay ISI Material.
+13.} Terrace and Bathroom : - Topi, parapet wall,Bathroom waterproofing.
+14.} Tiles: - Flooring  2'x2'/ 2'x4' Bathroom Tiles 16"x12" and Stair Tapa/Riser Still Grey Marbal
+15.} Door and Window Frem: - Still Grey Marbal.
+16.} Sliding  3 track with Mosquito Mesh 4'x4',4'x3' Bathroom 2'x2'
+17.} Painting: - Oil bond distemper inside.and Out side Ace Paint/Cement Paint.
+18.} *Note: -What if there is something else to do? Material charges, transportation charges and labour charges will have to be paid for that Extra work.`;
+const DEFAULT_MATERIAL = `1}. Steel 12mm, 10mm, 8mm
+2}. Cement JK Super 43 Grade Bricks work and Concrete Birala Super 53 Grade
+3}. Red Bricks 8"x6x4" For Wall and Plinth Use Cement 8"x6"x4" Bricks
+4}. Crush Sand
+5}. Metal 1/4"
+6}. Polycab Wire
+7}. Anchor Switch & Socket
+8}. Plumbing Material Prince and Ajay
+9}. Water Tank Plasto 1000 Ltr
+10}. PVC Bathroom Door 
+11}. Main Door Waterproof Ply
+12}. Flooring & Dado Tiles 2'x2'/ 4'x2' any Requirement 
+13}. Green Marble / Steel Grey
+14}. Sliding Window with Mesh
+15}. Grill 4x4 & 2x2
+16}. Paint Inside Asian/Birala 
+17}. Safety Door 7x3`;
+
+const DEFAULT_PAYMENT = `1}. Advance: 
+2}. 
+3}. 
+4}. 
+5}. 
+6}. 
+7}. 
+8}. `;
+
+
+
+function loadAgreementSuggestions() {
+
+  document.getElementById("workDescList").innerHTML =
+    `<option value="${DEFAULT_WORK_DESC}">`;
+
+  document.getElementById("materialList").innerHTML =
+    `<option value="${DEFAULT_MATERIAL}">`;
+
+  document.getElementById("paymentList").innerHTML =
+    `<option value="${DEFAULT_PAYMENT}">`;
+}
+
+
+function formatNumberedText(text){
+  return text
+    .replace(/(\d+\})/g, "\n$1 ")
+    .replace(/([A-Z]\})/g, "\n  $1 ");
+}
+
+function calcSqFt(line){
+  const m = line.match(/(\d+)\s*['’]?\s*[xX]\s*(\d+)/);
+  if(!m) return 0;
+  return parseInt(m[1]) * parseInt(m[2]);
+}
+
+a_rooms.addEventListener("input", () => {
+  let total = 0;
+  a_rooms.value.split("\n").forEach(l=>{
+    total += calcSqFt(l);
+  });
+  a_totalSqft.value = total;
+});
+
+
+function insertWorkDesc(){
+  if(!a_workDesc.value) a_workDesc.value = DEFAULT_WORK_DESC;
+}
+
+function insertMaterial(){
+  if(!a_material.value) a_material.value = DEFAULT_MATERIAL;
+}
+
+function insertPayment(){
+  if(!a_payment.value) a_payment.value = DEFAULT_PAYMENT;
+}
+
+function extractSqFt(line){
+  const m = line.match(/(\d+)\s*['’]?\s*[xX]\s*(\d+)/);
+  if(!m) return 0;
+  return parseInt(m[1]) * parseInt(m[2]);
+}
+
+function recalcAgreement(){
+  let totalSqft = 0;
+  let hasGround = false;
+
+  a_rooms.value.split("\n").forEach(line=>{
+    if(/ground/i.test(line)) hasGround = true;
+    totalSqft += extractSqFt(line);
+  });
+
+  a_totalSqft.value = totalSqft;
+
+  const rate = parseFloat(a_costPerSqft.value || 0);
+  a_totalAmount.value = totalSqft && rate ? totalSqft * rate : "";
+}
+
+a_rooms.addEventListener("input", recalcAgreement);
+a_costPerSqft.addEventListener("input", recalcAgreement);
+
+
+
+function numberToIndianWords(num) {
+  if (!num || isNaN(num)) return "";
+
+  const a = [
+    "", "One", "Two", "Three", "Four", "Five", "Six",
+    "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve",
+    "Thirteen", "Fourteen", "Fifteen", "Sixteen",
+    "Seventeen", "Eighteen", "Nineteen"
+  ];
+
+  const b = [
+    "", "", "Twenty", "Thirty", "Forty",
+    "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"
+  ];
+
+  function twoDigits(n) {
+    if (n < 20) return a[n];
+    return b[Math.floor(n / 10)] + (n % 10 ? " " + a[n % 10] : "");
+  }
+
+  function threeDigits(n) {
+    let str = "";
+    if (Math.floor(n / 100) > 0) {
+      str += a[Math.floor(n / 100)] + " Hundred ";
+      n = n % 100;
+    }
+    if (n > 0) str += twoDigits(n);
+    return str.trim();
+  }
+
+  let word = "";
+  let crore = Math.floor(num / 10000000);
+  num %= 10000000;
+
+  let lakh = Math.floor(num / 100000);
+  num %= 100000;
+
+  let thousand = Math.floor(num / 1000);
+  num %= 1000;
+
+  let hundred = num;
+
+  if (crore) word += threeDigits(crore) + " Crore ";
+  if (lakh) word += threeDigits(lakh) + " Lakh ";
+  if (thousand) word += threeDigits(thousand) + " Thousand ";
+  if (hundred) word += threeDigits(hundred);
+
+  return word.trim();
+}
+
+
+function getWorkDescFromEstimate() {
+  if (!estimateSelect.value) return "";
+
+  const rec = DATA.estimates.find(e => e.id === estimateSelect.value);
+  if (!rec || !rec.items || !rec.items.length) return "";
+
+  let text = "";
+
+  rec.items.forEach((it, i) => {
+    const desc = it.description || it.item || "";
+    if (desc.trim()) {
+      text += `${i + 1}.} ${desc}\n`;
+    }
+  });
+
+  return text.trim();
+}
+
+
 
 
 
