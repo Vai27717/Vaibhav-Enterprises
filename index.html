@@ -413,6 +413,17 @@ table tbody tr:hover {
   font-weight:bold;
 }
 
+@media (max-width: 767px){
+  #quickAttendanceModal > div{
+    width:95%;
+    max-height:90vh;
+    margin:0;
+    border-radius:10px;
+  }
+}
+
+
+
 #quick-exp-popup {
   overscroll-behavior: contain;
 }
@@ -493,15 +504,16 @@ table tbody tr:hover {
 </div>
     
     <div id="current-filter-display" class="mb-6 text-lg font-semibold text-center py-2 rounded-lg bg-gray-700">
-         <button class="smallbtn" onclick="openQuickAttendance()">
+        Current Filter: <span id="current-invoice-no" class="text-yellow-400">All Data</span>
+         
+      </div>
+      <button class="smallbtn" onclick="openQuickAttendance()">
        ✏️ Atten.
         </button>
-        Current Filter: <span id="current-invoice-no" class="text-yellow-400">All Data</span>
        <button class="smallbtn bg-blue-500" onclick="openQuickExpensePopup()">
     ⚡Exp.
   </button>
-  
-    </div>
+ </div>
      
     <!-- 🆕 Home Invoice Select Dropdown -->
 <div class="mb-4 text-center">
@@ -859,25 +871,34 @@ table tbody tr:hover {
      style="
        display:none;
        position:fixed;
-       top:0; left:0;
-       width:100%;
-       height:100%;
+       inset:0;
        background:rgba(0,0,0,0.4);
        z-index:9999;
+
+       align-items:center;
+       justify-content:center;
      ">
 
+
+
   <!-- INNER BOX -->
-  <div style="
-    background:#f2f2f2;
-    width:420px;
-    margin:80px auto;
-    padding:15px;
-    border-radius:8px;
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    position:relative;   /* 🔥 IMPORTANT */
-  ">
+ <div style="
+  background:#f2f2f2;
+  width:100%;
+  max-width:420px;
+  margin:auto;
+  padding:15px;
+  border-radius:12px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  position:relative;
+
+  /* 🔥 MOBILE FIX */
+  max-height:90vh;
+  overflow-y:auto;
+">
+
 
     <!-- CLOSE BUTTON (TOP-RIGHT, ALWAYS VISIBLE) -->
     <button
