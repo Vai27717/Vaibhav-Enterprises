@@ -413,6 +413,22 @@ table tbody tr:hover {
   font-weight:bold;
 }
 
+#quick-exp-popup {
+  overscroll-behavior: contain;
+}
+
+#quick-exp-popup > div {
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 768px) {
+  #quick-exp-popup > div {
+    max-width: 480px;
+    height: auto;
+    margin: auto;
+    border-radius: 12px;
+  }
+}
 
 
 
@@ -628,6 +644,15 @@ table tbody tr:hover {
 
   <div id="exp" class="card max-w-4xl mx-auto" style="display:none">
   <h2>Expenses</h2>
+  
+  <div class="flex justify-between items-center">
+  
+  <button class="smallbtn bg-blue-500" onclick="openQuickExpensePopup()">
+    ⚡ Quick Add
+  </button>
+</div>
+
+
 
   <div class="grid md:grid-cols-2 gap-2 mb-3 items-end">
     <div>
@@ -691,6 +716,62 @@ table tbody tr:hover {
   </div>
  
 </div>
+
+
+<div id="quick-exp-popup"
+     class="fixed inset-0 z-50 hidden bg-black/40 flex items-center justify-center">
+
+
+  <!-- FULL SCREEN CARD -->
+  <div class="bg-gray-100 w-full max-w-lg rounded-lg p-3
+            max-h-[90vh] overflow-y-auto">
+
+
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-2">
+      <h3 class="font-bold text-lg text-black">
+  ⚡ Quick Expense Entry
+</h3>
+
+      <button class="smallbtn bg-red-500" onclick="closeQuickExpensePopup()">✕</button>
+    </div>
+
+    <!-- Invoice -->
+    <label class="muted">Invoice</label>
+    <select id="qe-invoice" class="p-2 border rounded w-full mb-2"></select>
+
+    <!-- Search Date -->
+    <label class="muted">Search / Select Date</label>
+    <input type="date"
+           id="qe-search-date"
+           class="p-2 border rounded w-full mb-2">
+
+    <!-- Entry Date -->
+    <label class="muted">Entry Date</label>
+    <input type="date"
+           id="qe-date"
+           class="p-2 border rounded w-full mb-3">
+
+    <!-- Items -->
+    <div id="qe-rows" class="space-y-2"></div>
+
+    <!-- Sticky Footer Buttons -->
+    <div class="sticky bottom-0 bg-gray-100 pt-2 pb-2 mt-3 border-t">
+      <div class="flex gap-2">
+        <button class="smallbtn" onclick="addQuickExpenseRow()">+ Item</button>
+        <button class="smallbtn bg-green-500" onclick="saveQuickExpenses()">Save</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+
+
+
+
+
 
 
 
@@ -806,11 +887,16 @@ table tbody tr:hover {
 
     <label>Status (P / A / H)</label>
     <select id="qa_status">
-      <option value="">Select</option>
-      <option value="P">P</option>
-      <option value="A">A</option>
-      <option value="H">H</option>
-    </select>
+  <option value="">Select</option>
+
+  <option value="P">P</option>
+  <option value="PP">PP</option>
+  <option value="P1Q">P¼</option>
+  <option value="P1H">P½</option>
+
+  <option value="H">H</option>
+  <option value="A">A</option>
+  </select>
 
     <label>Advance (₹)</label>
     <input type="number" id="qa_advance" value="0">
@@ -4097,6 +4183,184 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+function openQuickExpensePopup() {
+  const pop = el("quick-exp-popup");
+
+  // 🔥 FIRST: fully show popup
+  pop.classList.remove("hidden");
+  pop.style.display = "flex";
+  document.body.style.overflow = "hidden";
+
+  // 🔥 THEN populate invoice
+  populateQuickInvoiceSelect();
+
+  // reset other fields
+  el("qe-search-date").value = "";
+  el("qe-date").value = new Date().toISOString().slice(0,10);
+
+  el("qe-rows").innerHTML = "";
+  addQuickExpenseRow();
+}
+
+
+function closeQuickExpensePopup() {
+  const pop = el("quick-exp-popup");
+  if (!pop) return;
+
+  pop.classList.add("hidden");
+  pop.style.display = "none";
+
+  document.body.style.overflow = "";
+}
+
+
+
+
+function populateQuickInvoiceSelect() {
+  const sel = el("qe-invoice");
+  sel.innerHTML = '<option value="">-- Select Invoice --</option>';
+
+  (DATA.invoices || []).forEach(inv => {
+    sel.innerHTML += `<option value="${inv.id}">${inv.id} - ${inv.client}</option>`;
+  });
+}
+
+
+function addQuickExpenseRow() {
+  const div = document.createElement("div");
+  div.className = "border p-2 rounded mb-2";
+
+  div.innerHTML = `
+    <!-- ITEM (with materials datalist) -->
+    <input type="text"
+           class="qe-name p-2 border rounded w-full mb-1"
+           placeholder="Item Name"
+           list="materials">
+
+    <!-- CATEGORY -->
+    <select class="qe-cat p-2 border rounded w-full mb-1">
+      <option value="">-- Select Category --</option>
+    </select>
+
+    <div class="grid grid-cols-3 gap-1 mb-1">
+      <input type="number" class="qe-qty p-2 border rounded" placeholder="Qty" value="1">
+      <input type="text" class="qe-unit p-2 border rounded" placeholder="Unit">
+      <input type="number" class="qe-rate p-2 border rounded" placeholder="Rate">
+    </div>
+
+    <button class="smallbtn bg-red-500" onclick="this.parentElement.remove()">✕</button>
+  `;
+
+  el("qe-rows").appendChild(div);
+
+  /* 🔥 CATEGORY DROPDOWN POPULATE (same as main table) */
+  const catSelect = div.querySelector(".qe-cat");
+  (DATA.categories || []).forEach(cat => {
+    const opt = document.createElement("option");
+    opt.value = cat;
+    opt.textContent = cat;
+    catSelect.appendChild(opt);
+  });
+
+  /* 🔥 ITEM → UNIT AUTO-FILL (from Excel imported materials) */
+  const itemInput = div.querySelector(".qe-name");
+  const unitInput = div.querySelector(".qe-unit");
+
+  itemInput.addEventListener("change", () => {
+    const mat = (DATA.materials || []).find(m => m.part === itemInput.value);
+    if (mat) {
+      unitInput.value = mat.unit || "";
+    }
+  });
+}
+
+
+
+function saveQuickExpenses() {
+
+  const invoice = el("qe-invoice").value;
+  const date    = el("qe-date").value;
+
+  if (!invoice || !date) {
+    alert("Invoice & Date required");
+    return;
+  }
+
+  // 🔁 reset edit mode
+  expenseIdToEdit = null;
+
+  // 🔎 update mode (date-wise)
+  const rec = DATA.expenses.find(e => e.invoiceNo === invoice);
+  if (rec && el("qe-search-date").value) {
+    expenseIdToEdit = rec.id;
+    el("exp-filter-date").value = el("qe-search-date").value;
+  }
+
+  // 🔄 silently set main UI
+  el("exp-invoice-select").value = invoice;
+  el("exp-rows").innerHTML = "";
+
+  // copy rows from popup → main expenses
+  document.querySelectorAll("#qe-rows > div").forEach(r => {
+    addExpenseRow({
+      date,
+      name: r.querySelector(".qe-name").value,
+      category: r.querySelector(".qe-cat").value,
+      quantity: r.querySelector(".qe-qty").value,
+      unit: r.querySelector(".qe-unit").value,
+      rate: r.querySelector(".qe-rate").value
+    });
+  });
+
+  // 🔥 existing logic
+  saveExpenses();
+
+  // close popup
+  closeQuickExpensePopup();
+}
+
+
+
+
+el("qe-search-date").addEventListener("change", () => {
+  const invoiceNo = el("qe-invoice").value;
+  const selDate   = el("qe-search-date").value;
+  if (!invoiceNo || !selDate) return;
+
+  const rec = DATA.expenses.find(e => e.invoiceNo === invoiceNo);
+  if (!rec) return alert("ℹ️ या Date साठी Expenses नाहीत");
+
+  el("qe-rows").innerHTML = "";
+
+  const dates = rec.date.split(',').map(s => s.trim());
+  const names = rec.name.split(',').map(s => s.trim());
+  const qtys  = rec.quantity.split(',').map(s => s.trim());
+  const units = rec.unit.split(',').map(s => s.trim());
+  const rates = rec.rate.split(',').map(s => s.trim());
+  const cats  = rec.category.split(',').map(s => s.trim());
+
+  let found = false;
+
+  dates.forEach((d, i) => {
+    if (d === selDate) {
+      found = true;
+      addQuickExpenseRow();
+
+      const row = el("qe-rows").lastElementChild;
+      row.querySelector(".qe-name").value = names[i] || "";
+      row.querySelector(".qe-cat").value  = cats[i] || "";
+      row.querySelector(".qe-qty").value  = qtys[i] || 1;
+      row.querySelector(".qe-unit").value = units[i] || "";
+      row.querySelector(".qe-rate").value = rates[i] || 0;
+    }
+  });
+
+  if (!found) alert("ℹ️ या Date साठी Expenses नाहीत");
+});
+
+
+
+
 /* -------------------------------------------------------------
  * 4️⃣ MEASUREMENTS (Local Storage Implementation)
  * ------------------------------------------------------------- */
@@ -5773,9 +6037,12 @@ function addLabor(pref){
           <select class="lab-status">
             <option value=""></option>
             <option value="P">P</option>
-            <option value="A">A</option>
+            <option value="PP">PP</option>
+            <option value="P1Q">P¼</option>
+            <option value="P1H">P½</option>
             <option value="H">H</option>
-          </select>
+            <option value="A">A</option>
+        </select>
         </td>
         <td><input type="number" class="p-1 border rounded lab-adv" value="0" min="0"></td>
         <td><input type="number" class="p-1 border rounded lab-trans" value="0" min="0"></td>
@@ -5853,7 +6120,15 @@ function saveLabor(btn){
     days.push({date,status,advance,transport});
   });
 
-  const totalDays = days.reduce((s,d)=> s + (d.status==='P'?1:(d.status==='H'?0.5:0)),0);
+  const totalDays = days.reduce((s,d)=>{
+  if(d.status==='P') return s+1;
+  if(d.status==='PP') return s+2;
+  if(d.status==='P1Q') return s+1.25;
+  if(d.status==='P1H') return s+1.5;
+  if(d.status==='H') return s+0.5;
+  return s;
+  },0);
+
   const totalAdvance = days.reduce((s,d)=> s + (d.advance||0),0);
   const totalTransport = days.reduce((s,d)=> s + (d.transport||0),0);
   const totalPay = totalDays * rate;
@@ -5937,9 +6212,14 @@ function updateLaborTotals(div){
     const status = tr.querySelector('.lab-status').value;
     const advVal = parseFloat(tr.querySelector('.lab-adv').value)||0;
     const transVal = parseFloat(tr.querySelector('.lab-trans').value)||0;
+    
+    if (status === 'P') totalDays += 1;
+    if (status === 'PP') totalDays += 2;
+    if (status === 'P1Q') totalDays += 1.25;
+    if (status === 'P1H') totalDays += 1.5;
+    if (status === 'H') totalDays += 0.5;
 
-    if(status==='P') totalDays += 1;
-    if(status==='H') totalDays += 0.5;
+    
     adv += advVal;
     trans += transVal;
   });
@@ -6134,7 +6414,14 @@ function shareLabor(id){
   // फक्त P/A/H status असलेले दिवस
   r.days.forEach(d => {
     if(d.status && d.status !== " "){
-      lines.push(`${d.date}    ${d.status}    Adv. ${money(d.advance||0)}`);
+      let displayStatus = d.status;
+
+// 🔥 MESSAGE-FRIENDLY STATUS (for labor understanding)
+if (d.status === "P1Q") displayStatus = "P2H"; // Quarter Day
+if (d.status === "P1H") displayStatus = "PH";  // Half Day
+
+lines.push(`${d.date}    ${displayStatus}    Adv. ${money(d.advance||0)}`);
+
     }
   });
 
@@ -6360,8 +6647,15 @@ function saveQuickAttendance(){
 
       // 🔁 RECALCULATE TOTALS
       l.totalDays = l.days.reduce((s,d)=>{
-        if(d.status==="P") return s+1;
-        if(d.status==="H") return s+0.5;
+        
+       if(d.status==="P") return s+1;
+      if(d.status==="PP") return s+2;
+      if(d.status==="P1Q") return s+1.25;
+      if(d.status==="P1H") return s+1.5;
+      if(d.status==="H") return s+0.5;
+
+ 
+       
         return s;
       },0);
 
