@@ -665,28 +665,28 @@ table tbody tr:hover {
   <div id="exp" class="card max-w-4xl mx-auto" style="display:none">
   <h2>Expenses</h2>
   
-  <div class="flex justify-between items-center">
-  
-  
-</div>
-
-
-
-  <div class="grid md:grid-cols-2 gap-2 mb-3 items-end">
+  <div class="grid md:grid-cols-3 gap-2 mb-3 items-end">
     <div>
       <label class="muted">Invoice (select)</label>
       <select id="exp-invoice-select" class="p-2 border rounded w-full"></select>
     </div>
      
-     <input
-  type="date"
-  id="exp-filter-date"
-  class="p-2 border rounded"
-  title="Filter by Date"
-/>
+    <div>
+      <label class="muted">Filter by Date</label>
+      <input type="date" id="exp-filter-date" class="p-2 border rounded w-full" onchange="loadExpenseByFilters()"/>
+    </div>
 
-   <div>
-      <label class="muted">Main Category</label>
+    <div>
+      <label class="muted">Filter by Category</label>
+      <select id="exp-filter-category" class="p-2 border rounded w-full" onchange="loadExpenseByFilters()">
+        <option value="">-- All Categories --</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="grid md:grid-cols-1 gap-2 mb-3 items-end">
+    <div>
+      <label class="muted">Main Category (Manage)</label>
       <div class="flex gap-2">
         <select id="cat-select" class="p-2 border rounded flex-1"></select>
         <button class="smallbtn" onclick="addCategoryPrompt()">Add</button>
@@ -705,12 +705,14 @@ table tbody tr:hover {
           <th>Qty</th><th>Unit</th><th>Rate</th><th>Amount</th><th>Action</th>
         </tr>
       </thead>
-      <tbody id="exp-rows"></tbody> </table>
+      <tbody id="exp-rows"></tbody>
+    </table>
   </div>
 
   <div class="mt-2 flex gap-2">
     <button class="smallbtn" onclick="addExpenseRow()">+ Add Item</button>
     <button class="smallbtn" onclick="saveExpenses()">Save</button>
+  
     <button onclick="toggleSection('expenses-table-wrap', this)" class="smallbtn mt-4">
   ➕ Show Saved Expenses
   </div>
@@ -854,8 +856,7 @@ table tbody tr:hover {
   <div id="labor-rows" class="space-y-3"></div>
   <h3 class="mt-4">Saved Attendance</h3>
   
-   <h3 class="mt-4 flex items-center gap-2">
-  Saved Attendance
+   
  
 </h3>
 <div id="saved-labor" class="mt-2"></div>
@@ -3434,22 +3435,103 @@ function renderCategorySelect() {
 // ✅ Category Dropdown Render Function
 function renderCategoryList() {
   const sel = document.getElementById('cat-select');
+  const filterSel = document.getElementById('exp-filter-category');
   if (!sel) return;
 
-  // dropdown रिकामा करून default option टाक
   sel.innerHTML = '<option value="">-- Select Category --</option>';
+  if(filterSel) filterSel.innerHTML = '<option value="">-- All Categories --</option>';
 
-  // जर DATA.categories नसतील तर रिकामा array तयार कर
   if (!Array.isArray(DATA.categories)) DATA.categories = [];
 
-  // सर्व categories दाखवा
   DATA.categories.forEach(cat => {
+    // Main Select
     const opt = document.createElement('option');
-    opt.value = cat;
-    opt.textContent = cat;
+    opt.value = cat; opt.textContent = cat;
     sel.appendChild(opt);
+
+    // Filter Select
+    if(filterSel){
+      const fOpt = document.createElement('option');
+      fOpt.value = cat; fOpt.textContent = cat;
+      filterSel.appendChild(fOpt);
+    }
   });
 }
+
+function loadExpenseByFilters() {
+  const invoiceNo = el("exp-invoice-select").value;
+  const selDate = el("exp-filter-date").value;
+  const selCat = el("exp-filter-category").value;
+
+  if (!invoiceNo) return;
+
+  const rec = DATA.expenses.find(e => e.invoiceNo === invoiceNo);
+  if (!rec) {
+    el("exp-rows").innerHTML = "";
+    return;
+  }
+
+  expenseIdToEdit = rec.id;
+  el("exp-rows").innerHTML = ""; // जुन्या रोज काढा
+
+  const dates = rec.date.split(',').map(s => s.trim());
+  const names = rec.name.split(',').map(s => s.trim());
+  const qtys  = rec.quantity.split(',').map(s => s.trim());
+  const units = rec.unit.split(',').map(s => s.trim());
+  const rates = rec.rate.split(',').map(s => s.trim());
+  const cats  = rec.category.split(',').map(s => s.trim());
+
+  let foundCount = 0;
+
+  for (let i = 0; i < names.length; i++) {
+    const rowDate = dates[i] || dates[0];
+    const rowCat = cats[i] || "";
+
+    // फिल्टर अट: जर डेट मॅच झाली (किंवा डेट सिलेक्ट नसेल) AND कॅटेगरी मॅच झाली (किंवा कॅटेगरी सिलेक्ट नसेल)
+    const dateMatch = !selDate || rowDate === selDate;
+    const catMatch = !selCat || rowCat === selCat;
+
+    if (dateMatch && catMatch) {
+      foundCount++;
+      addExpenseRow({
+        date: rowDate,
+        name: names[i],
+        category: rowCat,
+        quantity: qtys[i],
+        unit: units[i],
+        rate: rates[i]
+      });
+    }
+  }
+
+  // जर काहीच सापडले नाही तर युजरला नवीन आयटम ॲड करू द्या (रिकामी रो देऊन)
+  if (foundCount === 0 && (selDate || selCat)) {
+     console.log("No matches found for filter.");
+  }
+  
+  calculateExpenseAmountDirectly();
+}
+
+
+function calculateExpenseAmountDirectly() {
+  let total = 0;
+  document.querySelectorAll('#exp-rows .exp-amount').forEach(i => total += parseFloat(i.value) || 0);
+  el('exp-total').textContent = total.toFixed(2);
+}
+
+// ४. DOMContentLoaded मध्ये इव्हेंट बदला
+document.addEventListener("DOMContentLoaded", () => {
+  el("exp-filter-date")?.addEventListener("change", loadExpenseByFilters);
+  el("exp-filter-category")?.addEventListener("change", loadExpenseByFilters);
+  
+  // Invoice बदलल्यावर फिल्टर रिसेट करा
+  el("exp-invoice-select")?.addEventListener("change", () => {
+      el("exp-filter-date").value = "";
+      el("exp-filter-category").value = "";
+      el("exp-rows").innerHTML = "";
+      expenseIdToEdit = null;
+  });
+});
 
 // ✅ Category Add Function
 function addCategoryPrompt() {
@@ -3591,10 +3673,44 @@ function calculateExpenseAmount(input) {
 function saveExpenses() {
   const invoiceNo = el("exp-invoice-select").value;
   if (!invoiceNo) return alert("Please select an Invoice No.");
+    
+   // सध्या फिल्टरमध्ये असलेली तारीख आणि कॅटेगरी मिळवा
+  const selDate = el("exp-filter-date").value;
+  const selCat = el("exp-filter-category") ? el("exp-filter-category").value : "";
+
+   
+
+// 🔒 SMART BLOCK FOR ALL CATEGORY VIEW
+if (!selDate && !selCat) {
+
+  const existing = DATA.expenses.find(e => e.invoiceNo === invoiceNo);
+
+  if (existing) {
+
+    // 🔎 check: user added any NEW row?
+    let hasNewEntry = false;
+
+    document.querySelectorAll("#exp-rows .expense-row").forEach(row => {
+      const name = row.querySelector(".exp-name").value.trim();
+      const amount = parseFloat(row.querySelector(".exp-amount").value) || 0;
+
+      // new row has data → allow save
+      if (name && amount > 0) {
+        hasNewEntry = true;
+      }
+    });
+
+    // ❌ only block if NO new entry
+    if (!hasNewEntry) {
+      alert("ℹ️ All Category view मधून थेट Save करू नका. New entry add करा किंवा filter वापरा.");
+      return;
+    }
+  }
+}
+
+
 
   let items = [];
-  const allCats = [];
-
   document.querySelectorAll("#exp-rows .expense-row").forEach(row => {
     const name = row.querySelector(".exp-name").value.trim();
     const qty  = row.querySelector(".exp-qty").value.trim();
@@ -3606,27 +3722,19 @@ function saveExpenses() {
 
     if (name && amount > 0 && date) {
       items.push({ date, category, name, qty, unit, rate, amount });
-      if (category) allCats.push(category);
     }
   });
 
-  /* 🔴 Manual Entry Validation */
-  if (!expenseIdToEdit && items.length === 0) {
-    alert("Please select Date and add at least one expense item.");
+  /* 🔴 Validation */
+  if (items.length === 0 && !selDate) {
+    alert("Please add at least one expense item.");
     return;
   }
 
-  // ✅ SORT ITEMS BY DATE
-  items = sortItemsByDate(items);
-
   const existing = DATA.expenses.find(e => e.invoiceNo === invoiceNo);
 
-  /* =========================
-     UPDATE MODE
-  ==========================*/
-  if (expenseIdToEdit && existing && existing.id === expenseIdToEdit) {
-
-    const old = [];
+  if (existing) {
+    // १. जुन्या डेटाचे तुकडे करा
     const oldDates = existing.date.split(",").map(s => s.trim());
     const oldNames = existing.name.split(",").map(s => s.trim());
     const oldQtys  = existing.quantity.split(",").map(s => s.trim());
@@ -3634,27 +3742,36 @@ function saveExpenses() {
     const oldRates = existing.rate.split(",").map(s => s.trim());
     const oldCats  = existing.category.split(",").map(s => s.trim());
 
-    const selDate = el("exp-filter-date").value;
+    let keptData = [];
 
+    // २. फिल्टर लावलेला असताना, फक्त तोच डेटा वगळा जो आपण आता टेबलमध्ये एडिट केलाय
+    // बाकीच्या तारखांचा किंवा कॅटेगरीचा डेटा 'As It Is' ठेवा (Double होणार नाही)
     oldDates.forEach((d, i) => {
-      if (d !== selDate) {
-        old.push({
-          date: d,
-          name: oldNames[i],
-          qty: oldQtys[i],
-          unit: oldUnits[i],
-          rate: oldRates[i],
-          category: oldCats[i]
+      let isMatched = false;
+      
+      if (selDate && selCat) {
+        if (d === selDate && oldCats[i] === selCat) isMatched = true;
+      } else if (selDate) {
+        if (d === selDate) isMatched = true;
+      } else if (selCat) {
+        if (oldCats[i] === selCat) isMatched = true;
+      }
+
+      if (!isMatched) {
+        keptData.push({
+          date: d, name: oldNames[i], qty: oldQtys[i], 
+          unit: oldUnits[i], rate: oldRates[i], category: oldCats[i]
         });
       }
     });
 
-    let merged = [...old, ...items];
+    // ३. जुना राहिलेला डेटा आणि टेबलमधील नवीन डेटा एकत्र करा
+    let merged = [...keptData, ...items];
     merged = sortItemsByDate(merged);
 
     if (merged.length === 0) {
       DATA.expenses = DATA.expenses.filter(e => e.id !== existing.id);
-      alert("✅ Expense Deleted Successfully");
+      alert("✅ Expense Record Removed");
     } else {
       existing.date     = merged.map(i => i.date).join(", ");
       existing.name     = merged.map(i => i.name).join(", ");
@@ -3662,62 +3779,12 @@ function saveExpenses() {
       existing.unit     = merged.map(i => i.unit).join(", ");
       existing.rate     = merged.map(i => i.rate).join(", ");
       existing.category = merged.map(i => i.category).join(", ");
-      existing.amount   = merged.reduce(
-        (s, i) => s + (parseFloat(i.rate) || 0) * (parseFloat(i.qty) || 1),
-        0
-      ).toFixed(2);
-
-      alert("✅ Expense Updated (Date-wise Sorted)");
+      existing.amount   = merged.reduce((s, i) => s + (parseFloat(i.rate) * parseFloat(i.qty) || 0), 0).toFixed(2);
+      
+      alert("✅ Expenses Updated Successfully");
     }
-
-    expenseIdToEdit = null;
-  }
-
-  /* =========================
-     MERGE MODE
-  ==========================*/
-  else if (existing) {
-
-    let merged = [];
-    const oldDates = existing.date.split(",").map(s => s.trim());
-    const oldNames = existing.name.split(",").map(s => s.trim());
-    const oldQtys  = existing.quantity.split(",").map(s => s.trim());
-    const oldUnits = existing.unit.split(",").map(s => s.trim());
-    const oldRates = existing.rate.split(",").map(s => s.trim());
-    const oldCats  = existing.category.split(",").map(s => s.trim());
-
-    oldDates.forEach((d, i) => {
-      merged.push({
-        date: d,
-        name: oldNames[i],
-        qty: oldQtys[i],
-        unit: oldUnits[i],
-        rate: oldRates[i],
-        category: oldCats[i]
-      });
-    });
-
-    merged = [...merged, ...items];
-    merged = sortItemsByDate(merged);
-
-    existing.date     = merged.map(i => i.date).join(", ");
-    existing.name     = merged.map(i => i.name).join(", ");
-    existing.quantity = merged.map(i => i.qty).join(", ");
-    existing.unit     = merged.map(i => i.unit).join(", ");
-    existing.rate     = merged.map(i => i.rate).join(", ");
-    existing.category = merged.map(i => i.category).join(", ");
-    existing.amount   = merged.reduce(
-      (s, i) => s + (parseFloat(i.rate) || 0) * (parseFloat(i.qty) || 1),
-      0
-    ).toFixed(2);
-
-    alert("✅ New Expense Added (Date-wise Sorted)");
-  }
-
-  /* =========================
-     FIRST SAVE
-  ==========================*/
-  else {
+  } else {
+    // नवीन Invoice साठी पहिलीच एन्ट्री
     DATA.counters.exp = DATA.counters.exp || 0;
     DATA.counters.exp++;
 
@@ -3733,20 +3800,24 @@ function saveExpenses() {
       amount: items.reduce((s, i) => s + i.amount, 0).toFixed(2)
     });
 
-    alert("✅ Expense Saved (Date-wise)");
+    alert("✅ Expense Saved Successfully");
   }
 
   /* =========================
-     FINAL RESET
+      FINAL RESET
   ==========================*/
   saveData();
   el("exp-rows").innerHTML = "";
   el("exp-total").textContent = "0.00";
+  // फिल्टर रिसेट करा जेणेकरून गोंधळ होणार नाही
+  if(el("exp-filter-date")) el("exp-filter-date").value = "";
+  if(el("exp-filter-category")) el("exp-filter-category").value = "";
+  
   renderExpensesList();
   renderInvoiceProfits();
-  updateHomeSummary();
+  if (typeof updateHomeSummary === 'function') updateHomeSummary();
+  expenseIdToEdit = null;
 }
-
 
 
 
@@ -6870,9 +6941,8 @@ document.addEventListener("DOMContentLoaded", () => {
   show("home");    // Home tab default open होईल
 });
 
-
 // -------------------------------------------------
-// ⬇️ EXCEL IMPORT/EXPORT (Using local DATA object) ⬇️
+// ⬇️ EXCEL IMPORT/EXPORT (Labor Data Correction सह)
 // -------------------------------------------------
 
 function exportToExcel() {
@@ -6883,14 +6953,22 @@ function exportToExcel() {
 
     const wb = XLSX.utils.book_new();
 
-    // Helper to convert array of objects to sheet
     const addSheet = (dataArray, sheetName) => {
         if (dataArray && dataArray.length > 0) {
-            // Flatten nested objects (like items array in estimate/invoice)
             const flatData = dataArray.map(item => {
+                // Labor Attendance साठी विशेष बदल
+                if (sheetName === 'Labor Attendance') {
+                    const clonedItem = { ...item };
+                    // days array ला JSON string मध्ये बदला जेणेकरून एक्सेल तो नीट साठवेल
+                    if (clonedItem.days) {
+                        clonedItem.days = JSON.stringify(clonedItem.days);
+                    }
+                    return clonedItem;
+                }
+
+                // इतर मॉड्यूल्ससाठी (Invoices/Estimates)
                 const { items, ...rest } = item;
                 if (items && Array.isArray(items)) {
-                    // For records with nested items (like invoices/estimates/orders)
                     return items.map(subItem => ({ ...rest, ...subItem }));
                 }
                 return rest;
@@ -6911,64 +6989,88 @@ function exportToExcel() {
     addSheet(DATA.daily, 'Daily Reports');
     addSheet(DATA.labor, 'Labor Attendance');
     
-    // Add Metadata Sheet (Counters and Categories)
+    // Metadata Sheet
     const metaData = [
-        { Key: 'Counters', Value: JSON.stringify(DATA.counters) },
-        { Key: 'Categories', Value: JSON.stringify(DATA.categories) }
+        { Key: 'Counters', Value: JSON.stringify(DATA.counters || {}) },
+        { Key: 'Categories', Value: JSON.stringify(DATA.categories || {}) }
     ];
     const wsMeta = XLSX.utils.json_to_sheet(metaData);
     XLSX.utils.book_append_sheet(wb, wsMeta, 'MetaData');
 
-
     XLSX.writeFile(wb, 'Vaibhav_Enterprises_Data.xlsx');
 }
 
-function importFromExcel(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+function importFromExcel(e){
+  const file = e.target.files[0];
+  if(!file) return;
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        
-        let importedData = {};
-        let newCounters = {};
-        
-        workbook.SheetNames.forEach(sheetName => {
-            const worksheet = workbook.Sheets[sheetName];
-            let json = XLSX.utils.sheet_to_json(worksheet);
+  const reader = new FileReader();
 
-            if (sheetName === 'MetaData') {
-                const countersRow = json.find(r => r.Key === 'Counters');
-                if (countersRow) newCounters = JSON.parse(countersRow.Value);
-                const categoriesRow = json.find(r => r.Key === 'Categories');
-                if (categoriesRow) importedData.categories = JSON.parse(categoriesRow.Value);
-                return;
+  reader.onload = (evt)=>{
+    try{
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, { type:'array' });
+
+      // ================= EXPENSES =================
+      if(workbook.Sheets["Expenses"]){
+        DATA.expenses = XLSX.utils.sheet_to_json(workbook.Sheets["Expenses"]);
+      }
+
+      // ================= LABOR ATTENDANCE =================
+      const laborSheetName = Object.keys(workbook.Sheets)
+        .find(n => n.toLowerCase().includes("labor"));
+
+      if(laborSheetName){
+        const lab = XLSX.utils.sheet_to_json(workbook.Sheets[laborSheetName]);
+
+        DATA.labor = lab.map(l => {
+
+          let daysArr = [];
+          try{
+            if(typeof l.days === "string"){
+              daysArr = JSON.parse(l.days);
+            }else if(Array.isArray(l.days)){
+              daysArr = l.days;
             }
+          }catch{
+            daysArr = [];
+          }
 
-            // Simple import of flat data, assuming the user is importing their own exported format.
-            if (sheetName.includes('Invoices')) importedData.invoices = json;
-            if (sheetName.includes('Estimates')) importedData.estimates = json;
-            if (sheetName.includes('Expenses')) importedData.expenses = json;
-            if (sheetName.includes('Received Payments')) importedData.payments = json;
-            if (sheetName.includes('Paid Payments')) importedData.paidPayments = json;
-            if (sheetName.includes('Orders')) importedData.orders = json;
-            if (sheetName.includes('Measurements')) importedData.measurements = json;
-            if (sheetName.includes('Daily Reports')) importedData.daily = json;
-            if (sheetName.includes('Labor')) importedData.labor = json;
+          return {
+            id: l.id,
+            invno: l.invno,
+            client: l.client,
+            work: l.work,
+            name: l.name,
+            category: l.category,
+            rate: Number(l.rate || 0),
+            range: l.range,
+            start: l.start,
+            end: l.end,
+            days: daysArr,
+            totalDays: Number(l.totalDays || 0),
+            totalAdvance: Number(l.totalAdvance || 0),
+            totalTransport: Number(l.totalTransport || 0),
+            totalPay: Number(l.totalPay || 0),
+            balance: Number(l.balance || 0)
+          };
         });
+      }
 
-        // Merge imported data with existing local data
-        DATA = { ...DATA, ...importedData };
-        // Overwrite counters (important for new ID generation)
-        DATA.counters = { ...DATA.counters, ...newCounters };
-        
-        saveData();
-        alert("Data imported successfully! The app has reloaded with new data.");
-    };
-    reader.readAsArrayBuffer(file);
+      saveData();
+      renderAll();
+
+      alert("✅ Excel Import Successful");
+
+    }catch(err){
+      console.error(err);
+      alert("❌ Excel Import Failed");
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
 }
+
 
 // -------------------------------------------------
 // ⬇️ Category Chart  ⬇️
