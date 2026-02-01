@@ -851,6 +851,7 @@ table tbody tr:hover {
     <datalist id="labor-suggestions"></datalist>
 
     <button class="smallbtn" onclick="exportLaborReport()">Report</button>
+    <button class="smallbtn bg-red-600 text-white" onclick="exportLaborPDF()">PDF</button>
   </div>
 
   <div id="labor-rows" class="space-y-3"></div>
@@ -6842,6 +6843,170 @@ function loadQuickAttendanceNames(){
     }
   });
 }
+
+
+function exportLaborPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const q = (el('labor-search')?.value || '').trim().toLowerCase();
+  if (!q) return alert("Labor नाव search करा");
+
+  const records = DATA.labor.filter(l =>
+    l.name && l.name.toLowerCase() === q
+  );
+  if (!records.length) return alert("Labor record नाही");
+
+  const laborName = records[0].name;
+  const rate = records[0].rate || 0;
+
+  let y = 12;
+
+  /* ================= COMPANY HEADER ================= */
+
+ doc.setFontSize(16);
+doc.setTextColor(255, 140, 0); // ORANGE
+doc.setFont(undefined, "bold");
+doc.text("Vaibhav Enterprises", 105, y, { align: "center" });
+
+y += 7;
+
+// 🔴➡️⬛ BLACK COLOR FOR ADDRESS
+doc.setTextColor(0, 0, 0);
+doc.setFontSize(9);
+doc.setFont(undefined, "normal");
+
+doc.text(
+  "Anand Nagar, Near Kalyani Nursing Home, Lohegaon, Pune - 17",
+  105, y,
+  { align: "center" }
+);
+
+y += 5;
+doc.text(
+  "Mob: 9049764945 / 8080588206 | www.vaibhaventerprises.info",
+  105, y,
+  { align: "center" }
+);
+
+y += 5;
+doc.text(
+  "Reg. No: MH-26-0106699",
+  105, y,
+  { align: "center" }
+);
+
+
+  y += 6;
+  doc.setDrawColor(0);
+  doc.line(10, y, 200, y); // horizontal line
+  y += 8;
+
+  /* ================= REPORT TITLE ================= */
+
+  doc.setFontSize(13);
+  doc.setFont(undefined, "bold");
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Report : ${laborName}`, 105, y, { align: "center" });
+
+  y += 10;
+
+  /* ================= TO / DATE BLOCK ================= */
+
+  let firstDate = null;
+  let lastDate = null;
+
+  records.forEach(r => {
+    r.days.forEach(d => {
+      if (!d.status) return;
+      if (!firstDate) firstDate = d.date;
+      lastDate = d.date;
+    });
+  });
+
+  doc.setFontSize(10);
+  doc.setFont(undefined, "normal");
+
+  doc.text("To,", 10, y); y += 5;
+  doc.text(`Name : ${laborName}`, 10, y); y += 5;
+  doc.text(`Date : ${firstDate} To ${lastDate}`, 10, y);
+
+  y += 8;
+
+  /* ================= REPORT DETAILS ================= */
+
+  doc.setFont(undefined, "bold");
+  doc.text("Report Details", 10, y);
+  y += 6;
+
+  doc.setFont(undefined, "normal");
+
+  let totalDays = 0;
+  let totalAdvance = 0;
+  let totalTransport = 0;
+
+  records.forEach(r => {
+    r.days.forEach(d => {
+      if (!d.status) return;
+
+      let line = `${d.date}   ${d.status}`;
+      if (d.advance) line += `   Adv. ${d.advance}`;
+      if (d.transport) line += `   Trans. ${d.transport}`;
+
+      doc.text(line, 12, y);
+      y += 5;
+
+      if (y > 270) {
+        doc.addPage();
+        y = 12;
+      }
+    });
+
+    totalDays += r.totalDays || 0;
+    totalAdvance += r.totalAdvance || 0;
+    totalTransport += r.totalTransport || 0;
+  });
+
+  /* ================= TOTALS ================= */
+
+  y += 4;
+  doc.line(10, y, 200, y);
+  y += 6;
+
+  const totalPay = totalDays * rate;
+  const advanceBalance = totalAdvance - totalPay;
+
+  doc.text(`Per Day Rate : ${rate}`, 10, y); y += 5;
+  doc.text(`Total P Days : ${totalDays}`, 10, y); y += 5;
+  doc.text(`Total Payment: ${totalPay}`, 10, y); y += 5;
+  doc.text(`Total Advance: ${totalAdvance}`, 10, y); y += 5;
+
+  // 🚫 Transport = 0 → DO NOT SHOW
+  if (totalTransport > 0) {
+    doc.text(`Total Transport  : ${totalTransport}`, 10, y);
+    y += 5;
+  }
+
+  y += 4;
+
+  // 🎨 BALANCE COLOR LOGIC
+  if (advanceBalance > 0) {
+    doc.setTextColor(0, 150, 0); // GREEN
+    doc.setFont(undefined, "bold");
+    doc.text(
+      `Advance Balance (To Receive) : ${advanceBalance}`,
+      10, y
+    );
+  } else {
+    doc.setTextColor(200, 0, 0); // RED
+    doc.setFont(undefined, "bold");
+    doc.text(`Advance Balance : 0`, 10, y);
+  }
+
+  doc.save(`${laborName}_Report.pdf`);
+}
+
+
 
 
 function refreshLaborUI(){
