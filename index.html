@@ -870,7 +870,7 @@ body{
 
     <input id="labor-search"
            class="p-2 border rounded flex-1"
-           placeholder="Search by Client or Work"
+           placeholder="Search by Client or Work & Save Data Search"
            list="labor-suggestions"
            oninput="updateLaborSuggestions(this.value); filterLabor();">
 
@@ -7056,6 +7056,28 @@ doc.text(
 
   doc.save(`${laborName}_Report.pdf`);
 }
+
+
+
+function filterLabor(){
+  const q = el('labor-search').value.toLowerCase().trim();
+  const container = el('saved-labor');
+
+  if(!container) return;
+
+  const items = container.children;
+
+  Array.from(items).forEach(div => {
+    const text = div.innerText.toLowerCase();
+
+    if(q === ''){
+      div.style.display = '';
+    }else{
+      div.style.display = text.includes(q) ? '' : 'none';
+    }
+  });
+}
+
 
 
 
