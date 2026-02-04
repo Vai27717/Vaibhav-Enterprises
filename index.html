@@ -442,6 +442,27 @@ table tbody tr:hover {
 }
 
 
+.report-btn-wrap{
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.report-btn-wrap button{
+  flex: 1;
+}
+
+/* 📱 Mobile fix */
+@media (max-width: 600px){
+  .report-btn-wrap{
+    flex-direction: column;
+  }
+}
+
+body{
+  overflow-x: hidden;
+}
+
 
 </style>
 </head>
@@ -855,9 +876,12 @@ table tbody tr:hover {
 
     <datalist id="labor-suggestions"></datalist>
 
-    <button class="smallbtn" onclick="exportLaborReport()">Report</button>
-    <button class="smallbtn bg-red-600 text-white" onclick="exportLaborPDF()">PDF</button>
-  </div>
+    
+ </div>
+<div class="report-btn-wrap">
+  <button class="smallbtn" onclick="exportLaborReport()">Report</button>
+  <button class="smallbtn bg-red-600 text-white" onclick="exportLaborPDF()">PDF</button>
+</div>
 
   <div id="labor-rows" class="space-y-3"></div>
   <h3 class="mt-4">Saved Attendance</h3>
@@ -1512,14 +1536,33 @@ function renderAll() {
 
 
 // --- Labor ---
-  const sl = el('saved-labor');
-  sl.innerHTML = '';
-  DATA.labor.forEach(l => {
-    const div = document.createElement('div');
-    div.className = 'p-2 bg-gray-50 rounded flex justify-between items-center';
-    div.innerHTML = `<div><strong>${l.id}</strong> ${l.name} (${l.start} to ${l.end})</div><div class="flex gap-2"><button class="smallbtn" onclick="loadLabor('${l.id}')">Load</button><button class="smallbtn" onclick="shareLabor('${l.id}')">Share</button><button class="smallbtn" onclick="deleteLabor('${l.id}')">Delete</button></div>`;
-    sl.appendChild(div);
-  });
+  // --- Labor ---
+const sl = el('saved-labor');
+sl.innerHTML = '';
+
+DATA.labor.forEach(l => {
+  const div = document.createElement('div');
+  div.className = 'p-3 bg-gray-50 rounded space-y-2';
+
+  div.innerHTML = `
+    <div class="font-semibold">
+      ${l.id} ${l.name}
+    </div>
+
+    <div class="text-sm text-gray-600">
+      (${l.start} to ${l.end})
+    </div>
+
+    <div class="flex gap-2">
+      <button class="smallbtn flex-1" onclick="loadLabor('${l.id}')">Load</button>
+      <button class="smallbtn flex-1" onclick="shareLabor('${l.id}')">Share</button>
+      <button class="smallbtn flex-1 bg-red-600 text-white" onclick="deleteLabor('${l.id}')">Delete</button>
+    </div>
+  `;
+
+  sl.appendChild(div);
+});
+
 
 
 }
@@ -6056,7 +6099,8 @@ function addLabor(pref){
   div.className='p-3 border rounded bg-gray-50';
 
   div.innerHTML = `
-    <div class="grid md:grid-cols-5 gap-2">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-2 w-full">
+
       <!-- 🆕 Invoice No Field Added -->
       <select class="lab-inv p-2 border rounded" onchange="handleLaborInvoiceSelectRow(this)">
         <option value="">-- Select Invoice --</option>
@@ -6066,7 +6110,8 @@ function addLabor(pref){
       <input class="lab-work p-2 border rounded" placeholder="Work Title">
       <input class="lab-name p-2 border rounded" placeholder="Labor Name">
 
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-1 w-full">
+
         <select class="lab-category p-2 border rounded flex-1">
           <option value="">Select</option>
         </select>
@@ -6076,7 +6121,8 @@ function addLabor(pref){
     </div>
 
 
-    <div class="grid md:grid-cols-4 gap-2 mt-2">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mt-2 w-full">
+
       <input class="lab-rate p-2 border rounded" type="number" placeholder="Per day rate">
       <select class="lab-range p-2 border rounded">
         <option value="week">Week</option>
