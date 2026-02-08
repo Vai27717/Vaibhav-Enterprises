@@ -6108,7 +6108,15 @@ function addLabor(pref){
 
       <input class="lab-client p-2 border rounded" placeholder="Client Name">
       <input class="lab-work p-2 border rounded" placeholder="Work Title">
-      <input class="lab-name p-2 border rounded" placeholder="Labor Name">
+      <input
+  class="lab-name p-2 border rounded"
+  type="text"
+  list="labor-name-suggestions"
+  placeholder="Labor Name"
+/>
+
+<datalist id="labor-name-suggestions"></datalist>
+
 
       <div class="flex items-center gap-1 w-full">
 
@@ -6125,10 +6133,12 @@ function addLabor(pref){
 
       <input class="lab-rate p-2 border rounded" type="number" placeholder="Per day rate">
       <select class="lab-range p-2 border rounded">
+        <option value="custom">Custom</option>
         <option value="week">Week</option>
         <option value="2week">2 Week</option>
         <option value="month">Month</option>
         <option value="combine">Combine</option>
+        
       </select>
       <input class="lab-start p-2 border rounded" type="date">
       <input class="lab-end p-2 border rounded" type="date" readonly>
@@ -6164,6 +6174,14 @@ function addLabor(pref){
 
   parent.appendChild(div);
 
+   const nameInput = div.querySelector('.lab-name');
+if (nameInput) {
+  nameInput.addEventListener('input', function () {
+    updateLaborNameSuggestions(this.value);
+  });
+}
+
+
   const start = div.querySelector('.lab-start'), 
         end = div.querySelector('.lab-end'), 
         rangeSel = div.querySelector('.lab-range'),
@@ -6171,62 +6189,139 @@ function addLabor(pref){
 
   // auto rows generate (patched to append, not overwrite)
   function generateRows(){
-    if(!start.value) return;
+  if(!start.value) return;
 
-    const parts = start.value.split('-'); 
-    const f = new Date(parts[0], parts[1]-1, parts[2]);
+  // 🔹 EXISTING DATA MAP (date → values)
+  const existingMap = {};
+  tbody.querySelectorAll('tr').forEach(tr => {
+    const date = tr.cells[0].textContent;
+    existingMap[date] = {
+      status: tr.querySelector('.lab-status')?.value || '',
+      adv: tr.querySelector('.lab-adv')?.value || 0,
+      trans: tr.querySelector('.lab-trans')?.value || 0
+    };
+  });
 
-    let days = 7; // default week
-    if(rangeSel.value === '2week') days = 14;
-    if(rangeSel.value === 'combine') days = 30;
-    if(rangeSel.value === 'month'){
-      const year = f.getFullYear(), month = f.getMonth()+1;
-      days = new Date(year, month, 0).getDate() - f.getDate() + 1;
+  const sParts = start.value.split('-'); 
+  const startDate = new Date(sParts[0], sParts[1]-1, sParts[2]);
+
+  let newDates = [];
+
+  // -------------------------
+  // 🔹 CUSTOM MODE
+  // -------------------------
+  if (rangeSel.value === 'custom') {
+
+    end.removeAttribute('readonly');
+    if (!end.value) return;
+
+    const eParts = end.value.split('-');
+    const endDate = new Date(eParts[0], eParts[1]-1, eParts[2]);
+
+    if (endDate < startDate) {
+      alert("End date cannot be before start date");
+      end.value = '';
+      return;
     }
 
-    // किती rows आधीच आहेत ते check करा
-    const existing = tbody.querySelectorAll('tr').length;
+    let d = new Date(startDate);
+    while (d <= endDate) {
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,'0');
+      const dd = String(d.getDate()).padStart(2,'0');
+      newDates.push(`${yyyy}-${mm}-${dd}`);
+      d.setDate(d.getDate() + 1);
+    }
 
-    for(let i=existing;i<days;i++){
-      const d = new Date(f);
-      d.setDate(f.getDate() + i);
+    // ❌ BLOCK REDUCTION IF DATA EXISTS
+    for (let oldDate in existingMap) {
+      if (!newDates.includes(oldDate)) {
+        const r = existingMap[oldDate];
+        if (r.status || r.adv > 0 || r.trans > 0) {
+          alert(`Attendance exists on ${oldDate}. End date cannot be reduced.`);
+          end.value = tbody.lastChild?.cells[0]?.textContent || '';
+          return;
+        }
+      }
+    }
+  }
+
+  // -------------------------
+  // 🔹 AUTO MODES
+  // -------------------------
+  else {
+
+    end.setAttribute('readonly', true);
+    let days = 0;
+
+    if(rangeSel.value === 'week') days = 7;
+    if(rangeSel.value === '2week') days = 14;
+    if(rangeSel.value === 'combine') days = 30;
+
+    if(rangeSel.value === 'month'){
+      const year = startDate.getFullYear();
+      const month = startDate.getMonth() + 1;
+      days = new Date(year, month, 0).getDate() - startDate.getDate() + 1;
+    }
+
+    for(let i=0;i<days;i++){
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
 
       const yyyy = d.getFullYear();
       const mm = String(d.getMonth()+1).padStart(2,'0');
       const dd = String(d.getDate()).padStart(2,'0');
-      const ds = `${yyyy}-${mm}-${dd}`;
-
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${ds}</td>
-        <td>
-          <select class="lab-status">
-            <option value=""></option>
-            <option value="P">P</option>
-            <option value="PP">PP</option>
-            <option value="P1Q">P¼</option>
-            <option value="P1H">P½</option>
-            <option value="H">H</option>
-            <option value="A">A</option>
-        </select>
-        </td>
-        <td><input type="number" class="p-1 border rounded lab-adv" value="0" min="0"></td>
-        <td><input type="number" class="p-1 border rounded lab-trans" value="0" min="0"></td>
-      `;
-      tbody.appendChild(tr);
+      newDates.push(`${yyyy}-${mm}-${dd}`);
     }
-
-    // end date नेहमी last row चा date असेल
-    if(tbody.querySelectorAll('tr').length > 0){
-      const lastRow = tbody.querySelectorAll('tr')[tbody.querySelectorAll('tr').length-1];
-      end.value = lastRow.cells[0].textContent;
-    }
-
-    updateLaborTotals(div);
   }
 
+  // -------------------------
+  // 🔹 SAFE REBUILD (NO DATA LOSS)
+  // -------------------------
+  tbody.innerHTML = '';
+
+  newDates.forEach(ds => {
+    const rec = existingMap[ds] || {};
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${ds}</td>
+      <td>
+        <select class="lab-status">
+          <option value=""></option>
+          <option value="P">P</option>
+          <option value="PP">PP</option>
+          <option value="P1Q">P¼</option>
+          <option value="P1H">P½</option>
+          <option value="H">H</option>
+          <option value="A">A</option>
+        </select>
+      </td>
+      <td><input type="number" class="p-1 border rounded lab-adv" value="${rec.adv || 0}"></td>
+      <td><input type="number" class="p-1 border rounded lab-trans" value="${rec.trans || 0}"></td>
+    `;
+    tbody.appendChild(tr);
+
+    if (rec.status) {
+      tr.querySelector('.lab-status').value = rec.status;
+    }
+  });
+
+  // -------------------------
+  // 🔹 END DATE AUTO SET
+  // -------------------------
+  if (newDates.length) {
+    end.value = newDates[newDates.length - 1];
+  }
+
+  updateLaborTotals(div);
+}
+
+
+
   start.addEventListener('change', generateRows);
-  rangeSel.addEventListener('change', generateRows);
+rangeSel.addEventListener('change', generateRows);
+end.addEventListener('change', generateRows); // 🆕 REQUIRED FOR CUSTOM
+
 
   // preload if record exists
   if(pref){
@@ -6516,8 +6611,43 @@ function getLaborSummaryByName(laborName) {
 
 
 
+function updateLaborNameSuggestions(query) {
+  const dl = document.getElementById('labor-name-suggestions');
+  if (!dl) return;
+
+  dl.innerHTML = '';
+  if (!query) return;
+
+  const seen = new Set();
+  const q = query.toLowerCase();
+
+  (DATA.labor || []).forEach(l => {
+    if (l.name && l.name.toLowerCase().includes(q)) {
+      if (!seen.has(l.name)) {
+        seen.add(l.name);
+        const opt = document.createElement('option');
+        opt.value = l.name;
+        dl.appendChild(opt);
+      }
+    }
+  });
+}
 
 
+
+
+function getExistingAttendanceMap(tbody){
+  const map = {};
+  tbody.querySelectorAll('tr').forEach(tr => {
+    const date = tr.cells[0].textContent;
+    const status = tr.querySelector('.lab-status')?.value || '';
+    const adv = tr.querySelector('.lab-adv')?.value || 0;
+    const trans = tr.querySelector('.lab-trans')?.value || 0;
+
+    map[date] = { status, adv, trans };
+  });
+  return map;
+}
 
 
 
@@ -7077,7 +7207,6 @@ function filterLabor(){
     }
   });
 }
-
 
 
 
