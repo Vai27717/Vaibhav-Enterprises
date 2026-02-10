@@ -466,7 +466,18 @@ body{
 
 </style>
 </head>
+
+ <div id="app-content" class="hidden">
+  <h2>Welcome to App</h2>
+
+  <button class="smallbtn" onclick="enableAppLock()">
+    🔐 Enable App Lock
+  </button>
+
 <body class="p-4 md:p-8">
+ 
+
+
 
 <div class="nav">
   <div class="flex flex-1 overflow-x-auto whitespace-nowrap gap-2 py-1">
@@ -549,6 +560,12 @@ body{
   </select>
 </div>
    
+
+<div id="app-lock-screen" class="center hidden">
+  <h2>🔐 App Locked</h2>
+  <button class="smallbtn" onclick="unlockApp()">Unlock App</button>
+</div>
+
 
 
     <div id="home-summary" class="mt-4">
@@ -1269,9 +1286,9 @@ body{
     </div>
 
   </div>
+
+
 </div>
-
-
 
 
 
@@ -3862,7 +3879,7 @@ if (!selDate && !selCat) {
   if(el("exp-filter-date")) el("exp-filter-date").value = "";
   if(el("exp-filter-category")) el("exp-filter-category").value = "";
   
-  renderExpensesList();
+  renderExpensesList(el('exp-invoice-select').value);
   renderInvoiceProfits();
   if (typeof updateHomeSummary === 'function') updateHomeSummary();
   expenseIdToEdit = null;
@@ -3903,35 +3920,49 @@ function loadExpense(id) {
 
 
 
-function renderExpensesList() {
+function renderExpensesList(invoiceNo = "") {
   const tbody = el('expenses-tbody');
   if (!tbody) return;
+
   tbody.innerHTML = '';
 
-  (DATA.expenses || []).sort((a, b) => b.date.localeCompare(a.date)).forEach(e => {
-    const tr = document.createElement('tr');
-    tr.className = 'text-sm';
-    tr.innerHTML = `
-      <td data-label="Date">${e.date}</td>
-      <td data-label="Invoice No" class="font-bold text-yellow-300">${e.invoiceNo}</td>
-      <td data-label="Category">${e.category}</td>
-      <td data-label="Items">${e.name}</td>
-      <td data-label="Qty">${e.quantity}</td>
-      <td data-label="Unit">${e.unit}</td>
-      <td data-label="Rate">₹${e.rate}</td>
-      <td data-label="Amount" class="font-semibold text-red-400">₹${money(e.amount)}</td>
-      <td data-label="Action" class="flex gap-1">
-        <button class="smallbtn bg-blue-500" title="Load/Edit" onclick="loadExpense('${e.id}')">🔄</button>
-        <button class="smallbtn bg-green-500" title="Report" onclick="exportExpensePDF('${e.id}')">🖨️</button>
-        <button class="smallbtn bg-red-500" title="Delete" onclick="deleteExpense('${e.id}')">✕</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
+  // 🔒 जर invoice select नसेल → Saved Expenses hide
+  if (!invoiceNo) {
+    el('expenses-table-wrap')?.classList.add('hidden');
+    return;
+  }
+
+  // 🔓 invoice select असेल → show
+  el('expenses-table-wrap')?.classList.remove('hidden');
+
+  (DATA.expenses || [])
+    .filter(e => e.invoiceNo === invoiceNo)   // ✅ MAIN FIX
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .forEach(e => {
+      const tr = document.createElement('tr');
+      tr.className = 'text-sm';
+      tr.innerHTML = `
+        <td>${e.date}</td>
+        <td class="font-bold text-yellow-300">${e.invoiceNo}</td>
+        <td>${e.category}</td>
+        <td>${e.name}</td>
+        <td>${e.quantity}</td>
+        <td>${e.unit}</td>
+        <td>₹${e.rate}</td>
+        <td class="font-semibold text-red-400">₹${money(e.amount)}</td>
+        <td class="flex gap-1">
+          <button class="smallbtn bg-blue-500" onclick="loadExpense('${e.id}')">🔄</button>
+          <button class="smallbtn bg-green-500" onclick="exportExpensePDF('${e.id}')">🖨️</button>
+          <button class="smallbtn bg-red-500" onclick="deleteExpense('${e.id}')">✕</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
 
   renderInvoiceProfits();
   updateHomeSummary();
 }
+
 
 
 function deleteExpense(expenseId) {
@@ -4335,6 +4366,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     expenseIdToEdit = rec ? rec.id : null;
     el("exp-rows").innerHTML = ""; // clean slate
+
+     el("exp-total").textContent = "0.00";
+
+  renderExpensesList(inv); // ✅ NEW
   });
 
 });
@@ -7230,7 +7265,21 @@ function refreshLaborUI(){
 /* -------------------------------------------------------------
  * 🏁 INITIALIZATION & EXPORT/IMPORT
  * ------------------------------------------------------------- */
+function el(id) {
+  return document.getElementById(id);
+}
 
+
+window.addEventListener("load", () => {
+  const enabled = localStorage.getItem("appPasskeyEnabled");
+
+  if (enabled === "1") {
+    el('app-lock-screen').classList.remove('hidden');
+    el('app-content').classList.add('hidden');
+  } else {
+    el('app-content').classList.remove('hidden');
+  }
+});
 
 // Auto-fill Date on page load for relevant fields
 document.addEventListener("DOMContentLoaded", ()=>{ 
@@ -7666,8 +7715,66 @@ function addResetButtonToNavbar() {
 window.addEventListener("DOMContentLoaded", addResetButtonToNavbar);
 
 
+async function enableAppLock() {
 
+  if (!window.PublicKeyCredential) {
+    alert("❌ Device lock not supported");
+    return;
+  }
+
+  try {
+    await navigator.credentials.create({
+      publicKey: {
+        challenge: new Uint8Array(32),
+        rp: { name: "Vaibhav Enterprises App" },
+        user: {
+          id: new Uint8Array(16),
+          name: "app-user",
+          displayName: "App User"
+        },
+        pubKeyCredParams: [
+          { type: "public-key", alg: -7 }
+        ],
+        authenticatorSelection: {
+          userVerification: "required"
+        },
+        timeout: 60000
+      }
+    });
+
+    localStorage.setItem("appPasskeyEnabled", "1");
+    alert("✅ App Lock Enabled");
+
+  } catch (e) {
+    alert("⚠️ Setup cancelled");
+  }
+}
  
+async function unlockApp() {
+
+  if (!window.PublicKeyCredential) {
+    alert("❌ Secure unlock not supported");
+    return;
+  }
+
+  try {
+    await navigator.credentials.get({
+      publicKey: {
+        challenge: new Uint8Array(32),
+        userVerification: "required",
+        timeout: 60000
+      }
+    });
+
+    // ✅ Success
+    el('app-lock-screen').classList.add('hidden');
+    el('app-content').classList.remove('hidden');
+
+  } catch (err) {
+    alert("❌ Authentication failed or cancelled");
+  }
+}
+
 
 </script>
 
