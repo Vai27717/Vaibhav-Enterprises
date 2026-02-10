@@ -467,17 +467,9 @@ body{
 </style>
 </head>
 
- <div id="app-content" class="hidden">
-  <h2>Welcome to App</h2>
 
-  <button class="smallbtn" onclick="enableAppLock()">
-    🔐 Enable App Lock
-  </button>
 
 <body class="p-4 md:p-8">
- 
-
-
 
 <div class="nav">
   <div class="flex flex-1 overflow-x-auto whitespace-nowrap gap-2 py-1">
@@ -560,12 +552,6 @@ body{
   </select>
 </div>
    
-
-<div id="app-lock-screen" class="center hidden">
-  <h2>🔐 App Locked</h2>
-  <button class="smallbtn" onclick="unlockApp()">Unlock App</button>
-</div>
-
 
 
     <div id="home-summary" class="mt-4">
@@ -1288,7 +1274,7 @@ body{
   </div>
 
 
-</div>
+
 
 
 
@@ -7265,21 +7251,7 @@ function refreshLaborUI(){
 /* -------------------------------------------------------------
  * 🏁 INITIALIZATION & EXPORT/IMPORT
  * ------------------------------------------------------------- */
-function el(id) {
-  return document.getElementById(id);
-}
 
-
-window.addEventListener("load", () => {
-  const enabled = localStorage.getItem("appPasskeyEnabled");
-
-  if (enabled === "1") {
-    el('app-lock-screen').classList.remove('hidden');
-    el('app-content').classList.add('hidden');
-  } else {
-    el('app-content').classList.remove('hidden');
-  }
-});
 
 // Auto-fill Date on page load for relevant fields
 document.addEventListener("DOMContentLoaded", ()=>{ 
@@ -7715,66 +7687,8 @@ function addResetButtonToNavbar() {
 window.addEventListener("DOMContentLoaded", addResetButtonToNavbar);
 
 
-async function enableAppLock() {
 
-  if (!window.PublicKeyCredential) {
-    alert("❌ Device lock not supported");
-    return;
-  }
-
-  try {
-    await navigator.credentials.create({
-      publicKey: {
-        challenge: new Uint8Array(32),
-        rp: { name: "Vaibhav Enterprises App" },
-        user: {
-          id: new Uint8Array(16),
-          name: "app-user",
-          displayName: "App User"
-        },
-        pubKeyCredParams: [
-          { type: "public-key", alg: -7 }
-        ],
-        authenticatorSelection: {
-          userVerification: "required"
-        },
-        timeout: 60000
-      }
-    });
-
-    localStorage.setItem("appPasskeyEnabled", "1");
-    alert("✅ App Lock Enabled");
-
-  } catch (e) {
-    alert("⚠️ Setup cancelled");
-  }
-}
  
-async function unlockApp() {
-
-  if (!window.PublicKeyCredential) {
-    alert("❌ Secure unlock not supported");
-    return;
-  }
-
-  try {
-    await navigator.credentials.get({
-      publicKey: {
-        challenge: new Uint8Array(32),
-        userVerification: "required",
-        timeout: 60000
-      }
-    });
-
-    // ✅ Success
-    el('app-lock-screen').classList.add('hidden');
-    el('app-content').classList.remove('hidden');
-
-  } catch (err) {
-    alert("❌ Authentication failed or cancelled");
-  }
-}
-
 
 </script>
 
