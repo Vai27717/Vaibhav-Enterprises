@@ -1274,7 +1274,7 @@ body{
   </div>
 
 
-
+</div>
 
 
 
@@ -7356,6 +7356,61 @@ window.onload = async function () {
 };
 
 
+document.addEventListener("DOMContentLoaded", () => {
+
+  const summaryCards = document.getElementById("summary-cards");
+  const invoiceSummary = document.getElementById("invoice-summary");
+  const currentFilter = document.getElementById("current-invoice-no");
+
+  if (summaryCards) summaryCards.style.display = "none";
+  if (invoiceSummary) invoiceSummary.innerHTML = "";
+  if (currentFilter) currentFilter.textContent = "";
+
+});
+
+
+document.getElementById("home-inv-select").addEventListener("change", function () {
+
+  const selected = this.value;
+  const summaryCards = document.getElementById("summary-cards");
+  const invoiceSummary = document.getElementById("invoice-summary");
+  const currentFilter = document.getElementById("current-invoice-no");
+
+  // 🔹 Nothing selected
+  if (!selected) {
+    summaryCards.style.display = "none";
+    invoiceSummary.innerHTML = "";
+    currentFilter.textContent = "";
+
+    if (categoryChart) {
+      categoryChart.destroy();
+      categoryChart = null;
+    }
+    return;
+  }
+
+  // 🔹 Show cards
+  summaryCards.style.display = "grid";
+
+  // 🔹 ALL selected
+  if (selected === "ALL") {
+    currentFilter.textContent = "All Data";
+
+    updateHomeSummary("ALL");   // ✅ इथे change
+
+    if (categoryChart) {
+      categoryChart.destroy();
+      categoryChart = null;
+    }
+    return;
+  }
+
+  // 🔹 Specific Invoice selected
+  currentFilter.textContent = selected;
+
+  updateHomeSummary(selected);   // ✅ इथे change
+  updateHomeDashboard(selected);
+});
 
 
 
@@ -7687,7 +7742,12 @@ document.addEventListener("DOMContentLoaded", () => {
 function populateHomeInvoices() {
   const sel = document.getElementById("home-inv-select");
   if (!sel) return;
-  sel.innerHTML = `<option value="">-- Select Invoice --</option>`;
+
+  sel.innerHTML = `
+    <option value="">-- Select Invoice --</option>
+    <option value="ALL">All</option>
+  `;
+
   (DATA.invoices || []).forEach(inv => {
     const opt = document.createElement("option");
     opt.value = inv.id;
@@ -7695,6 +7755,7 @@ function populateHomeInvoices() {
     sel.appendChild(opt);
   });
 }
+
 
 
 
