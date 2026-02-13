@@ -1684,26 +1684,41 @@ function getPaidPaymentsTotal(paidPayments) {
     return paidPayments.reduce((sum, pp) => sum + (parseFloat(pp.amount) || 0), 0);
 }
 
-function updateHomeSummary() {
-  const invoiceTotal = getInvoiceTotal(DATA.invoices);
-  const expenseTotal = getExpenseTotal(DATA.expenses);
-  const receivedTotal = getReceivedTotal(DATA.payments);
-  const paidPaymentTotal = getPaidPaymentsTotal(DATA.paidPayments); 
+function updateHomeSummary(invoiceId = "") {
+
+  let invoices = DATA.invoices || [];
+  let expenses = DATA.expenses || [];
+  let payments = DATA.payments || [];
+  let paidPayments = DATA.paidPayments || [];
+
+  // 🔹 If specific invoice selected → filter data
+  if (invoiceId && invoiceId !== "ALL") {
+
+    invoices = invoices.filter(i =>
+      i.invoiceNo === invoiceId ||
+      i.id === invoiceId ||
+      i.invoice === invoiceId ||
+      i.invoiceId === invoiceId
+    );
+
+    expenses = expenses.filter(e => e.invoiceNo === invoiceId);
+    payments = payments.filter(p => p.invoiceNo === invoiceId);
+    paidPayments = paidPayments.filter(pp => pp.invoiceNo === invoiceId);
+  }
+
+  const invoiceTotal = getInvoiceTotal(invoices);
+  const expenseTotal = getExpenseTotal(expenses);
+  const receivedTotal = getReceivedTotal(payments);
+  const paidPaymentTotal = getPaidPaymentsTotal(paidPayments);
   const profitTotal = invoiceTotal - expenseTotal;
 
-  // Output
-  const totalInvEl = el('total-invoice-amount');
-  const totalOrderEl = el('total-order-amount');
-  const totalReceivedEl = el('total-received-amount');
-  const totalPaidEl = el('total-paid-amount');
-  const totalProfitEl = el('total-profit-amount');
-  
-  if (totalInvEl) totalInvEl.textContent = "₹ " + invoiceTotal.toFixed(2);
-  if (totalOrderEl) totalOrderEl.textContent = "₹ " + expenseTotal.toFixed(2);
-  if (totalReceivedEl) totalReceivedEl.textContent = "₹ " + receivedTotal.toFixed(2);
-  if (totalPaidEl) totalPaidEl.textContent = "₹ " + paidPaymentTotal.toFixed(2);
-  if (totalProfitEl) totalProfitEl.textContent = "₹ " + profitTotal.toFixed(2);
+  el('total-invoice-amount').textContent = "₹ " + invoiceTotal.toFixed(2);
+  el('total-order-amount').textContent = "₹ " + expenseTotal.toFixed(2);
+  el('total-received-amount').textContent = "₹ " + receivedTotal.toFixed(2);
+  el('total-paid-amount').textContent = "₹ " + paidPaymentTotal.toFixed(2);
+  el('total-profit-amount').textContent = "₹ " + profitTotal.toFixed(2);
 }
+
 
 
 /* ---------- Number to Words (Indian Rupees) ---------- */
