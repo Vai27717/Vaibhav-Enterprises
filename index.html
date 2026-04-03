@@ -741,6 +741,9 @@ body{
   <div class="mt-2 flex gap-2">
     <button class="smallbtn" onclick="addExpenseRow()">+ Add Item</button>
     <button class="smallbtn" onclick="saveExpenses()">Save</button>
+
+    <!-- 🆕 NEW FILTER PDF BUTTON -->
+  <button class="smallbtn bg-red-600" onclick="exportFilteredExpensePDF()">📄 Filter PDF</button>
   
     <button onclick="toggleSection('expenses-table-wrap', this)" class="smallbtn mt-4">
   ➕ Show Saved Expenses
@@ -4232,6 +4235,206 @@ async function exportExpensePDF(id) {
 
 
 
+async function exportFilteredExpensePDF() {
+  const { jsPDF } = window.jspdf;
+
+  const invoiceNo = document.getElementById("exp-invoice-select")?.value || "";
+  const filterDate = document.getElementById("exp-filter-date")?.value || "";
+  const filterCategory = document.getElementById("exp-filter-category")?.value || "";
+
+  if (!invoiceNo) {
+    return alert("Please select Invoice first!");
+  }
+
+  // 🔍 Find selected invoice expense record
+  const rec = (DATA.expenses || []).find(x => x.invoiceNo === invoiceNo);
+  if (!rec) {
+    return alert("No expense data found for selected invoice!");
+  }
+
+  // --- SPLIT MERGED DATA ---
+  const dates = (rec.date || "").split(",").map(s => s.trim());
+  const names = (rec.name || "").split(",").map(s => s.trim());
+  const cats  = (rec.category || "").split(",").map(s => s.trim());
+  const qtys  = (rec.quantity || "").split(",").map(s => s.trim());
+  const units = (rec.unit || "").split(",").map(s => s.trim());
+  const rates = (rec.rate || "").split(",").map(s => s.trim());
+
+  // --- Build item array ---
+  let items = names.map((name, i) => {
+    const qty = parseFloat(qtys[i]) || 0;
+    const rate = parseFloat(rates[i]) || 0;
+    return {
+      date: dates[i] || "-",
+      name: name || "-",
+      category: cats[i] || "-",
+      qty,
+      unit: units[i] || "-",
+      rate,
+      amount: qty * rate
+    };
+  });
+
+  // --- Apply filters ---
+  if (filterDate) {
+    items = items.filter(it => it.date === filterDate);
+  }
+
+  if (filterCategory) {
+    items = items.filter(it => it.category === filterCategory);
+  }
+
+  if (!items.length) {
+    return alert("No filtered expense rows found for PDF!");
+  }
+
+  // --- PDF START ---
+  const doc = new jsPDF();
+  let y = 15;
+
+  // --- HEADER ---
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("Report", 105, y, { align: "center" });
+  y += 8;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+
+  doc.text(`Invoice No: ${invoiceNo}`, 14, y);
+  y += 6;
+
+  doc.text(`Date Filter: ${filterDate || "All Dates"}`, 14, y);
+  y += 6;
+
+  doc.text(`Category Filter: ${filterCategory || "All Categories"}`, 14, y);
+  y += 10;
+
+  // --- TABLE HEADER ---
+  doc.setFillColor(200, 220, 255);
+  doc.rect(10, y - 4, 190, 8, "F");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("Date", 14, y);
+  doc.text("Item", 40, y);
+  doc.text("Category", 80, y);
+  doc.text("Qty", 120, y);
+  doc.text("Unit", 135, y);
+  doc.text("Rate", 150, y);
+  doc.text("Amount", 196 - 14, y, { align: "right" });
+  y += 6;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+
+  const categoryTotals = {};
+  let grandTotal = 0;
+
+  // --- ROWS ---
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+
+    const itemLines = doc.splitTextToSize(it.name, 38);
+    const catLines  = doc.splitTextToSize(it.category, 30);
+    const rowHeight = Math.max(itemLines.length, catLines.length) * 5;
+
+    doc.text(it.date, 14, y);
+    doc.text(itemLines, 40, y);
+    doc.text(catLines, 80, y);
+    doc.text(String(it.qty), 120, y);
+    doc.text(it.unit, 135, y);
+    doc.text(it.rate.toFixed(2), 150, y);
+    doc.text(it.amount.toFixed(2), 196 - 14, y, { align: "right" });
+
+    y += rowHeight;
+    grandTotal += it.amount;
+
+    // Category accumulate
+    if (!categoryTotals[it.category]) {
+      categoryTotals[it.category] = { total: 0, items: [] };
+    }
+    categoryTotals[it.category].total += it.amount;
+    categoryTotals[it.category].items.push({
+      name: it.name,
+      qty: it.qty,
+      unit: it.unit,
+      amount: it.amount
+    });
+
+    if (y > 270) {
+      doc.addPage();
+      y = 20;
+    }
+  }
+
+  // --- GRAND TOTAL ---
+  y += 4;
+  doc.setFont("helvetica", "bold");
+  doc.text("Grand Total: " + grandTotal.toFixed(2), 196 - 14, y, { align: "right" });
+  y += 10;
+
+  // --- CATEGORY SUMMARY ---
+  doc.setFontSize(12);
+  doc.text("Category-wise Summary", 14, y);
+  y += 8;
+
+  Object.keys(categoryTotals).forEach(cat => {
+    const catTotal = categoryTotals[cat].total;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text(`${cat}  (Total: ${catTotal.toFixed(2)})`, 14, y);
+    y += 6;
+
+    // table header
+    doc.setFontSize(10);
+    doc.setFillColor(230, 230, 230);
+    doc.rect(12, y - 4, 182, 7, "F");
+    doc.text("Name", 16, y);
+    doc.text("Qty", 80, y);
+    doc.text("Unit", 100, y);
+    doc.text("Amount", 196 - 14, y, { align: "right" });
+    y += 5;
+
+    doc.setFont("helvetica", "normal");
+
+    categoryTotals[cat].items.forEach(it => {
+      const nameLines = doc.splitTextToSize(it.name, 55);
+      const h = nameLines.length * 5;
+
+      doc.text(nameLines, 16, y);
+      doc.text(String(it.qty), 80, y);
+      doc.text(it.unit, 100, y);
+      doc.text(it.amount.toFixed(2), 196 - 14, y, { align: "right" });
+      y += h;
+
+      if (y > 270) {
+        doc.addPage();
+        y = 20;
+      }
+    });
+
+    y += 6;
+  });
+
+  // --- FOOTER ---
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text("Generated: " + new Date().toLocaleString(), 14, 290);
+
+  // --- FILE NAME ---
+  let fileName = `${invoiceNo}_Filtered_Expense_Report`;
+
+  if (filterDate) fileName += `_${filterDate}`;
+  if (filterCategory) fileName += `_${filterCategory.replace(/\s+/g, "_")}`;
+
+  doc.save(fileName + ".pdf");
+}
+
+
+
+
 function loadExpensesByInvoice(invoiceNo) {
     const table = document.getElementById('expense-items');
     table.innerHTML = '';
@@ -4465,13 +4668,22 @@ function addQuickExpenseRow() {
   const itemInput = div.querySelector(".qe-name");
   const unitInput = div.querySelector(".qe-unit");
 
-  itemInput.addEventListener("change", () => {
+    itemInput.addEventListener("change", () => {
     const mat = (DATA.materials || []).find(m => m.part === itemInput.value);
     if (mat) {
       unitInput.value = mat.unit || "";
     }
   });
+
+  // 🔽 AUTO SCROLL TO NEWLY ADDED ROW (mobile friendly)
+  setTimeout(() => {
+    div.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest"
+    });
+  }, 100);
 }
+
 
 
 
