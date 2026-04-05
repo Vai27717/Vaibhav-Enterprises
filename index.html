@@ -4866,13 +4866,79 @@ el("qe-search-date").addEventListener("change", () => {
 
 
 /* -------------------------------------------------------------
- * 4️⃣ MEASUREMENTS (Local Storage Implementation)
- * FINAL VERSION with SUB ENTRIES
+ * 4️⃣ MEASUREMENTS (Final JS Code)
+ * Features:
+ * ✅ Fraction support (7 1/2, 5 1/4, 3 3/4, 7.5)
+ * ✅ Sub entry support
+ * ✅ Material field support
+ * ✅ Unit-wise display in save/share
+ * ✅ Total R.ft / Sq.ft
+ * ✅ Safe share (share / clipboard / prompt)
  * ------------------------------------------------------------- */
 
 let msrIdToEdit = null;
 
 /* ---------- Helpers ---------- */
+function getUnitSymbol(unitType){
+  switch(unitType){
+    case 'feet': return "'";
+    case 'inch': return '"';
+    case 'meter': return ' m';
+    case 'cm': return ' cm';
+    default: return '';
+  }
+}
+
+function formatMeasurementValue(val, unitType){
+  if(val === null || val === undefined || val === '') return '';
+  return `${parseFloat(val)}${getUnitSymbol(unitType)}`;
+}
+
+/* ---------- Fraction / Decimal Parser ---------- */
+function parseMeasureInput(val){
+  if(val === null || val === undefined) return 0;
+
+  val = String(val).trim();
+  if(!val) return 0;
+
+  // direct decimal / integer (Ex: 7.5, 48)
+  if(!isNaN(val)) return parseFloat(val);
+
+  // mixed fraction (Ex: 7 1/2, 5 1/4, 3 3/4)
+  if(val.includes(' ')){
+    const parts = val.split(' ');
+    if(parts.length === 2){
+      const whole = parseFloat(parts[0]) || 0;
+      const frac = parts[1];
+
+      if(frac.includes('/')){
+        const f = frac.split('/');
+        if(f.length === 2){
+          const num = parseFloat(f[0]) || 0;
+          const den = parseFloat(f[1]) || 1;
+          if(den !== 0){
+            return whole + (num / den);
+          }
+        }
+      }
+    }
+  }
+
+  // only fraction (Ex: 1/2, 3/4)
+  if(val.includes('/')){
+    const f = val.split('/');
+    if(f.length === 2){
+      const num = parseFloat(f[0]) || 0;
+      const den = parseFloat(f[1]) || 1;
+      if(den !== 0){
+        return num / den;
+      }
+    }
+  }
+
+  return 0;
+}
+
 function convertToFeet(val, unitType){
   switch(unitType){
     case 'meter': return val * 3.28084;
@@ -4882,22 +4948,149 @@ function convertToFeet(val, unitType){
   }
 }
 
-function formatMeasurementValue(value, unitType){
-  switch(unitType){
-    case 'inch': return `${value}"`;
-    case 'meter': return `${value} m`;
-    case 'cm': return `${value} cm`;
-    default: return `${value}'`;
+/* ---------- Sub Entry ---------- */
+function addSubMeasurement(parentDiv, data){
+  const box = parentDiv.querySelector('.sub-items');
+  const subDiv = document.createElement('div');
+  subDiv.className = 'sub-row border rounded p-2 bg-gray-100 mt-2';
+
+  subDiv.innerHTML = `
+    <div class="grid md:grid-cols-5 gap-2 items-center">
+      <input class="sub-w p-2 border rounded" type="text" placeholder="Sub Width (Ex. 7.5 or 7 1/2)">
+      <input class="sub-h p-2 border rounded" type="text" placeholder="Sub Height">
+      <input class="sub-qty p-2 border rounded" type="number" placeholder="Qty" min="1" value="1">
+      <select class="sub-unit-select p-2 border rounded">
+        <option value="feet">Feet</option>
+        <option value="meter">Meter</option>
+        <option value="inch">Inch</option>
+        <option value="cm">Centimeter</option>
+      </select>
+      <div class="flex items-center">
+        Area: <span class="sub-area font-semibold ml-2">0.00</span>
+        <span class="sub-unit ml-1 text-sm">R.ft</span>
+      </div>
+    </div>
+    <div class="mt-2 text-right">
+      <button class="smallbtn" type="button" onclick="this.closest('.sub-row').remove(); updateMeas(this.closest('.meas-row'))">Remove Sub</button>
+    </div>
+  `;
+
+  box.appendChild(subDiv);
+
+  if(data){
+    subDiv.querySelector('.sub-w').value = data.w || '';
+    subDiv.querySelector('.sub-h').value = data.h || '';
+    subDiv.querySelector('.sub-qty').value = data.qty || 1;
+    subDiv.querySelector('.sub-unit-select').value = data.unitType || 'feet';
   }
+
+  subDiv.querySelector('.sub-w').addEventListener('input', ()=> updateMeas(parentDiv));
+  subDiv.querySelector('.sub-h').addEventListener('input', ()=> updateMeas(parentDiv));
+  subDiv.querySelector('.sub-qty').addEventListener('input', ()=> updateMeas(parentDiv));
+  subDiv.querySelector('.sub-unit-select').addEventListener('change', ()=> updateMeas(parentDiv));
+
+  updateMeas(parentDiv);
 }
 
-function calcMeasurementResult(wRaw, hRaw, qty, unitType){
+function calcSubMeasurement(subDiv){
+  const swRaw = parseMeasureInput(subDiv.querySelector('.sub-w').value);
+  const shRaw = parseMeasureInput(subDiv.querySelector('.sub-h').value);
+  const sqty = parseFloat(subDiv.querySelector('.sub-qty').value) || 1;
+  const sUnitType = subDiv.querySelector('.sub-unit-select').value;
+
+  const sw = convertToFeet(swRaw, sUnitType);
+  const sh = convertToFeet(shRaw, sUnitType);
+
+  let sResult = 0, sUnit = '';
+  if(!shRaw){
+    sResult = sw * sqty;
+    sUnit = 'R.ft';
+  } else {
+    sResult = sw * sh * sqty;
+    sUnit = 'Sq.ft';
+  }
+
+  subDiv.querySelector('.sub-area').textContent = sResult.toFixed(2);
+  subDiv.querySelector('.sub-unit').textContent = sUnit;
+
+  return {
+    w: swRaw,
+    h: shRaw,
+    qty: sqty,
+    result: parseFloat(sResult.toFixed(2)),
+    unit: sUnit,
+    unitType: sUnitType
+  };
+}
+
+/* ---------- Main Measurement ---------- */
+function addMeasurement(data){
+  const parent = el('meas-items');
+  const div = document.createElement('div');
+  div.className = 'p-2 border rounded bg-gray-50 meas-row';
+
+  div.innerHTML = `
+    <div class="grid md:grid-cols-6 gap-2 items-center">
+      <input class="meas-name p-2 border rounded" placeholder="Item">
+      <input class="meas-w p-2 border rounded" type="text" placeholder="Width (Ex. 7.5 or 7 1/2)">
+      <input class="meas-h p-2 border rounded" type="text" placeholder="Height (Ex. 48 or 3 3/4)">
+      <input class="meas-qty p-2 border rounded" type="number" placeholder="Qty" min="1" value="1">
+      <select class="meas-unit-select p-2 border rounded">
+        <option value="feet">Feet</option>
+        <option value="meter">Meter</option>
+        <option value="inch">Inch</option>
+        <option value="cm">Centimeter</option>
+      </select>
+      <div class="flex items-center">
+        Area: <span class="meas-area font-semibold ml-2">0.00</span>
+        <span class="meas-unit ml-1 text-sm">R.ft</span>
+      </div>
+    </div>
+
+    <div class="mt-2 flex gap-2 justify-end">
+      <button class="smallbtn" type="button" onclick="addSubMeasurement(this.closest('.meas-row'))">+ Add Sub Entry</button>
+      <button class="smallbtn" type="button" onclick="this.closest('.meas-row').remove(); recalcTotals()">Remove</button>
+    </div>
+
+    <div class="sub-items mt-2"></div>
+
+    <div class="mt-2 text-right font-semibold text-blue-700">
+      Row Total: <span class="meas-total-row">0.00</span> <span class="meas-total-unit">R.ft</span>
+    </div>
+  `;
+
+  parent.appendChild(div);
+
+  if(data){
+    div.querySelector('.meas-name').value = data.name || '';
+    div.querySelector('.meas-w').value = data.w || '';
+    div.querySelector('.meas-h').value = data.h || '';
+    div.querySelector('.meas-qty').value = data.qty || 1;
+    div.querySelector('.meas-unit-select').value = data.unitType || 'feet';
+
+    if(Array.isArray(data.subItems) && data.subItems.length){
+      data.subItems.forEach(sub => addSubMeasurement(div, sub));
+    }
+  }
+
+  div.querySelector('.meas-w').addEventListener('input', ()=> updateMeas(div));
+  div.querySelector('.meas-h').addEventListener('input', ()=> updateMeas(div));
+  div.querySelector('.meas-qty').addEventListener('input', ()=> updateMeas(div));
+  div.querySelector('.meas-unit-select').addEventListener('change', ()=> updateMeas(div));
+
+  updateMeas(div);
+}
+
+function updateMeas(div){
+  const wRaw = parseMeasureInput(div.querySelector('.meas-w').value);
+  const hRaw = parseMeasureInput(div.querySelector('.meas-h').value);
+  const qty = parseFloat(div.querySelector('.meas-qty').value) || 1;
+  const unitType = div.querySelector('.meas-unit-select').value;
+
   const w = convertToFeet(wRaw, unitType);
   const h = convertToFeet(hRaw, unitType);
 
-  let result = 0;
-  let unit = '';
-
+  let result = 0, unit = '';
   if(!hRaw){
     result = w * qty;
     unit = 'R.ft';
@@ -4906,255 +5099,131 @@ function calcMeasurementResult(wRaw, hRaw, qty, unitType){
     unit = 'Sq.ft';
   }
 
-  return {
-    result: parseFloat(result.toFixed(2)),
-    unit
-  };
-}
+  div.querySelector('.meas-area').textContent = result.toFixed(2);
+  div.querySelector('.meas-unit').textContent = unit;
 
-/* ---------- Add Main Measurement Group ---------- */
-function addMeasurement(data){
-  const parent = el('meas-items');
-  const group = document.createElement('div');
-  group.className = 'meas-group p-3 border rounded bg-gray-50';
-  group.dataset.groupId = 'grp_' + Date.now() + '_' + Math.floor(Math.random()*10000);
+  // Sub entries total
+  let subTotal = 0;
+  let hasSqft = (unit === 'Sq.ft');
+  let hasRft = (unit === 'R.ft');
 
-  group.innerHTML = `
-    <div class="main-row border rounded p-2 bg-white">
-      <div class="grid md:grid-cols-7 gap-2 items-center">
-        <input class="meas-name p-2 border rounded" placeholder="Item">
-        <input class="meas-w p-2 border rounded" type="number" placeholder="Width">
-        <input class="meas-h p-2 border rounded" type="number" placeholder="Height">
-        <input class="meas-qty p-2 border rounded" type="number" placeholder="Qty" min="1" value="1">
-        <select class="meas-unit-select p-2 border rounded">
-          <option value="feet">Feet</option>
-          <option value="meter">Meter</option>
-          <option value="inch">Inch</option>
-          <option value="cm">Centimeter</option>
-        </select>
-        <div class="flex items-center">
-          <span>Main:</span>
-          <span class="meas-area font-semibold ml-2">0.00</span>
-          <span class="meas-unit ml-1 text-sm">R.ft</span>
-        </div>
-        <div class="flex gap-2 flex-wrap">
-          <button class="smallbtn add-sub-btn" type="button">+ Sub Entry</button>
-          <button class="smallbtn remove-main-btn" type="button">Remove</button>
-        </div>
-      </div>
+  div.querySelectorAll('.sub-row').forEach(subDiv => {
+    const subData = calcSubMeasurement(subDiv);
+    subTotal += subData.result;
 
-      <div class="sub-items mt-3 space-y-2"></div>
-
-      <div class="mt-3 text-right font-semibold text-sm">
-        Item Total:
-        <span class="group-total-value">0.00</span>
-        <span class="group-total-unit">R.ft</span>
-      </div>
-    </div>
-  `;
-
-  parent.appendChild(group);
-
-  const mainW = group.querySelector('.meas-w');
-  const mainH = group.querySelector('.meas-h');
-  const mainQty = group.querySelector('.meas-qty');
-  const mainUnit = group.querySelector('.meas-unit-select');
-  const mainName = group.querySelector('.meas-name');
-
-  mainW.addEventListener('input', ()=> updateGroup(group));
-  mainH.addEventListener('input', ()=> updateGroup(group));
-  mainQty.addEventListener('input', ()=> updateGroup(group));
-  mainUnit.addEventListener('change', ()=> updateGroup(group));
-  mainName.addEventListener('input', ()=> updateGroup(group));
-
-  group.querySelector('.add-sub-btn').addEventListener('click', ()=> addSubMeasurement(group));
-  group.querySelector('.remove-main-btn').addEventListener('click', ()=> {
-    group.remove();
-    recalcTotals();
+    if(subData.unit === 'Sq.ft') hasSqft = true;
+    if(subData.unit === 'R.ft') hasRft = true;
   });
 
-  if(data){
-    group.querySelector('.meas-name').value = data.name || '';
-    group.querySelector('.meas-w').value = data.w || 0;
-    group.querySelector('.meas-h').value = data.h || 0;
-    group.querySelector('.meas-qty').value = data.qty || 1;
-    group.querySelector('.meas-unit-select').value = data.unitType || 'feet';
+  const rowTotal = result + subTotal;
 
-    if(Array.isArray(data.subItems)){
-      data.subItems.forEach(sub => addSubMeasurement(group, sub));
-    }
-  }
+  // Row total unit preference
+  let rowUnit = unit;
+  if(hasSqft) rowUnit = 'Sq.ft';
+  else if(hasRft) rowUnit = 'R.ft';
 
-  updateGroup(group);
-}
-
-/* ---------- Add Sub Entry ---------- */
-function addSubMeasurement(group, data){
-  const subWrap = group.querySelector('.sub-items');
-  const sub = document.createElement('div');
-  sub.className = 'sub-row border rounded p-2 bg-blue-50';
-
-  sub.innerHTML = `
-    <div class="grid md:grid-cols-6 gap-2 items-center">
-      <div class="text-sm font-medium">↳ Sub</div>
-      <input class="sub-w p-2 border rounded" type="number" placeholder="Width">
-      <input class="sub-h p-2 border rounded" type="number" placeholder="Height">
-      <input class="sub-qty p-2 border rounded" type="number" placeholder="Qty" min="1" value="1">
-      <select class="sub-unit-select p-2 border rounded">
-        <option value="feet">Feet</option>
-        <option value="meter">Meter</option>
-        <option value="inch">Inch</option>
-        <option value="cm">Centimeter</option>
-      </select>
-      <div class="flex items-center gap-2 flex-wrap">
-        <span class="sub-area font-semibold">0.00</span>
-        <span class="sub-unit text-sm">R.ft</span>
-        <button class="smallbtn remove-sub-btn" type="button">Remove</button>
-      </div>
-    </div>
-  `;
-
-  subWrap.appendChild(sub);
-
-  const subW = sub.querySelector('.sub-w');
-  const subH = sub.querySelector('.sub-h');
-  const subQty = sub.querySelector('.sub-qty');
-  const subUnit = sub.querySelector('.sub-unit-select');
-
-  subW.addEventListener('input', ()=> updateGroup(group));
-  subH.addEventListener('input', ()=> updateGroup(group));
-  subQty.addEventListener('input', ()=> updateGroup(group));
-  subUnit.addEventListener('change', ()=> updateGroup(group));
-
-  sub.querySelector('.remove-sub-btn').addEventListener('click', ()=> {
-    sub.remove();
-    updateGroup(group);
-  });
-
-  if(data){
-    sub.querySelector('.sub-w').value = data.w || 0;
-    sub.querySelector('.sub-h').value = data.h || 0;
-    sub.querySelector('.sub-qty').value = data.qty || 1;
-    sub.querySelector('.sub-unit-select').value = data.unitType || 'feet';
-  }
-
-  updateGroup(group);
-}
-
-/* ---------- Update Group ---------- */
-function updateGroup(group){
-  const name = group.querySelector('.meas-name').value || 'Item';
-  const wRaw = parseFloat(group.querySelector('.meas-w').value) || 0;
-  const hRaw = parseFloat(group.querySelector('.meas-h').value) || 0;
-  const qty = parseFloat(group.querySelector('.meas-qty').value) || 1;
-  const unitType = group.querySelector('.meas-unit-select').value;
-
-  const mainCalc = calcMeasurementResult(wRaw, hRaw, qty, unitType);
-
-  group.querySelector('.meas-area').textContent = mainCalc.result.toFixed(2);
-  group.querySelector('.meas-unit').textContent = mainCalc.unit;
-
-  let groupTotal = mainCalc.result;
-  let groupUnit = mainCalc.unit;
-
-  group.querySelectorAll('.sub-row').forEach(sub => {
-    const subW = parseFloat(sub.querySelector('.sub-w').value) || 0;
-    const subH = parseFloat(sub.querySelector('.sub-h').value) || 0;
-    const subQty = parseFloat(sub.querySelector('.sub-qty').value) || 1;
-    const subUnitType = sub.querySelector('.sub-unit-select').value;
-
-    const subCalc = calcMeasurementResult(subW, subH, subQty, subUnitType);
-
-    sub.querySelector('.sub-area').textContent = subCalc.result.toFixed(2);
-    sub.querySelector('.sub-unit').textContent = subCalc.unit;
-
-    /* Add only same unit totals */
-    if(subCalc.unit === groupUnit){
-      groupTotal += subCalc.result;
-    }
-  });
-
-  group.querySelector('.group-total-value').textContent = groupTotal.toFixed(2);
-  group.querySelector('.group-total-unit').textContent = groupUnit;
-  group.dataset.groupName = name;
+  div.querySelector('.meas-total-row').textContent = rowTotal.toFixed(2);
+  div.querySelector('.meas-total-unit').textContent = rowUnit;
 
   recalcTotals();
 }
 
-/* ---------- Recalculate Overall Totals ---------- */
 function recalcTotals(){
-  let totalRft = 0;
-  let totalSft = 0;
+  let totalRft = 0, totalSft = 0;
 
-  document.querySelectorAll('#meas-items .meas-group').forEach(group => {
-    const wRaw = parseFloat(group.querySelector('.meas-w').value) || 0;
-    const hRaw = parseFloat(group.querySelector('.meas-h').value) || 0;
-    const qty = parseFloat(group.querySelector('.meas-qty').value) || 1;
-    const unitType = group.querySelector('.meas-unit-select').value;
+  document.querySelectorAll('#meas-items .meas-row').forEach(div => {
+    const wRaw = parseMeasureInput(div.querySelector('.meas-w').value);
+    const hRaw = parseMeasureInput(div.querySelector('.meas-h').value);
+    const qty = parseFloat(div.querySelector('.meas-qty').value) || 1;
+    const unitType = div.querySelector('.meas-unit-select').value;
 
-    const mainCalc = calcMeasurementResult(wRaw, hRaw, qty, unitType);
+    const w = convertToFeet(wRaw, unitType);
+    const h = convertToFeet(hRaw, unitType);
 
-    if(mainCalc.unit === 'R.ft') totalRft += mainCalc.result;
-    if(mainCalc.unit === 'Sq.ft') totalSft += mainCalc.result;
+    if(!hRaw){
+      totalRft += (w * qty);
+    } else {
+      totalSft += (w * h * qty);
+    }
 
-    group.querySelectorAll('.sub-row').forEach(sub => {
-      const subW = parseFloat(sub.querySelector('.sub-w').value) || 0;
-      const subH = parseFloat(sub.querySelector('.sub-h').value) || 0;
-      const subQty = parseFloat(sub.querySelector('.sub-qty').value) || 1;
-      const subUnitType = sub.querySelector('.sub-unit-select').value;
+    div.querySelectorAll('.sub-row').forEach(subDiv => {
+      const swRaw = parseMeasureInput(subDiv.querySelector('.sub-w').value);
+      const shRaw = parseMeasureInput(subDiv.querySelector('.sub-h').value);
+      const sqty = parseFloat(subDiv.querySelector('.sub-qty').value) || 1;
+      const sUnitType = subDiv.querySelector('.sub-unit-select').value;
 
-      const subCalc = calcMeasurementResult(subW, subH, subQty, subUnitType);
+      const sw = convertToFeet(swRaw, sUnitType);
+      const sh = convertToFeet(shRaw, sUnitType);
 
-      if(subCalc.unit === 'R.ft') totalRft += subCalc.result;
-      if(subCalc.unit === 'Sq.ft') totalSft += subCalc.result;
+      if(!shRaw){
+        totalRft += (sw * sqty);
+      } else {
+        totalSft += (sw * sh * sqty);
+      }
     });
   });
 
   el('meas-total').textContent = `Tot. R.ft: ${totalRft.toFixed(2)} | Tot. Sq.ft: ${totalSft.toFixed(2)}`;
 }
 
-/* ---------- Save Measurements ---------- */
+
+
+/* ---------- Get Next Available Measurement ID (Gap Fill System) ---------- */
+function getNextMeasurementId(){
+  const usedNums = (DATA.measurements || [])
+    .map(x => {
+      const n = parseInt(String(x.id || '').replace('MSR-', ''), 10);
+      return isNaN(n) ? null : n;
+    })
+    .filter(n => n !== null)
+    .sort((a, b) => a - b);
+
+  let nextNum = 1;
+
+  for(let i = 0; i < usedNums.length; i++){
+    if(usedNums[i] === nextNum){
+      nextNum++;
+    } else if(usedNums[i] > nextNum){
+      break;
+    }
+  }
+
+  return 'MSR-' + String(nextNum).padStart(4, '0');
+}
+
+/* ---------- Save ---------- */
 function saveMeasurements(){
   const client = el('msr-client').value || '';
-  const contact = el('msr-contact').value || '';
+  const contact = el('msr-contact') ? (el('msr-contact').value || '') : '';
   const material = el('msr-material') ? (el('msr-material').value || '') : '';
 
-  if(!client) return alert("Enter Customer Name");
+  if(!client) return alert("Enter Customer / Site Name");
 
   const items = [];
 
-  document.querySelectorAll('#meas-items .meas-group').forEach(group => {
-    const name = group.querySelector('.meas-name').value || 'Item';
-    const wRaw = parseFloat(group.querySelector('.meas-w').value) || 0;
-    const hRaw = parseFloat(group.querySelector('.meas-h').value) || 0;
-    const qty = parseFloat(group.querySelector('.meas-qty').value) || 1;
-    const unitType = group.querySelector('.meas-unit-select').value;
+  document.querySelectorAll('#meas-items .meas-row').forEach(div => {
+    const name = div.querySelector('.meas-name').value || 'Item';
+    const wRaw = parseMeasureInput(div.querySelector('.meas-w').value);
+    const hRaw = parseMeasureInput(div.querySelector('.meas-h').value);
+    const qty = parseFloat(div.querySelector('.meas-qty').value) || 1;
+    const unitType = div.querySelector('.meas-unit-select').value;
 
-    const mainCalc = calcMeasurementResult(wRaw, hRaw, qty, unitType);
+    const w = convertToFeet(wRaw, unitType);
+    const h = convertToFeet(hRaw, unitType);
+
+    let result = 0, unit = '';
+    if(!hRaw){
+      result = w * qty;
+      unit = 'R.ft';
+    } else {
+      result = w * h * qty;
+      unit = 'Sq.ft';
+    }
 
     const subItems = [];
-    let groupTotal = mainCalc.result;
-
-    group.querySelectorAll('.sub-row').forEach(sub => {
-      const subW = parseFloat(sub.querySelector('.sub-w').value) || 0;
-      const subH = parseFloat(sub.querySelector('.sub-h').value) || 0;
-      const subQty = parseFloat(sub.querySelector('.sub-qty').value) || 1;
-      const subUnitType = sub.querySelector('.sub-unit-select').value;
-
-      const subCalc = calcMeasurementResult(subW, subH, subQty, subUnitType);
-
-      subItems.push({
-        w: subW,
-        h: subH,
-        qty: subQty,
-        unitType: subUnitType,
-        result: subCalc.result,
-        unit: subCalc.unit
-      });
-
-      if(subCalc.unit === mainCalc.unit){
-        groupTotal += subCalc.result;
-      }
+    div.querySelectorAll('.sub-row').forEach(subDiv => {
+      const subData = calcSubMeasurement(subDiv);
+      subItems.push(subData);
     });
 
     items.push({
@@ -5162,63 +5231,95 @@ function saveMeasurements(){
       w: wRaw,
       h: hRaw,
       qty,
+      result: parseFloat(result.toFixed(2)),
+      unit,
       unitType,
-      result: mainCalc.result,
-      unit: mainCalc.unit,
-      subItems,
-      total: parseFloat(groupTotal.toFixed(2))
+      subItems
     });
   });
 
   if(items.length === 0) return alert("Add at least one measurement row");
 
-  const hiddenId = el('msr-id').value || '';
+  const hiddenId = el('msr-id') ? (el('msr-id').value || '').trim() : '';
 
   if(hiddenId){
-    const rec = DATA.measurements.find(x => x.id === hiddenId);
-    if(rec){
-      rec.client = client;
-      rec.contact = contact;
-      rec.material = material;
-      rec.items = items;
-      rec.date = new Date().toISOString().split('T')[0];
-    }
-  } else {
-    DATA.counters.msr = (DATA.counters.msr || 0) + 1;
-    const id = 'MSR-' + String(DATA.counters.msr).padStart(4,'0');
+    // ===== UPDATE MODE =====
+    const index = (DATA.measurements || []).findIndex(x => x.id === hiddenId);
 
-    DATA.measurements.push({
+    const updatedRec = {
+      id: hiddenId,
+      client,
+      contact,
+      material,
+      date: (index >= 0 && DATA.measurements[index].date) ? DATA.measurements[index].date : new Date().toISOString().split('T')[0],
+      items
+    };
+
+    if(index >= 0){
+      // exact replace (best)
+      DATA.measurements[index] = updatedRec;
+    } else {
+      // fallback safety
+      DATA.measurements.push(updatedRec);
+    }
+
+  } else {
+    // ===== NEW SAVE MODE =====
+    const id = getNextMeasurementId();
+
+    const rec = {
       id,
       client,
       contact,
       material,
       date: new Date().toISOString().split('T')[0],
       items
-    });
+    };
+
+    DATA.measurements.push(rec);
   }
 
   saveData();
-  clearMeasurementForm();
-  renderMeasurementsList();
-  alert('Measurements saved successfully ✅');
-}
+  alert('Measurements saved.');
 
-/* ---------- Clear Form ---------- */
-function clearMeasurementForm(){
-  el('msr-client').value = '';
-  el('msr-contact').value = '';
-  if(el('msr-material')) el('msr-material').value = '';
-  el('msr-id').value = '';
-  el('meas-items').innerHTML = '';
-  recalcTotals();
+  // Save झाल्यावर hidden id clear कर
+  if(el('msr-id')) el('msr-id').value = '';
+
+  renderMeasurementsList();
 }
 
 /* ---------- Delete ---------- */
 function deleteMeasurement(id){
-  if(!confirm('Delete this measurement?')) return;
-  DATA.measurements = DATA.measurements.filter(x => x.id !== id);
+  if(!confirm('Delete?')) return;
+
+  DATA.measurements = (DATA.measurements || []).filter(x => x.id !== id);
+
   saveData();
   renderMeasurementsList();
+
+  alert('Measurement deleted ✅');
+}
+
+
+
+/* ---------- Load ---------- */
+function loadMeasurement(id){
+  const rec = DATA.measurements.find(x => x.id === id);
+  if(!rec) return alert("Not found");
+
+  el('msr-client').value = rec.client || '';
+  if(el('msr-contact')) el('msr-contact').value = rec.contact || '';
+  if(el('msr-material')) el('msr-material').value = rec.material || '';
+  if(el('msr-id')) el('msr-id').value = rec.id || '';
+
+  el('meas-items').innerHTML = '';
+
+  if(rec.items){
+    rec.items.forEach(it => addMeasurement(it));
+  }
+
+  show('meas');
+  recalcTotals();
 }
 
 /* ---------- Render Saved List ---------- */
@@ -5233,24 +5334,28 @@ function renderMeasurementsList(){
     let totalRft = 0;
     let totalSft = 0;
 
-    let html = `<b>${r.id}</b> ${r.client || ''} (${r.contact || ''})`;
-    if(r.material){
-      html += ` | Material: ${r.material}`;
-    }
+    let html = `<b>${r.id}</b> - ${r.client || ''}`;
+    if(r.contact) html += ` (${r.contact})`;
     html += `<br>`;
+
+    if(r.material){
+      html += `<span class="text-sm text-gray-600">Material: ${r.material}</span><br>`;
+    }
 
     if(r.items){
       r.items.forEach(item => {
         const wText = formatMeasurementValue(item.w, item.unitType || 'feet');
         const hText = item.h ? formatMeasurementValue(item.h, item.unitType || 'feet') : '';
 
-        if(item.unit === 'R.ft') totalRft += item.result;
-        if(item.unit === 'Sq.ft') totalSft += item.result;
+        if(item.unit === 'R.ft') totalRft += Number(item.result || 0);
+        if(item.unit === 'Sq.ft') totalSft += Number(item.result || 0);
+
+        html += `<div class="mt-2"><b>${item.name}:</b><br>`;
 
         if(item.h){
-          html += `${item.name}: ${wText}×${hText} × Qty ${item.qty || 1} = ${item.result.toFixed(2)} ${item.unit}<br>`;
+          html += `${wText}×${hText} × Qty ${item.qty || 1} = ${Number(item.result || 0).toFixed(2)} ${item.unit}<br>`;
         } else {
-          html += `${item.name}: ${wText} × Qty ${item.qty || 1} = ${item.result.toFixed(2)} ${item.unit}<br>`;
+          html += `${wText} × Qty ${item.qty || 1} = ${Number(item.result || 0).toFixed(2)} ${item.unit}<br>`;
         }
 
         if(Array.isArray(item.subItems) && item.subItems.length){
@@ -5258,65 +5363,292 @@ function renderMeasurementsList(){
             const swText = formatMeasurementValue(sub.w, sub.unitType || 'feet');
             const shText = sub.h ? formatMeasurementValue(sub.h, sub.unitType || 'feet') : '';
 
-            if(sub.unit === 'R.ft') totalRft += sub.result;
-            if(sub.unit === 'Sq.ft') totalSft += sub.result;
+            if(sub.unit === 'R.ft') totalRft += Number(sub.result || 0);
+            if(sub.unit === 'Sq.ft') totalSft += Number(sub.result || 0);
 
             if(sub.h){
-              html += `&nbsp;&nbsp;&nbsp;&nbsp;↳ ${swText}×${shText} × Qty ${sub.qty || 1} = ${sub.result.toFixed(2)} ${sub.unit}<br>`;
+              html += `↳ ${swText}×${shText} × Qty ${sub.qty || 1} = ${Number(sub.result || 0).toFixed(2)} ${sub.unit}<br>`;
             } else {
-              html += `&nbsp;&nbsp;&nbsp;&nbsp;↳ ${swText} × Qty ${sub.qty || 1} = ${sub.result.toFixed(2)} ${sub.unit}<br>`;
+              html += `↳ ${swText} × Qty ${sub.qty || 1} = ${Number(sub.result || 0).toFixed(2)} ${sub.unit}<br>`;
             }
           });
-
-          html += `&nbsp;&nbsp;&nbsp;&nbsp;<b>Total ${item.name} = ${(item.total || item.result).toFixed(2)} ${item.unit}</b><br>`;
         }
+
+        html += `</div>`;
       });
     }
 
-    html += `<br>`;
-    if(totalRft > 0) html += `<b>Total R.ft: ${totalRft.toFixed(2)}</b><br>`;
-    if(totalSft > 0) html += `<b>Total Sq.ft: ${totalSft.toFixed(2)}</b><br>`;
+    html += `<div class="mt-2 font-semibold">`;
+    if(totalRft > 0) html += `Total R.ft: ${totalRft.toFixed(2)} `;
+    if(totalSft > 0) html += `${totalRft > 0 ? '| ' : ''}Total Sq.ft: ${totalSft.toFixed(2)}`;
+    html += `</div>`;
 
     div.innerHTML = html + `
-      <div class="mt-2 flex gap-2 flex-wrap">
-        <button class="smallbtn" onclick="loadMeasurement('${r.id}')">Load</button>
-        <button class="smallbtn" onclick="deleteMeasurement('${r.id}')">Delete</button>
-        <button class="smallbtn" onclick="shareMeasurement('${r.id}')">Share</button>
-      </div>
+      <div class="mt-3 flex gap-2 flex-wrap">
+  <button class="smallbtn" onclick="loadMeasurement('${r.id}')">Load</button>
+  <button class="smallbtn" onclick="downloadMeasurementPDF('${r.id}')">PDF</button>
+  <button class="smallbtn" onclick="shareMeasurement('${r.id}')">Share</button>
+  <button class="smallbtn" onclick="deleteMeasurement('${r.id}')">Delete</button>
+</div>
     `;
 
     box.appendChild(div);
   });
 }
 
-/* ---------- Load ---------- */
-function loadMeasurement(id){
-  const rec = DATA.measurements.find(x => x.id === id);
-  if(!rec) return alert("Not found");
 
-  el('msr-client').value = rec.client || '';
-  el('msr-contact').value = rec.contact || '';
-  if(el('msr-material')) el('msr-material').value = rec.material || '';
-  el('msr-id').value = rec.id || '';
+function formatMeasurementDisplayForShare(val, unitType){
+  const formattedValue = smartFractionText(val);
 
-  el('meas-items').innerHTML = '';
-
-  if(rec.items){
-    rec.items.forEach(item => addMeasurement(item));
+  switch(unitType){
+    case 'inch':
+      return `${formattedValue}"`;
+    case 'feet':
+      return `${formattedValue}'`;
+    case 'meter':
+      return `${formattedValue} m`;
+    case 'cm':
+      return `${formattedValue} cm`;
+    default:
+      return `${formattedValue}`;
   }
-
-  show('meas');
-  recalcTotals();
 }
 
-/* ---------- Share ---------- */
+function smartFractionText(value){
+  const raw = String(value ?? '').trim();
+
+  if(!raw) return '0';
+
+  // If user typed local style like 7.3 / 7.5 / 7.8
+  if(raw.includes('.')){
+    const parts = raw.split('.');
+    const whole = parts[0] || '0';
+    const dec = parts[1] || '';
+
+    // local shortcut mapping
+    if(dec === '3' || dec === '25') return `${parseInt(whole, 10)} 1/4`;
+    if(dec === '5' || dec === '50') return `${parseInt(whole, 10)} 1/2`;
+    if(dec === '8' || dec === '75') return `${parseInt(whole, 10)} 3/4`;
+
+    // If actual decimal number close to quarter values
+    const num = Number(raw);
+    if(isFinite(num)){
+      const w = Math.floor(num);
+      const frac = +(num - w).toFixed(2);
+
+      if(Math.abs(frac - 0.25) < 0.06) return `${w} 1/4`;
+      if(Math.abs(frac - 0.50) < 0.06) return `${w} 1/2`;
+      if(Math.abs(frac - 0.75) < 0.06) return `${w} 3/4`;
+    }
+
+    // keep normal decimal if not matching
+    return raw;
+  }
+
+  // If already fraction typed like 7 1/2
+  if(raw.includes('/')){
+    return raw;
+  }
+
+  return raw;
+}
+
+
+
+/* ---------- Download Measurement PDF ---------- */
+function downloadMeasurementPDF(id){
+  const rec = DATA.measurements.find(x => x.id === id);
+  if(!rec) return alert("Measurement not found");
+
+  if(!window.jspdf || !window.jspdf.jsPDF){
+    return alert("jsPDF library not loaded. Please add jsPDF script in HTML.");
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({
+    orientation: "p",
+    unit: "mm",
+    format: "a4"
+  });
+
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  let y = 15;
+
+  /* ===== Letterhead ===== */
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.text("VAIBHAV ENTERPRISES", pageWidth / 2, y, { align: "center" });
+
+  y += 6;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text("Measurement Report", pageWidth / 2, y, { align: "center" });
+
+  y += 4;
+  doc.setLineWidth(0.5);
+  doc.line(12, y, pageWidth - 12, y);
+
+  y += 8;
+
+  /* ===== Header Info ===== */
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text(`Measurement ID: ${rec.id}`, 14, y);
+
+  y += 7;
+  doc.setFont("helvetica", "normal");
+  doc.text(`Site Name: ${rec.client || ''}`, 14, y);
+
+  y += 7;
+  if(rec.material){
+    doc.text(`Material: ${rec.material}`, 14, y);
+    y += 7;
+  }
+
+  doc.text(`Date: ${rec.date || ''}`, 14, y);
+  y += 8;
+
+  doc.setLineWidth(0.2);
+  doc.line(14, y, pageWidth - 14, y);
+  y += 8;
+
+  /* ===== Body ===== */
+  let totalQty = 0;
+  let totalSqFt = 0;
+  let totalRft = 0;
+
+  const ensurePageSpace = (needed = 8) => {
+    if(y + needed > pageHeight - 25){
+      doc.addPage();
+      y = 20;
+    }
+  };
+
+  (rec.items || []).forEach(item => {
+    ensurePageSpace(12);
+
+    const itemName = item.name || "Item";
+    const wText = formatMeasurementDisplayForShare(item.w, item.unitType || 'feet');
+    const hText = item.h ? formatMeasurementDisplayForShare(item.h, item.unitType || 'feet') : '';
+
+    // Item heading
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(`${itemName}:`, 14, y);
+    y += 7;
+
+    // Main item = 1)
+    const mainQty = Number(item.qty || 1);
+    totalQty += mainQty;
+
+    const mainResult = Number(item.result || 0);
+    if(item.unit === 'Sq.ft') totalSqFt += mainResult;
+    if(item.unit === 'R.ft') totalRft += mainResult;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+
+    let mainLine = '';
+    if(item.h){
+      mainLine = `1) ${wText} x ${hText} x Qty ${mainQty}`;
+    } else {
+      mainLine = `1) ${wText} x Qty ${mainQty}`;
+    }
+
+    const mainLines = doc.splitTextToSize(mainLine, pageWidth - 28);
+    mainLines.forEach(line => {
+      ensurePageSpace(6);
+      doc.text(line, 18, y);
+      y += 6;
+    });
+
+    // Sub items = 2), 3), ...
+    if(Array.isArray(item.subItems) && item.subItems.length){
+      item.subItems.forEach((sub, index) => {
+        const swText = formatMeasurementDisplayForShare(sub.w, sub.unitType || 'feet');
+        const shText = sub.h ? formatMeasurementDisplayForShare(sub.h, sub.unitType || 'feet') : '';
+
+        const subQty = Number(sub.qty || 1);
+        totalQty += subQty;
+
+        const subResult = Number(sub.result || 0);
+        if(sub.unit === 'Sq.ft') totalSqFt += subResult;
+        if(sub.unit === 'R.ft') totalRft += subResult;
+
+        const serial = index + 2;
+
+        let subLine = '';
+        if(sub.h){
+          subLine = `${serial}) ${swText} x ${shText} x Qty ${subQty}`;
+        } else {
+          subLine = `${serial}) ${swText} x Qty ${subQty}`;
+        }
+
+        const subLines = doc.splitTextToSize(subLine, pageWidth - 32);
+        subLines.forEach(line => {
+          ensurePageSpace(6);
+          doc.text(line, 22, y);
+          y += 6;
+        });
+      });
+    }
+
+    y += 4;
+  });
+
+  /* ===== Totals ===== */
+  ensurePageSpace(24);
+  doc.setLineWidth(0.2);
+  doc.line(14, y, pageWidth - 14, y);
+  y += 8;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text(`Total Qty: ${totalQty}`, 14, y);
+  y += 7;
+
+  doc.text(`Total Sq.ft: ${totalSqFt.toFixed(2)}`, 14, y);
+  y += 7;
+
+  if(totalRft > 0){
+    doc.text(`Total R.ft: ${totalRft.toFixed(2)}`, 14, y);
+    y += 7;
+  }
+
+  y += 5;
+
+  /* ===== Footer ===== */
+  ensurePageSpace(25);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.text("Thank You", 14, y);
+
+  y += 14;
+
+  doc.setFont("helvetica", "bold");
+  doc.text("For Vaibhav Enterprises", pageWidth - 14, y, { align: "right" });
+
+  y += 6;
+  doc.setFont("helvetica", "normal");
+  doc.text("Authorized Signatory", pageWidth - 14, y, { align: "right" });
+
+  /* ===== Save PDF ===== */
+  const safeName = (rec.client || "Measurement").replace(/[^\w\s-]/g, '').replace(/\s+/g, '_');
+  doc.save(`${rec.id}_${safeName}.pdf`);
+}
+
+
+
+
 /* ---------- Share ---------- */
 async function shareMeasurement(id){
   const rec = DATA.measurements.find(x => x.id === id);
   if(!rec) return alert("Not found");
 
-  let text = `📏 Measurement: ${rec.id}\n`;
-  text += `Site Name: ${rec.client}\n`;
+  let text = `Site Name: ${rec.client}\n`;
 
   if(rec.material){
     text += `Material: ${rec.material}\n`;
@@ -5324,38 +5656,50 @@ async function shareMeasurement(id){
 
   text += `Date: ${rec.date}\n\n`;
 
+  let totalQty = 0;
+  let totalSqFt = 0;
   let totalRft = 0;
-  let totalSft = 0;
 
   (rec.items || []).forEach(item => {
-    const wText = formatMeasurementValue(item.w, item.unitType || 'feet');
-    const hText = item.h ? formatMeasurementValue(item.h, item.unitType || 'feet') : '';
+    const wText = formatMeasurementDisplayForShare(item.w, item.unitType || 'feet');
+    const hText = item.h ? formatMeasurementDisplayForShare(item.h, item.unitType || 'feet') : '';
 
-    if(item.unit === 'R.ft') totalRft += Number(item.result || 0);
-    if(item.unit === 'Sq.ft') totalSft += Number(item.result || 0);
+    // Item name
+    text += `${item.name}:\n`;
 
-    // Main item line
+    // Main item = 1)
+    const mainQty = Number(item.qty || 1);
+    totalQty += mainQty;
+
+    const mainResult = Number(item.result || 0);
+    if(item.unit === 'Sq.ft') totalSqFt += mainResult;
+    if(item.unit === 'R.ft') totalRft += mainResult;
+
     if(item.h){
-      text += `${item.name}:\n`;
-      text += `${wText}×${hText} × Qty ${item.qty || 1} = ${Number(item.result || 0).toFixed(2)} ${item.unit}\n`;
+      text += `1) ${wText}×${hText} × Qty ${mainQty}\n`;
     } else {
-      text += `${item.name}:\n`;
-      text += `${wText} × Qty ${item.qty || 1} = ${Number(item.result || 0).toFixed(2)} ${item.unit}\n`;
+      text += `1) ${wText} × Qty ${mainQty}\n`;
     }
 
-    // Sub items line by line
+    // Sub items = 2), 3), 4)...
     if(Array.isArray(item.subItems) && item.subItems.length){
-      item.subItems.forEach(sub => {
-        const swText = formatMeasurementValue(sub.w, sub.unitType || 'feet');
-        const shText = sub.h ? formatMeasurementValue(sub.h, sub.unitType || 'feet') : '';
+      item.subItems.forEach((sub, index) => {
+        const swText = formatMeasurementDisplayForShare(sub.w, sub.unitType || 'feet');
+        const shText = sub.h ? formatMeasurementDisplayForShare(sub.h, sub.unitType || 'feet') : '';
 
-        if(sub.unit === 'R.ft') totalRft += Number(sub.result || 0);
-        if(sub.unit === 'Sq.ft') totalSft += Number(sub.result || 0);
+        const subQty = Number(sub.qty || 1);
+        totalQty += subQty;
+
+        const subResult = Number(sub.result || 0);
+        if(sub.unit === 'Sq.ft') totalSqFt += subResult;
+        if(sub.unit === 'R.ft') totalRft += subResult;
+
+        const serial = index + 2; // because main item is 1)
 
         if(sub.h){
-          text += `↳ ${swText}×${shText} × Qty ${sub.qty || 1} = ${Number(sub.result || 0).toFixed(2)} ${sub.unit}\n`;
+          text += `${serial}) ${swText}×${shText} × Qty ${subQty}\n`;
         } else {
-          text += `↳ ${swText} × Qty ${sub.qty || 1} = ${Number(sub.result || 0).toFixed(2)} ${sub.unit}\n`;
+          text += `${serial}) ${swText} × Qty ${subQty}\n`;
         }
       });
     }
@@ -5363,15 +5707,19 @@ async function shareMeasurement(id){
     text += `\n`;
   });
 
+  // Bottom totals
+  text += `Total Qty: ${totalQty}\n`;
+  text += `Total Sq.ft: ${totalSqFt.toFixed(2)}\n`;
+
+  // Show R.ft only if > 0
   if(totalRft > 0){
     text += `Total R.ft: ${totalRft.toFixed(2)}\n`;
   }
 
-  if(totalSft > 0){
-    text += `Total Sq.ft: ${totalSft.toFixed(2)}\n`;
-  }
+  text += `\nThank You\n`;
+  text += `For Vaibhav Enterprises`;
 
-  // Try native share first
+  // Try native share
   try {
     if(navigator.share){
       await navigator.share({
@@ -5398,9 +5746,6 @@ async function shareMeasurement(id){
   // Final fallback
   prompt("Copy Measurement Text:", text);
 }
-
-
-
 
 
 
