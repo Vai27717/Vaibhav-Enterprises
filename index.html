@@ -4784,6 +4784,8 @@ function saveQuickExpenses() {
 
   const invoice = el("qe-invoice").value;
   const date    = el("qe-date").value;
+  const searchDate = el("qe-search-date").value;
+  const finalDate = searchDate || date;
 
   if (!invoice || !date) {
     alert("Invoice & Date required");
@@ -4807,8 +4809,8 @@ function saveQuickExpenses() {
   // copy rows from popup → main expenses
   document.querySelectorAll("#qe-rows > div").forEach(r => {
     addExpenseRow({
-      date,
-      name: r.querySelector(".qe-name").value,
+  date: finalDate,
+  name: r.querySelector(".qe-name").value,
       category: r.querySelector(".qe-cat").value,
       quantity: r.querySelector(".qe-qty").value,
       unit: r.querySelector(".qe-unit").value,
