@@ -2143,17 +2143,19 @@ async function shareEstimate(estNo){
     });
     lines.push('');
     lines.push('Subtotal: ₹' + r["Subtotal"]);
+    if (parseFloat(r["Discount"]) > 0) {
     lines.push('Discount: ' + r["Discount"] + '%');
+    }
     lines.push('*Final Amount: ₹' + r["Grand Total"] + '*');
     lines.push('_In words: ' + numberToWords(r["Grand Total"] || 0) + '_');
     lines.push('');
     lines.push('_Regarding,_');
     lines.push('');
     lines.push('_Vaibhav Enterprises_');
-    lines.push('For more info, visit: www.vaibhaventerprises.info');
-    lines.push('_Thank you for connecting with Vaibhav Enterprises_');
     lines.push('');
-    lines.push('Open Estimate PDF:https://vai27717.github.io/Your-Estimate/?view=customer&id=' + r["Estimate Number"]);
+    lines.push('Download Estimate PDF:https://vai27717.github.io/Your-Estimate/?view=customer&id=' + r["Estimate Number"]);
+    lines.push('');
+    lines.push('_Thank you for connecting with Vaibhav Enterprises_');
     window.open('https://wa.me/?text=' + encodeURIComponent(lines.join('\n')), '_blank');
   } catch(err){
     alert("Share failed: "+err.message);
@@ -2537,7 +2539,7 @@ function generateCompletionPDF() {
     </div>
 
     <div class="line">
-      ____________________________________________________________________________________________
+      ____________________________________________________________________________________________________________________
     </div>
 
     <!-- Registration & Date -->
@@ -3784,7 +3786,10 @@ if (!selDate && !selCat) {
 
   let items = [];
   document.querySelectorAll("#exp-rows .expense-row").forEach(row => {
-    const name = row.querySelector(".exp-name").value.trim();
+    const name = row.querySelector(".exp-name").value
+  .replace(/,/g, " ")   // comma काढून space
+  .replace(/\s+/g, " ") // extra space fix
+  .trim();
     const qty  = row.querySelector(".exp-qty").value.trim();
     const unit = row.querySelector(".exp-unit").value.trim();
     const rate = row.querySelector(".exp-rate").value.trim();
