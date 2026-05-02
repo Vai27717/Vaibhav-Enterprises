@@ -6413,11 +6413,23 @@ function addPaymentRowForm(data = {}) {
     const row = document.createElement('div');
     row.className = 'payment-row p-3 border rounded bg-gray-700 grid grid-cols-4 gap-2 text-sm';
     row.innerHTML = `
-        <input type="date" class="pay-date w-full col-span-1" placeholder="Date" value="${data.date || new Date().toISOString().slice(0, 10)}">
-        <input type="number" class="pay-recv w-full col-span-1" placeholder="Received Amt (₹)" value="${data.received || ''}">
-        <input type="text" class="pay-note w-full col-span-2" placeholder="Note (e.g. Cash, GPay, Bank)" value="${data.note || ''}">
-        <button class="smallbtn bg-red-500 col-span-1" onclick="this.closest('.payment-row').remove()">✕</button>
-    `;
+    <input type="date" class="pay-date w-full col-span-1" value="${data.date || new Date().toISOString().slice(0, 10)}">
+    <input type="number" class="pay-recv w-full col-span-1" placeholder="Received Amt (₹)" value="${data.received || ''}">
+
+    <select class="pay-bank w-full col-span-1">
+        <option value="">-- Bank --</option>
+        <option value="Kotak Bank">Kotak Bank</option>
+        <option value="SBI Bank">SBI Bank</option>
+        <option value="HDFC Bank">HDFC Bank</option>
+        <option value="Cash">Cash</option>
+    </select>
+
+    <input type="text" class="pay-note w-full col-span-1" placeholder="Note" value="${data.note || ''}">
+    
+    <button class="smallbtn bg-red-500 col-span-1" onclick="this.closest('.payment-row').remove()">✕</button>
+`;
+  
+
     parent.appendChild(row);
 }
 
@@ -6458,11 +6470,17 @@ function savePayments() {
 
     const newEntries = [];
     document.querySelectorAll('#payment-rows .payment-row').forEach(r => {
-        const date = r.querySelector('.pay-date').value || new Date().toISOString().split('T')[0];
-        const received = parseFloat(r.querySelector('.pay-recv').value) || 0;
-        const note = r.querySelector('.pay-note').value || '';
-        if (received > 0 || note) newEntries.push({ date, received, note });
-    });
+    const date = r.querySelector('.pay-date').value || new Date().toISOString().split('T')[0];
+    const received = parseFloat(r.querySelector('.pay-recv').value) || 0;
+    const note = r.querySelector('.pay-note').value || '';
+
+    const bankEl = r.querySelector('.pay-bank');
+    const bank = bankEl ? bankEl.value : '';
+
+    if (received > 0) {
+        newEntries.push({ date, received, note, bank });
+    }
+});
 
     if (newEntries.length === 0) return alert('Add at least one payment entry (Received Amount > 0)');
 
@@ -6491,7 +6509,8 @@ function savePayments() {
         projectCost: projectCost,  // ✅ ALWAYS UPDATE
         date: en.date, 
         received: en.received, 
-        note: en.note 
+        note: en.note,
+        bank: en.bank   // 🔥 NEW 
     };
     DATA.payments.push(record);
 });
@@ -6552,7 +6571,11 @@ function renderPaymentsList() {
         
         recs.forEach(r => {
             html += `
-                <li>${formatDateToInput(r.date)}: ₹${money(r.received)} (${r.note || 'N/A'})</li>
+                <li>
+                 ${formatDateToInput(r.date)}: ₹${money(r.received)} 
+                (${r.note || 'N/A'}) 
+                [${r.bank || 'Cash'}]
+                </li>
             `;
         });
         
@@ -6698,6 +6721,13 @@ function addPaidRow(data = {}) {
     row.innerHTML = `
         <input type="date" class="pp-date w-full col-span-1" placeholder="Date" value="${data.date || new Date().toISOString().slice(0, 10)}">
         <input type="number" class="pp-amount w-full col-span-1" placeholder="Paid Amt (₹)" value="${data.amount || ''}">
+         <select class="pp-bank w-full">
+            <option value="">-- Select --</option>
+            <option value="Kotak Bank">Kotak Bank</option>
+            <option value="SBI Bank">SBI Bank</option>
+            <option value="HDFC Bank">HDFC Bank</option>
+            <option value="Cash">Cash</option>
+        </select>
         <input type="text" class="pp-note w-full col-span-2" placeholder="Purpose / Note" value="${data.note || ''}">
         <button class="smallbtn bg-red-500 col-span-1" onclick="this.closest('.pp-row').remove()">✕</button>
     `;
@@ -6743,11 +6773,15 @@ function savePaidPayment() {
 
     const newEntries = [];
     document.querySelectorAll('#pp-rows .pp-row').forEach(r => {
-        const date = r.querySelector('.pp-date').value || new Date().toISOString().split('T')[0];
-        const amount = parseFloat(r.querySelector('.pp-amount').value) || 0;
-        const note = r.querySelector('.pp-note').value || '';
-        if (amount > 0 || note) newEntries.push({ date, amount, note });
-    });
+    const date = r.querySelector('.pp-date').value || new Date().toISOString().split('T')[0];
+    const amount = parseFloat(r.querySelector('.pp-amount').value) || 0;
+    const note = r.querySelector('.pp-note').value || '';
+    const bank = r.querySelector('.pp-bank').value || '';
+
+    if (amount > 0 || note) {
+        newEntries.push({ date, amount, note, bank });
+    }
+});
 
     if (newEntries.length === 0) return alert('Add at least one payment entry (Amount > 0)');
     
@@ -6781,7 +6815,8 @@ function savePaidPayment() {
             labor,
             date: en.date, 
             amount: en.amount.toFixed(2), 
-            note: en.note 
+            note: en.note,
+            bank: en.bank   // ✅ IMPORTANT 
         };
         DATA.paidPayments.push(record);
     });
@@ -6859,7 +6894,11 @@ function renderPaidPayments() {
         
         recs.forEach(r => {
             html += `
-                <li>${formatDateToInput(r.date)}: ₹${money(r.amount)} (${r.note || 'N/A'})</li>
+                <li>
+  ${formatDateToInput(r.date)}: ₹${money(r.amount)} 
+  (${r.note || 'N/A'}) 
+  ${r.bank ? ' | ' + r.bank : ''}
+</li>
             `;
         });
         
