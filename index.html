@@ -17,7 +17,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
 <style>
  body {
@@ -464,6 +464,36 @@ body{
 }
 
 
+#bank {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border: 1px solid #334155;
+}
+
+#bank h2 {
+  text-align: center;
+  font-size: 20px;
+  color: #38bdf8;
+}
+
+
+#bank input,
+#bank select {
+  width: 100%;
+  height: 40px;
+  border-radius: 6px;
+}
+
+#bank label {
+  font-size: 13px;
+  color: #cbd5e1;
+  margin-bottom: 2px;
+}
+
+#bank-list{
+  max-height:300px;
+  overflow-y:auto;
+}
+
 </style>
 </head>
 
@@ -474,11 +504,7 @@ body{
 <div class="nav">
   <div class="flex flex-1 overflow-x-auto whitespace-nowrap gap-2 py-1">
     <button class="smallbtn flex-shrink-0" onclick="show('home')">Home</button>
-   <button
-  class="smallbtn flex-shrink-0"
-  onclick="window.open('https://vai27717.github.io/Home-Exp./','_blank')">
-  H.Expenses
-</button>
+    <button class="smallbtn flex-shrink-0" onclick="show('bank')">Bank</button>
     <button class="smallbtn flex-shrink-0" onclick="show('est')">Estimates</button>
     <button class="smallbtn flex-shrink-0" onclick="show('inv')">Invoices</button>
     <button class="smallbtn flex-shrink-0" onclick="show('orders')">Orders</button>
@@ -566,6 +592,154 @@ body{
       <canvas id="categoryChart" height="200"></canvas>
     </div>
      </div>
+
+
+
+
+
+    <div id="bank" class="card max-w-xl mx-auto" style="display:none">
+  <h2>🏦 Bank Manager</h2>
+
+  <!-- SUMMARY -->
+ <div class="grid grid-cols-3 gap-2 mt-4 text-center">
+  <div style="background:#064e3b;padding:8px;border-radius:6px">
+    <div style="color:#22c55e;font-weight:bold">IN</div>
+    ₹<span id="b-in">0</span>
+  </div>
+
+  <div style="background:#7f1d1d;padding:8px;border-radius:6px">
+    <div style="color:#ef4444;font-weight:bold">OUT</div>
+    ₹<span id="b-out">0</span>
+  </div>
+
+  <div style="background:#78350f;padding:8px;border-radius:6px">
+    <div style="color:#facc15;font-weight:bold">BAL</div>
+    ₹<span id="b-bal">0</span>
+  </div>
+</div>
+
+
+  
+   <div class="grid gap-2 mt-2">
+  <div>
+    <label class="muted">Account</label>
+    <select id="b-ac">
+    <option value="">Select Account</option>
+    <option>Kotak</option>
+    <option>SBI</option>
+    <option>HDFC</option>
+    <option>Cash</option>
+    <select id="b-ac" onchange="calcBank(); loadBank();">
+  </div>
+
+  <div>
+    <label class="muted">Payment Type</label>
+      <label>Payment Type</label>
+  <select id="b-type" onchange="handleBankType()">
+    <option value="">Select</option>
+    <option value="in">Payment In</option>
+    <option value="out">Payment Out</option>
+    <option value="transfer">Transfer</option>
+    <select id="b-type" class="w-full" onchange="handleBankType()"></select>
+  </div>
+</div>
+
+
+
+  
+  
+ 
+
+  <!-- NORMAL FIELDS -->
+  <div id="b-normal" style="display:none">
+    <label>Date</label>
+    <input type="date" id="b-date">
+
+    <label>Particular</label>
+    <input id="b-part">
+
+    <label>Amount</label>
+    <input type="number" id="b-amt">
+  </div>
+
+  <!-- SAVE -->
+  <button class="smallbtn mt-2" onclick="saveBank()">Save</button>
+  <button class="smallbtn mt-2" onclick="exportBankPDF()">📄 Bank PDF</button>
+  <button class="smallbtn mt-2" onclick="loadBank()">Apply Filter</button>
+  <button class="smallbtn mt-2" onclick="loadBank()">Load Data</button>
+   <div class="grid grid-cols-2 gap-2 mt-2">
+
+  <div>
+    <label for="b-from">From Date</label>
+    <input type="date" id="b-from">
+  </div>
+
+  <div>
+    <label for="b-to">To Date</label>
+    <input type="date" id="b-to">
+  </div>
+
+  <div class="col-span-2">
+    <label for="b-month">Month</label>
+    <input type="month" id="b-month">
+  </div>
+
+</div>
+
+   <h3 class="mt-4">Saved Entries</h3>
+  
+  <div id="bank-list" class="mt-2 space-y-2"></div>
+  
+  
+
+
+<div id="b-transfer" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeTransfer()">×</span>
+
+    <h3>Transfer</h3>
+
+    <label>From Account</label>
+    <select id="t-from">
+      <option>Kotak</option>
+      <option>SBI</option>
+      <option>HDFC</option>
+      <option>Cash</option>
+    </select>
+
+    <label>To Account</label>
+    <select id="t-to">
+      <option>Kotak</option>
+      <option>SBI</option>
+      <option>HDFC</option>
+      <option>Cash</option>
+    </select>
+
+    <label>Date</label>
+    <input type="date" id="t-date">
+
+    <label>Particular</label>
+    <input id="t-part">
+
+    <label>Amount</label>
+    <input type="number" id="t-amt">
+
+    <button onclick="saveTransfer()">Save</button>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1850,6 +2024,294 @@ function recalcAll() {
     
     renderInvoiceProfits();
 }
+
+
+
+
+
+   let BANK = JSON.parse(localStorage.getItem("bankData") || "[]");
+
+function handleBankType(){
+  let t = document.getElementById("b-type").value;
+
+  if(t === "transfer"){
+    document.getElementById("b-transfer").style.display = "block";
+    document.getElementById("b-normal").style.display = "none";
+  } else {
+    document.getElementById("b-normal").style.display = "block";
+  }
+}
+
+function closeTransfer(){
+  document.getElementById("b-transfer").style.display = "none";
+}
+
+
+function saveBank(){
+
+  let obj = {
+    acc: document.getElementById("b-ac").value,
+    type: document.getElementById("b-type").value,
+    date: document.getElementById("b-date").value,
+    part: document.getElementById("b-part").value,
+    amt: +document.getElementById("b-amt").value
+  };
+
+  if(editIndex > -1){
+    // 🔥 UPDATE
+    BANK[editIndex] = obj;
+    editIndex = -1;
+  } else {
+    // NEW SAVE
+    BANK.push(obj);
+  }
+
+  localStorage.setItem("bankData", JSON.stringify(BANK));
+
+  loadBank();
+  calcBank();
+  clearBankForm(); // 🔥 important
+}
+
+function calcBank(){
+
+  let acc = document.getElementById("b-ac").value;
+
+  let totalIn = 0, totalOut = 0;
+
+  let from = document.getElementById("b-from").value;
+  let to   = document.getElementById("b-to").value;
+  let mon  = document.getElementById("b-month").value;
+
+  let filtered = BANK.filter(e => {
+
+    if(e.acc !== acc) return false;
+
+    let d = e.date || "";
+
+    if(from && d < from) return false;
+    if(to && d > to) return false;
+
+    if(mon){
+      if(d.slice(0,7) !== mon) return false;
+    }
+
+    return true;
+  });
+
+  filtered.forEach(e=>{
+    if(e.type === "in" || e.type === "transfer-in") totalIn += e.amt;
+    if(e.type === "out" || e.type === "transfer-out") totalOut += e.amt;
+  });
+
+  document.getElementById("b-in").innerText = totalIn;
+  document.getElementById("b-out").innerText = totalOut;
+  document.getElementById("b-bal").innerText = totalIn - totalOut;
+}
+
+// account change la auto update
+document.getElementById("b-ac").addEventListener("change", calcBank);
+
+
+function loadBank(){
+  let wrap = document.getElementById("bank-list");
+  wrap.innerHTML = "";
+  
+  let acc = document.getElementById("b-ac").value;
+  
+  if(!acc){
+    wrap.innerHTML = "<div class='muted'>Select Account</div>";
+    return;
+  }
+
+  let from = document.getElementById("b-from").value;
+let to   = document.getElementById("b-to").value;
+let mon  = document.getElementById("b-month").value;
+
+let filtered = BANK.filter(e => {
+
+  if(e.acc !== acc) return false;
+
+  let d = e.date || "";
+
+  if(from && d < from) return false;
+  if(to && d > to) return false;
+
+  if(mon){
+    if(d.slice(0,7) !== mon) return false;
+  }
+
+  return true;
+});
+
+  filtered.forEach((e, i)=>{
+    wrap.innerHTML += `
+  <div style="background:#334155;padding:8px;border-radius:6px">
+
+    <div><b>${e.type.toUpperCase()}</b></div>
+    <div>${e.date || ''} - ${e.part || ''}</div>
+    <div>₹ ${e.amt}</div>
+
+    <button onclick="editBank(${i})"
+      style="background:#0ea5e9;color:#fff;padding:4px 8px;margin-top:5px">
+      Load
+    </button>
+
+    <button onclick="deleteBank(${i})"
+      style="background:red;color:#fff;padding:4px 8px;margin-top:5px">
+      Delete
+    </button>
+
+  </div>
+`;
+  });
+}
+
+
+function deleteBank(index){
+
+  if(!confirm("Delete this entry?")) return;
+
+  let acc = document.getElementById("b-ac").value;
+
+  // account wise filtered list
+  let filtered = BANK.filter(e => e.acc === acc);
+
+  let item = filtered[index];
+
+  // 🔥 actual index find करा
+  let realIndex = BANK.findIndex(e => e.id === item.id);
+
+  if(realIndex > -1){
+    BANK.splice(realIndex, 1); // 🔥 only one delete
+  }
+
+  localStorage.setItem("bankData", JSON.stringify(BANK));
+
+  loadBank();
+  calcBank();
+}
+
+let editIndex = -1;
+
+function editBank(index){
+
+  let acc = document.getElementById("b-ac").value;
+  let filtered = BANK.filter(e => e.acc === acc);
+  let item = filtered[index];
+
+  // form fill
+  document.getElementById("b-type").value = item.type;
+  document.getElementById("b-date").value = item.date || "";
+  document.getElementById("b-part").value = item.part || "";
+  document.getElementById("b-amt").value = item.amt || "";
+
+  document.getElementById("b-normal").style.display = "block";
+
+  // 🔥 exact index by ID
+  editIndex = BANK.findIndex(e => e.id === item.id);
+}
+
+
+function clearBankForm(){
+  document.getElementById("b-type").value = "";
+  document.getElementById("b-date").value = "";
+  document.getElementById("b-part").value = "";
+  document.getElementById("b-amt").value = "";
+
+  // fields hide (optional)
+  document.getElementById("b-normal").style.display = "none";
+
+  // edit mode reset
+  editIndex = -1;
+}
+
+
+function exportBankPDF(){
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  let acc = document.getElementById("b-ac").value;
+
+  if(!acc){
+    alert("Select Account First");
+    return;
+  }
+
+  let data = BANK.filter(e => e.acc === acc);
+
+  let rows = [];
+  let totalIn = 0;
+  let totalOut = 0;
+
+  data.forEach(e => {
+
+    let type = e.type.toUpperCase();
+    let amt = +e.amt || 0;
+
+    if(e.type === "in"){
+      totalIn += amt;
+    }
+
+    if(e.type === "out"){
+      totalOut += amt;
+    }
+
+    rows.push([
+      e.date || "",
+      e.part || "",
+      "-",
+      "-",
+      "-",
+      amt.toFixed(2),
+      type
+    ]);
+  });
+
+  doc.setFontSize(14);
+  doc.text(`Bank Report - ${acc}`, 14, 15);
+
+  doc.autoTable({
+    startY: 25,
+    head: [['Date','Particular','Qty','Unit','Rate','Amount','Type']],
+    body: rows,
+    theme: 'grid',
+    styles: { fontSize: 10 },
+    headStyles: { fillColor: [41, 128, 185] },
+
+    didParseCell: function (data) {
+      const col = data.column.index;
+      const row = data.row;
+      const cell = data.cell;
+
+      const typeText = row.raw[6];
+
+      if (typeText === "IN" && (col === 5 || col === 6)) {
+        cell.styles.textColor = [34, 197, 94];
+        cell.styles.fontStyle = 'bold';
+      }
+
+      if (typeText === "OUT" && (col === 5 || col === 6)) {
+        cell.styles.textColor = [239, 68, 68];
+        cell.styles.fontStyle = 'bold';
+      }
+    }
+  });
+
+  let finalY = doc.lastAutoTable.finalY + 10;
+
+  doc.setFontSize(12);
+  doc.text(`Total IN: ${totalIn.toFixed(2)}`, 14, finalY);
+  doc.text(`Total OUT: ${totalOut.toFixed(2)}`, 14, finalY + 6);
+  doc.text(`Balance: ${(totalIn - totalOut).toFixed(2)}`, 14, finalY + 12);
+
+  doc.save(`bank_${acc}.pdf`);
+}
+
+
+
+
 
 
 /* -------------------------------------------------------------
@@ -6413,23 +6875,11 @@ function addPaymentRowForm(data = {}) {
     const row = document.createElement('div');
     row.className = 'payment-row p-3 border rounded bg-gray-700 grid grid-cols-4 gap-2 text-sm';
     row.innerHTML = `
-    <input type="date" class="pay-date w-full col-span-1" value="${data.date || new Date().toISOString().slice(0, 10)}">
-    <input type="number" class="pay-recv w-full col-span-1" placeholder="Received Amt (₹)" value="${data.received || ''}">
-
-    <select class="pay-bank w-full col-span-1">
-        <option value="">-- Bank --</option>
-        <option value="Kotak Bank">Kotak Bank</option>
-        <option value="SBI Bank">SBI Bank</option>
-        <option value="HDFC Bank">HDFC Bank</option>
-        <option value="Cash">Cash</option>
-    </select>
-
-    <input type="text" class="pay-note w-full col-span-1" placeholder="Note" value="${data.note || ''}">
-    
-    <button class="smallbtn bg-red-500 col-span-1" onclick="this.closest('.payment-row').remove()">✕</button>
-`;
-  
-   row.querySelector('.pay-bank').value = data.bank || '';
+        <input type="date" class="pay-date w-full col-span-1" placeholder="Date" value="${data.date || new Date().toISOString().slice(0, 10)}">
+        <input type="number" class="pay-recv w-full col-span-1" placeholder="Received Amt (₹)" value="${data.received || ''}">
+        <input type="text" class="pay-note w-full col-span-2" placeholder="Note (e.g. Cash, GPay, Bank)" value="${data.note || ''}">
+        <button class="smallbtn bg-red-500 col-span-1" onclick="this.closest('.payment-row').remove()">✕</button>
+    `;
     parent.appendChild(row);
 }
 
@@ -6470,17 +6920,11 @@ function savePayments() {
 
     const newEntries = [];
     document.querySelectorAll('#payment-rows .payment-row').forEach(r => {
-    const date = r.querySelector('.pay-date').value || new Date().toISOString().split('T')[0];
-    const received = parseFloat(r.querySelector('.pay-recv').value) || 0;
-    const note = r.querySelector('.pay-note').value || '';
-
-    const bankEl = r.querySelector('.pay-bank');
-    const bank = bankEl ? bankEl.value : '';
-
-    if (received > 0) {
-        newEntries.push({ date, received, note, bank });
-    }
-});
+        const date = r.querySelector('.pay-date').value || new Date().toISOString().split('T')[0];
+        const received = parseFloat(r.querySelector('.pay-recv').value) || 0;
+        const note = r.querySelector('.pay-note').value || '';
+        if (received > 0 || note) newEntries.push({ date, received, note });
+    });
 
     if (newEntries.length === 0) return alert('Add at least one payment entry (Received Amount > 0)');
 
@@ -6509,8 +6953,7 @@ function savePayments() {
         projectCost: projectCost,  // ✅ ALWAYS UPDATE
         date: en.date, 
         received: en.received, 
-        note: en.note,
-        bank: en.bank   // 🔥 NEW 
+        note: en.note 
     };
     DATA.payments.push(record);
 });
@@ -6571,11 +7014,7 @@ function renderPaymentsList() {
         
         recs.forEach(r => {
             html += `
-                <li>
-                 ${formatDateToInput(r.date)}: ₹${money(r.received)} 
-                (${r.note || 'N/A'}) 
-                [${r.bank || 'Cash'}]
-                </li>
+                <li>${formatDateToInput(r.date)}: ₹${money(r.received)} (${r.note || 'N/A'})</li>
             `;
         });
         
@@ -6604,7 +7043,7 @@ function loadPayment(invNo) {
     el('pay-contact').value = r0.contact || '';
     el('pay-work').value = r0.work || '';
     el('pay-cost').value = (parseFloat(r0.projectCost) || 0).toFixed(2);
-    el('pay-bank').value = r0.bank || '';
+    
     el('payment-rows').innerHTML = '';
     recs.forEach(p => addPaymentRowForm(p));
 }
@@ -6721,20 +7160,9 @@ function addPaidRow(data = {}) {
     row.innerHTML = `
         <input type="date" class="pp-date w-full col-span-1" placeholder="Date" value="${data.date || new Date().toISOString().slice(0, 10)}">
         <input type="number" class="pp-amount w-full col-span-1" placeholder="Paid Amt (₹)" value="${data.amount || ''}">
-         <select class="pp-bank w-full">
-            <option value="">-- Select --</option>
-            <option value="Kotak Bank">Kotak Bank</option>
-            <option value="SBI Bank">SBI Bank</option>
-            <option value="HDFC Bank">HDFC Bank</option>
-            <option value="Cash">Cash</option>
-        </select>
         <input type="text" class="pp-note w-full col-span-2" placeholder="Purpose / Note" value="${data.note || ''}">
         <button class="smallbtn bg-red-500 col-span-1" onclick="this.closest('.pp-row').remove()">✕</button>
     `;
-
-      // ✅ 🔥 IMPORTANT LINE
-    row.querySelector('.pp-bank').value = data.bank || '';
-
     parent.appendChild(row);
 }
 
@@ -6777,15 +7205,11 @@ function savePaidPayment() {
 
     const newEntries = [];
     document.querySelectorAll('#pp-rows .pp-row').forEach(r => {
-    const date = r.querySelector('.pp-date').value || new Date().toISOString().split('T')[0];
-    const amount = parseFloat(r.querySelector('.pp-amount').value) || 0;
-    const note = r.querySelector('.pp-note').value || '';
-    const bank = r.querySelector('.pp-bank').value || '';
-
-    if (amount > 0 || note) {
-        newEntries.push({ date, amount, note, bank });
-    }
-});
+        const date = r.querySelector('.pp-date').value || new Date().toISOString().split('T')[0];
+        const amount = parseFloat(r.querySelector('.pp-amount').value) || 0;
+        const note = r.querySelector('.pp-note').value || '';
+        if (amount > 0 || note) newEntries.push({ date, amount, note });
+    });
 
     if (newEntries.length === 0) return alert('Add at least one payment entry (Amount > 0)');
     
@@ -6819,8 +7243,7 @@ function savePaidPayment() {
             labor,
             date: en.date, 
             amount: en.amount.toFixed(2), 
-            note: en.note,
-            bank: en.bank   // ✅ IMPORTANT 
+            note: en.note 
         };
         DATA.paidPayments.push(record);
     });
@@ -6898,11 +7321,7 @@ function renderPaidPayments() {
         
         recs.forEach(r => {
             html += `
-                <li>
-  ${formatDateToInput(r.date)}: ₹${money(r.amount)} 
-  (${r.note || 'N/A'}) 
-  ${r.bank ? ' | ' + r.bank : ''}
-</li>
+                <li>${formatDateToInput(r.date)}: ₹${money(r.amount)} (${r.note || 'N/A'})</li>
             `;
         });
         
@@ -6922,9 +7341,10 @@ function renderPaidPayments() {
 
 function loadPaidPayment(key) {
     let recs;
-    let orderId = '';
-
+    
     if (key.includes('^N/A^')) {
+        // 💡 दुरुस्ती: मॅन्युअल एंट्री Key Parsing
+        // Key Format: InvNo^N/A^Name^Labor
         const parts = key.split('^');
         const invNo = parts[0];
         const name = parts[2];
@@ -6937,17 +7357,12 @@ function loadPaidPayment(key) {
             pp.labor === labor
         );
         
-        el('pp-order-id').value = '';
+        el('pp-order-id').value = ''; // Order ID clear करा
 
     } else {
-        const parts = key.split('_');
-        const invNo = parts[0];
-        orderId = parts[1];
-
-        recs = DATA.paidPayments.filter(pp => 
-            pp.invoiceNo === invNo && pp.orderId === orderId
-        );
-
+        // Standard Key Parsing
+        const [invNo, orderId] = key.split('_');
+        recs = DATA.paidPayments.filter(pp => pp.invoiceNo === invNo && pp.orderId === orderId);
         el('pp-order-id').value = orderId;
     }
     
@@ -6955,28 +7370,16 @@ function loadPaidPayment(key) {
 
     const r0 = recs[0];
     show('paid');
-
+    
     el('pp-invno').value = r0.invoiceNo;
     el('pp-client').value = r0.client || '';
     el('pp-work').value = r0.work || '';
     el('pp-name').value = r0.name || '';
     el('pp-labor').value = r0.labor || '';
-
-    // 🔥 rows clear
+    
     el('pp-rows').innerHTML = '';
-
-    // 🔥 FIRST → rows load from saved data
     recs.forEach(p => addPaidRow(p));
-
-    // 🔥 SECOND → trigger order auto-fill (optional but safe)
-    if (orderId) {
-        setTimeout(() => {
-            el('pp-order-id').dispatchEvent(new Event('change'));
-        }, 100);
-    }
 }
-
-
 
 function deletePaidPayment(key) {
     if (!confirm("Are you sure you want to delete ALL paid payment records for this group?")) return;
@@ -8519,6 +8922,9 @@ document.addEventListener("DOMContentLoaded", () => {
   renderAll?.();   // renderAll() function असेल तर चालेल
   show("home");    // Home tab default open होईल
 });
+
+loadBank();
+calcBank();
 
 // -------------------------------------------------
 // ⬇️ EXCEL IMPORT/EXPORT (Labor Data Correction सह)
