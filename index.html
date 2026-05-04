@@ -6413,11 +6413,23 @@ function addPaymentRowForm(data = {}) {
     const row = document.createElement('div');
     row.className = 'payment-row p-3 border rounded bg-gray-700 grid grid-cols-4 gap-2 text-sm';
     row.innerHTML = `
-        <input type="date" class="pay-date w-full col-span-1" placeholder="Date" value="${data.date || new Date().toISOString().slice(0, 10)}">
-        <input type="number" class="pay-recv w-full col-span-1" placeholder="Received Amt (₹)" value="${data.received || ''}">
-        <input type="text" class="pay-note w-full col-span-2" placeholder="Note (e.g. Cash, GPay, Bank)" value="${data.note || ''}">
-        <button class="smallbtn bg-red-500 col-span-1" onclick="this.closest('.payment-row').remove()">✕</button>
-    `;
+    <input type="date" class="pay-date w-full col-span-1" value="${data.date || new Date().toISOString().slice(0, 10)}">
+    <input type="number" class="pay-recv w-full col-span-1" placeholder="Received Amt (₹)" value="${data.received || ''}">
+
+    <select class="pay-bank w-full col-span-1">
+        <option value="">-- Bank --</option>
+        <option value="Kotak Bank">Kotak Bank</option>
+        <option value="SBI Bank">SBI Bank</option>
+        <option value="HDFC Bank">HDFC Bank</option>
+        <option value="Cash">Cash</option>
+    </select>
+
+    <input type="text" class="pay-note w-full col-span-1" placeholder="Note" value="${data.note || ''}">
+    
+    <button class="smallbtn bg-red-500 col-span-1" onclick="this.closest('.payment-row').remove()">✕</button>
+`;
+  
+   row.querySelector('.pay-bank').value = data.bank || '';
     parent.appendChild(row);
 }
 
@@ -6458,11 +6470,17 @@ function savePayments() {
 
     const newEntries = [];
     document.querySelectorAll('#payment-rows .payment-row').forEach(r => {
-        const date = r.querySelector('.pay-date').value || new Date().toISOString().split('T')[0];
-        const received = parseFloat(r.querySelector('.pay-recv').value) || 0;
-        const note = r.querySelector('.pay-note').value || '';
-        if (received > 0 || note) newEntries.push({ date, received, note });
-    });
+    const date = r.querySelector('.pay-date').value || new Date().toISOString().split('T')[0];
+    const received = parseFloat(r.querySelector('.pay-recv').value) || 0;
+    const note = r.querySelector('.pay-note').value || '';
+
+    const bankEl = r.querySelector('.pay-bank');
+    const bank = bankEl ? bankEl.value : '';
+
+    if (received > 0) {
+        newEntries.push({ date, received, note, bank });
+    }
+});
 
     if (newEntries.length === 0) return alert('Add at least one payment entry (Received Amount > 0)');
 
@@ -6491,7 +6509,8 @@ function savePayments() {
         projectCost: projectCost,  // ✅ ALWAYS UPDATE
         date: en.date, 
         received: en.received, 
-        note: en.note 
+        note: en.note,
+        bank: en.bank   // 🔥 NEW 
     };
     DATA.payments.push(record);
 });
@@ -6552,7 +6571,11 @@ function renderPaymentsList() {
         
         recs.forEach(r => {
             html += `
-                <li>${formatDateToInput(r.date)}: ₹${money(r.received)} (${r.note || 'N/A'})</li>
+                <li>
+                 ${formatDateToInput(r.date)}: ₹${money(r.received)} 
+                (${r.note || 'N/A'}) 
+                [${r.bank || 'Cash'}]
+                </li>
             `;
         });
         
@@ -6581,7 +6604,7 @@ function loadPayment(invNo) {
     el('pay-contact').value = r0.contact || '';
     el('pay-work').value = r0.work || '';
     el('pay-cost').value = (parseFloat(r0.projectCost) || 0).toFixed(2);
-    
+    el('pay-bank').value = r0.bank || '';
     el('payment-rows').innerHTML = '';
     recs.forEach(p => addPaymentRowForm(p));
 }
@@ -6698,9 +6721,20 @@ function addPaidRow(data = {}) {
     row.innerHTML = `
         <input type="date" class="pp-date w-full col-span-1" placeholder="Date" value="${data.date || new Date().toISOString().slice(0, 10)}">
         <input type="number" class="pp-amount w-full col-span-1" placeholder="Paid Amt (₹)" value="${data.amount || ''}">
+         <select class="pp-bank w-full">
+            <option value="">-- Select --</option>
+            <option value="Kotak Bank">Kotak Bank</option>
+            <option value="SBI Bank">SBI Bank</option>
+            <option value="HDFC Bank">HDFC Bank</option>
+            <option value="Cash">Cash</option>
+        </select>
         <input type="text" class="pp-note w-full col-span-2" placeholder="Purpose / Note" value="${data.note || ''}">
         <button class="smallbtn bg-red-500 col-span-1" onclick="this.closest('.pp-row').remove()">✕</button>
     `;
+
+      // ✅ 🔥 IMPORTANT LINE
+    row.querySelector('.pp-bank').value = data.bank || '';
+
     parent.appendChild(row);
 }
 
@@ -6743,11 +6777,15 @@ function savePaidPayment() {
 
     const newEntries = [];
     document.querySelectorAll('#pp-rows .pp-row').forEach(r => {
-        const date = r.querySelector('.pp-date').value || new Date().toISOString().split('T')[0];
-        const amount = parseFloat(r.querySelector('.pp-amount').value) || 0;
-        const note = r.querySelector('.pp-note').value || '';
-        if (amount > 0 || note) newEntries.push({ date, amount, note });
-    });
+    const date = r.querySelector('.pp-date').value || new Date().toISOString().split('T')[0];
+    const amount = parseFloat(r.querySelector('.pp-amount').value) || 0;
+    const note = r.querySelector('.pp-note').value || '';
+    const bank = r.querySelector('.pp-bank').value || '';
+
+    if (amount > 0 || note) {
+        newEntries.push({ date, amount, note, bank });
+    }
+});
 
     if (newEntries.length === 0) return alert('Add at least one payment entry (Amount > 0)');
     
@@ -6781,7 +6819,8 @@ function savePaidPayment() {
             labor,
             date: en.date, 
             amount: en.amount.toFixed(2), 
-            note: en.note 
+            note: en.note,
+            bank: en.bank   // ✅ IMPORTANT 
         };
         DATA.paidPayments.push(record);
     });
@@ -6859,7 +6898,11 @@ function renderPaidPayments() {
         
         recs.forEach(r => {
             html += `
-                <li>${formatDateToInput(r.date)}: ₹${money(r.amount)} (${r.note || 'N/A'})</li>
+                <li>
+  ${formatDateToInput(r.date)}: ₹${money(r.amount)} 
+  (${r.note || 'N/A'}) 
+  ${r.bank ? ' | ' + r.bank : ''}
+</li>
             `;
         });
         
@@ -6879,10 +6922,9 @@ function renderPaidPayments() {
 
 function loadPaidPayment(key) {
     let recs;
-    
+    let orderId = '';
+
     if (key.includes('^N/A^')) {
-        // 💡 दुरुस्ती: मॅन्युअल एंट्री Key Parsing
-        // Key Format: InvNo^N/A^Name^Labor
         const parts = key.split('^');
         const invNo = parts[0];
         const name = parts[2];
@@ -6895,12 +6937,17 @@ function loadPaidPayment(key) {
             pp.labor === labor
         );
         
-        el('pp-order-id').value = ''; // Order ID clear करा
+        el('pp-order-id').value = '';
 
     } else {
-        // Standard Key Parsing
-        const [invNo, orderId] = key.split('_');
-        recs = DATA.paidPayments.filter(pp => pp.invoiceNo === invNo && pp.orderId === orderId);
+        const parts = key.split('_');
+        const invNo = parts[0];
+        orderId = parts[1];
+
+        recs = DATA.paidPayments.filter(pp => 
+            pp.invoiceNo === invNo && pp.orderId === orderId
+        );
+
         el('pp-order-id').value = orderId;
     }
     
@@ -6908,16 +6955,28 @@ function loadPaidPayment(key) {
 
     const r0 = recs[0];
     show('paid');
-    
+
     el('pp-invno').value = r0.invoiceNo;
     el('pp-client').value = r0.client || '';
     el('pp-work').value = r0.work || '';
     el('pp-name').value = r0.name || '';
     el('pp-labor').value = r0.labor || '';
-    
+
+    // 🔥 rows clear
     el('pp-rows').innerHTML = '';
+
+    // 🔥 FIRST → rows load from saved data
     recs.forEach(p => addPaidRow(p));
+
+    // 🔥 SECOND → trigger order auto-fill (optional but safe)
+    if (orderId) {
+        setTimeout(() => {
+            el('pp-order-id').dispatchEvent(new Event('change'));
+        }, 100);
+    }
 }
+
+
 
 function deletePaidPayment(key) {
     if (!confirm("Are you sure you want to delete ALL paid payment records for this group?")) return;
