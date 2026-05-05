@@ -8909,10 +8909,12 @@ window.addEventListener("DOMContentLoaded", addResetButtonToNavbar);
   // Initialize
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-
+  
   // Document path — तुम्ही बदलू शकता (company-wise अलग करायचा तर)
   const DOC_PATH = { collection: "apps", docId: "vaibhav_enterprises_data" };
-
+  // 🔥 इथे paste कर
+const H_DOC_PATH = { collection: "apps", docId: "h_expenses_data" };
+  
   // Save local DATA object into Firestore
   async function saveToFirestore() {
     try {
@@ -8943,6 +8945,44 @@ window.addEventListener("DOMContentLoaded", addResetButtonToNavbar);
     }
   }
 
+  async function saveHToFirestore() {
+  try {
+    let data = JSON.parse(localStorage.getItem("hExpenses") || "[]");
+
+    await setDoc(
+      doc(db, H_DOC_PATH.collection, H_DOC_PATH.docId),
+      { hExpenses: data }
+    );
+
+    console.log("✅ H Expenses saved to Firestore");
+  } catch (err) {
+    console.error("❌ H Firestore save error:", err);
+  }
+}
+
+async function loadHFromFirestore() {
+  try {
+    const snap = await getDoc(
+      doc(db, H_DOC_PATH.collection, H_DOC_PATH.docId)
+    );
+
+    if (snap.exists()) {
+      const remote = snap.data();
+
+      localStorage.setItem(
+        "hExpenses",
+        JSON.stringify(remote.hExpenses || [])
+      );
+
+      fetchHExpenses();   // 🔥 UI refresh
+
+      console.log("✅ H Expenses loaded from Firestore");
+    }
+  } catch (err) {
+    console.error("❌ H Firestore load error:", err);
+  }
+}
+
   // छोटे helper: save on explicit call and when saveData() is invoked
   window.saveToFirestore = saveToFirestore;
   window.loadFromFirestore = loadFromFirestore;
@@ -8951,6 +8991,7 @@ window.addEventListener("DOMContentLoaded", addResetButtonToNavbar);
 window.addEventListener("load", () => {
   console.log("🔄 Loading latest data from Firestore...");
   loadFromFirestore();  // ✅ नेहमी Firestore मधून डेटा आणा
+  loadHFromFirestore();  // 🔥 ADD THIS (H Expenses)
 });
 
 
