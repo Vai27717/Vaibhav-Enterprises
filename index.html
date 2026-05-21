@@ -884,7 +884,15 @@ body{
 
     <datalist id="labor-suggestions"></datalist>
 
-    
+    <div class="flex gap-2 mb-2 flex-wrap">
+
+  <input type="date" id="labor-from-date"
+         class="p-2 border rounded">
+
+  <input type="date" id="labor-to-date"
+         class="p-2 border rounded">
+
+</div>
  </div>
 <div class="report-btn-wrap">
   <button class="smallbtn" onclick="exportLaborReport()">Report</button>
@@ -8190,9 +8198,54 @@ function exportLaborPDF() {
   const q = (el('labor-search')?.value || '').trim().toLowerCase();
   if (!q) return alert("Labor नाव search करा");
 
-  const records = DATA.labor.filter(l =>
-    l.name && l.name.toLowerCase() === q
-  );
+  const fromDate = el('labor-from-date')?.value || '';
+const toDate = el('labor-to-date')?.value || '';
+
+const records = DATA.labor
+  .filter(l =>
+    l.name &&
+    l.name.toLowerCase() === q
+  )
+  .map(r => {
+
+    // 🔥 DATE FILTERED DAYS
+    const filteredDays = r.days.filter(d => {
+
+      if (!d.status) return false;
+
+      if (fromDate && d.date < fromDate) return false;
+      if (toDate && d.date > toDate) return false;
+
+      return true;
+    });
+
+    // 🔥 RECALCULATE
+    let totalDays = 0;
+    let totalAdvance = 0;
+    let totalTransport = 0;
+
+    filteredDays.forEach(d => {
+
+      if (d.status === 'P') totalDays += 1;
+      if (d.status === 'PP') totalDays += 2;
+      if (d.status === 'P1Q') totalDays += 1.25;
+      if (d.status === 'P1H') totalDays += 1.5;
+      if (d.status === 'H') totalDays += 0.5;
+
+      totalAdvance += d.advance || 0;
+      totalTransport += d.transport || 0;
+    });
+
+    return {
+      ...r,
+      days: filteredDays,
+      totalDays,
+      totalAdvance,
+      totalTransport
+    };
+  })
+  .filter(r => r.days.length > 0);
+
   if (!records.length) return alert("Labor record नाही");
 
   const laborName = records[0].name;
@@ -8267,7 +8320,11 @@ doc.text(
 
   doc.text("To,", 10, y); y += 5;
   doc.text(`Name : ${laborName}`, 10, y); y += 5;
-  doc.text(`Date : ${firstDate} To ${lastDate}`, 10, y);
+  doc.text(
+  `Date : ${fromDate || firstDate} To ${toDate || lastDate}`,
+  10,
+  y
+);
 
   y += 8;
 
@@ -8342,6 +8399,10 @@ doc.text(
   }
 
   doc.save(`${laborName}_Report.pdf`);
+
+// 🔥 CLEAR DATE FILTERS AFTER PDF
+el('labor-from-date').value = '';
+el('labor-to-date').value = '';
 }
 
 
