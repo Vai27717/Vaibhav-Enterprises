@@ -6919,6 +6919,7 @@ function renderPaidPayments() {
             <div class="flex gap-2 mt-2">
                 <button class="smallbtn" onclick="loadPaidPayment('${key}')">Load</button>
                 <button class="smallbtn" onclick="sharePaidPayment('${key}')">Share</button>
+                <button class="smallbtn bg-red-600" onclick="exportPaidPaymentPDF('${key}')">PDF</button>
                 <button class="smallbtn bg-red-500" onclick="deletePaidPayment('${key}')">Delete All</button>
             </div>
         `;
@@ -7106,7 +7107,185 @@ function sharePaidPayment(key) {
 }
 
 
+function exportPaidPaymentPDF(key) {
 
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // --- COMPANY INFO ---
+    const c = DATA.company || {};
+    const cname = c.name || "Vaibhav Enterprises";
+
+    let invNo, orderId, name, labor;
+    let recs;
+
+    // 🔥 SAME LOGIC AS SHARE
+    if (key.includes('^N/A^')) {
+
+        const parts = key.split('^');
+        invNo = parts[0];
+        orderId = 'N/A';
+        name = parts[2];
+        labor = parts[3];
+
+        recs = (DATA.paidPayments || []).filter(x =>
+            x.invoiceNo === invNo &&
+            (!x.orderId || x.orderId === 'N/A' || x.orderId === '') &&
+            x.name === name &&
+            x.labor === labor
+        );
+
+    } else {
+
+        [invNo, orderId] = key.split('_');
+
+        recs = (DATA.paidPayments || []).filter(x =>
+            (x.invoiceNo === invNo) &&
+            (x.orderId === orderId)
+        );
+    }
+
+    if (!recs.length) {
+        return alert("No Paid Payment found");
+    }
+
+    const r = recs[0];
+
+    const total = recs.reduce(
+        (sum, p) => sum + (parseFloat(p.amount) || 0),
+        0
+    );
+
+    let y = 15;
+
+    /* ================= HEADER ================= */
+
+    doc.setFontSize(16);
+    doc.setTextColor(255, 140, 0);
+    doc.setFont(undefined, "bold");
+
+    doc.text(cname, 105, y, { align: "center" });
+
+    y += 8;
+
+    doc.setTextColor(0, 0, 0);
+
+    doc.setFontSize(11);
+
+    doc.text("Paid Payment Report", 105, y, {
+        align: "center"
+    });
+
+    y += 8;
+
+    doc.line(10, y, 200, y);
+
+    y += 10;
+
+    /* ================= DETAILS ================= */
+
+    doc.setFontSize(11);
+    doc.setFont(undefined, "normal");
+
+    
+
+    if (orderId !== 'N/A') {
+        doc.text(`Order ID : ${r.orderId || 'N/A'}`, 10, y);
+        y += 7;
+    }
+
+    doc.text(`Name : ${r.name || 'N/A'}`, 10, y);
+    y += 7;
+
+    doc.text(`Purpose : ${r.labor || 'N/A'}`, 10, y);
+    y += 10;
+
+    /* ================= TABLE HEADER ================= */
+
+    doc.setFont(undefined, "bold");
+
+    doc.text("No", 10, y);
+    doc.text("Date", 30, y);
+    doc.text("Amount", 80, y);
+    doc.text("Note", 130, y);
+
+    y += 4;
+
+    doc.line(10, y, 200, y);
+
+    y += 7;
+
+    doc.setFont(undefined, "normal");
+
+    /* ================= ROWS ================= */
+
+    recs.forEach((p, i) => {
+
+        const date = p.date
+            ? new Date(p.date).toLocaleDateString("en-GB")
+            : "N/A";
+
+        const amount =
+            " " +
+            (window.money
+                ? money(p.amount)
+                : parseFloat(p.amount).toFixed(2));
+
+        doc.text(String(i + 1), 10, y);
+        doc.text(date, 30, y);
+        doc.text(amount, 80, y);
+
+        const note = p.note || 'N/A';
+
+        doc.text(note.substring(0, 35), 130, y);
+
+        y += 7;
+
+        // 🔥 AUTO PAGE BREAK
+        if (y > 270) {
+            doc.addPage();
+            y = 15;
+        }
+    });
+
+    /* ================= TOTAL ================= */
+
+    y += 5;
+
+    doc.line(10, y, 200, y);
+
+    y += 10;
+
+    doc.setFont(undefined, "bold");
+
+    doc.setTextColor(200, 0, 0); // RED
+
+doc.text(
+    `Total Paid : ${window.money ? money(total) : total.toFixed(2)}`,
+    10,
+    y
+);
+
+doc.setTextColor(0, 0, 0); // BLACK RESET
+
+    y += 15;
+
+    doc.setFont(undefined, "normal");
+
+    doc.text("Regards,", 170, y, {
+    align: "right"
+});
+
+y += 7;
+
+doc.text(cname, 180, y, {
+    align: "right"
+});
+
+    /* ================= SAVE ================= */
+
+    doc.save(`PaidPayment_${r.invoiceNo || 'Report'}.pdf`);
+}
 
 
 
