@@ -8609,7 +8609,7 @@ doc.text(
   y += 6;
 
   const totalPay = totalDays * rate;
-  const advanceBalance = totalAdvance - totalPay;
+  
 
   doc.text(`Per Day Rate : ${rate}`, 10, y); y += 5;
   doc.text(`Total P Days : ${totalDays}`, 10, y); y += 5;
@@ -8624,21 +8624,61 @@ doc.text(
 
   y += 4;
 
-  // 🎨 BALANCE COLOR LOGIC
-  if (advanceBalance > 0) {
-    doc.setTextColor(0, 150, 0); // GREEN
-    doc.setFont(undefined, "bold");
-    doc.text(
-      `Advance Balance (To Receive) : ${advanceBalance}`,
-      10, y
-    );
-  } else {
+ const balance = totalPay - totalAdvance;
+
+if (balance > 0) {
+
     doc.setTextColor(200, 0, 0); // RED
     doc.setFont(undefined, "bold");
-    doc.text(`Advance Balance : 0`, 10, y);
-  }
+
+    doc.text(
+        `Balance Payment : ${money(balance)}`,
+        10,
+        y
+    );
+
+} else if (balance < 0) {
+
+    doc.setTextColor(0, 150, 0); // GREEN
+    doc.setFont(undefined, "bold");
+
+    doc.text(
+    `Extra Advance Amount To Receive By ${laborName} : ${money(Math.abs(balance))}`,
+    10,
+    y
+);
+
+} else {
+
+    doc.setTextColor(0, 0, 255); // BLUE
+    doc.setFont(undefined, "bold");
+
+    doc.text(
+        `Balance Payment : 0`,
+        10,
+        y
+    );
+}
 
   
+/* ================= SIGNATURE ================= */
+
+y += 15;
+
+doc.setTextColor(0, 0, 0);
+doc.setFont(undefined, "normal");
+
+doc.text("Regards,", 170, y, {
+  align: "right"
+});
+
+y += 7;
+
+doc.setFont(undefined, "bold");
+
+doc.text("Vaibhav Enterprises", 180, y, {
+  align: "right"
+});
 
 
   doc.save(`${laborName}_Report.pdf`);
