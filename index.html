@@ -993,6 +993,29 @@ body{
 
     <label>Transport (₹)</label>
     <input type="number" id="qa_transport" value="0">
+     
+     <label>Signature</label>
+
+<canvas id="signature-pad"
+        width="350"
+        height="120"
+        style="
+          border:1px solid #999;
+          background:#fff;
+          border-radius:5px;
+          touch-action:none;
+        ">
+</canvas>
+
+<div style="margin-top:5px;">
+  <button type="button"
+          class="smallbtn"
+          onclick="clearSignature()">
+    Clear Signature
+  </button>
+</div>
+
+
 
     <div style="margin-top:10px; text-align:center">
       <button class="smallbtn" onclick="saveQuickAttendance()">Save</button>
@@ -8093,59 +8116,130 @@ async function deleteLabor(id) {
 
 
 function shareLabor(id){
+
   // --- COMPANY INFO ---
   const c = DATA.company || {};
-  const cname = c.name || "Vaibhav Enterprises"; // Company name dynamically get kela
-    
-  const r = DATA.labor.find(x=> x.id === id); 
+  const cname = c.name || "Vaibhav Enterprises";
+
+  const r = DATA.labor.find(x => x.id === id);
   if(!r) return;
 
+  const fromDate =
+    document.getElementById("labor-from-date")?.value || "";
+
+  const toDate =
+    document.getElementById("labor-to-date")?.value || "";
+
   const lines = [];
+
+  let filteredDays = 0;
+  let filteredAdvance = 0;
+  let filteredTransport = 0;
+
   // Header
   lines.push('📅Attendance Details');
   lines.push('');
-  lines.push(cname); // ✅ 1. Company name dynamic kela
+  lines.push(cname);
   lines.push('');
   lines.push('Name: ' + r.name);
   lines.push('Perday: ' + r.rate);
-  lines.push('Start Date: ' + r.start);
-  lines.push('End Date: ' + r.end);
+  lines.push('Start Date: ' + (fromDate || r.start));
+  lines.push('End Date: ' + (toDate || r.end));
   lines.push('');
 
-  // फक्त P/A/H status असलेले दिवस
-  r.days.forEach(d => {
-    if(d.status && d.status !== " "){
-      let displayStatus = d.status;
+  // Attendance Rows
+  r.days
+  .filter(d => {
 
-// 🔥 MESSAGE-FRIENDLY STATUS (for labor understanding)
-if (d.status === "P1Q") displayStatus = "P2H"; // Quarter Day
-if (d.status === "P1H") displayStatus = "PH";  // Half Day
+    if(!d.status) return false;
 
-lines.push(`${d.date}    ${displayStatus}    Adv. ${money(d.advance||0)}`);
+    if(fromDate && d.date < fromDate)
+      return false;
 
-    }
+    if(toDate && d.date > toDate)
+      return false;
+
+    return true;
+
+  })
+  .forEach(d => {
+
+    if (d.status === "P") filteredDays += 1;
+    if (d.status === "PP") filteredDays += 2;
+    if (d.status === "P1Q") filteredDays += 1.25;
+    if (d.status === "P1H") filteredDays += 1.5;
+    if (d.status === "H") filteredDays += 0.5;
+
+    filteredAdvance += (d.advance || 0);
+    filteredTransport += (d.transport || 0);
+
+    let displayStatus = d.status;
+
+    if (d.status === "P1Q") displayStatus = "P2H";
+    if (d.status === "P1H") displayStatus = "PH";
+
+    lines.push(
+      `${d.date}    ${displayStatus}    Adv. ${money(d.advance || 0)}`
+    );
+
   });
 
+  const filteredPay =
+    filteredDays * (r.rate || 0);
+
+  const filteredBalance =
+    filteredPay - filteredAdvance;
+
   lines.push('====================');
-  lines.push('Tot. Day: ' + r.totalDays + ' Adv. ' + money(r.totalAdvance||0));
+
+  lines.push(
+    'Tot. Day: ' +
+    filteredDays +
+    ' Adv. ' +
+    money(filteredAdvance)
+  );
+
   lines.push('====================');
-  lines.push('Total Payment: ' + money(r.totalPay||0));
-  lines.push('Adv. Payment: ' + money(r.totalAdvance||0));
+
+  lines.push(
+    'Total Payment: ' +
+    money(filteredPay)
+  );
+
+  lines.push(
+    'Adv. Payment: ' +
+    money(filteredAdvance)
+  );
+
   lines.push('====================');
-  lines.push('Balance Pay. ' + money(r.balance||0));
-  lines.push('Extra Allown Pay. ' + money(r.totalTransport||0));  // 🚍 Transport वेगळं
+
+  lines.push(
+    'Balance Pay. ' +
+    money(filteredBalance)
+  );
+
+  lines.push(
+    'Extra Allown Pay. ' +
+    money(filteredTransport)
+  );
+
   lines.push('');
+
   // Footer
   lines.push('Regarding');
   lines.push('');
-  lines.push(cname); // ✅ 2. Company name dynamic kela
+  lines.push(cname);
   lines.push('');
-  lines.push(`Thank you for connecting with ${cname}`); // ✅ 3. Company name dynamic kela
-  
+  lines.push(
+    `Thank you for connecting with ${cname}`
+  );
 
-  window.open('https://wa.me/?text=' + encodeURIComponent(lines.join('\n')), '_blank');
+  window.open(
+    'https://wa.me/?text=' +
+    encodeURIComponent(lines.join('\n')),
+    '_blank'
+  );
 }
-
 
 
 /* ---------- Populate Invoice Dropdown in Each Labor Row ---------- */
@@ -8284,6 +8378,7 @@ text += `==========================\n`;
 function openQuickAttendance(){
   loadQuickAttendanceNames();
   document.getElementById("quickAttendanceModal").style.display = "block";
+  setTimeout(initSignaturePad,100);
 }
 
 function closeQuickAttendance(){
@@ -8342,6 +8437,7 @@ function saveQuickAttendance(){
           d.status = status;
           d.advance = adv;
           d.transport = trans;
+          d.signature = signCanvas.toDataURL("image/png");
           updated = true;
         }
       });
@@ -8406,6 +8502,29 @@ function fillQuickAttendance(){
   if(!rec) return;
 
   const day = rec.days.find(d => d.date === date);
+  if(day.signature){
+
+  const img = new Image();
+
+  img.onload = function(){
+
+    clearSignature();
+
+    signCtx.drawImage(
+      img,
+      0,
+      0,
+      signCanvas.width,
+      signCanvas.height
+    );
+  };
+
+  img.src = day.signature;
+
+}else{
+
+  clearSignature();
+}
   if(!day) return;
 
   qa_status.value   = day.status || "";
@@ -8585,10 +8704,25 @@ doc.text(
       if (!d.status) return;
 
       let line = `${d.date}   ${d.status}`;
-      if (d.advance) line += `   Adv. ${d.advance}`;
-      if (d.transport) line += `   Trans. ${d.transport}`;
 
-      doc.text(line, 12, y);
+if (d.advance) line += `   Adv. ${d.advance}`;
+if (d.transport) line += `   Trans. ${d.transport}`;
+
+doc.text(line, 12, y);
+
+if(d.advance > 0 && d.signature){
+
+  doc.addImage(
+    d.signature,
+    "PNG",
+    95,
+    y - 4,
+    30,
+    10
+  );
+}
+
+y += 5;
       y += 5;
 
       if (y > 270) {
@@ -8660,7 +8794,36 @@ if (balance > 0) {
     );
 }
 
-  
+ 
+/* ================= LABOR SIGNATURE ================= */
+
+const signedDay = records
+  .flatMap(r => r.days)
+  .find(d => d.signature);
+
+if(signedDay && signedDay.signature){
+
+  y += 10;
+
+  doc.setTextColor(0,0,0);
+  doc.text("Labor Signature :", 10, y);
+
+  y += 3;
+
+  doc.addImage(
+    signedDay.signature,
+    "PNG",
+    10,
+    y,
+    50,
+    20
+  );
+
+  y += 25;
+}
+
+
+ 
 /* ================= SIGNATURE ================= */
 
 y += 15;
@@ -8708,6 +8871,91 @@ function filterLabor(){
     }
   });
 }
+
+
+
+let signCanvas;
+let signCtx;
+let drawing = false;
+
+function initSignaturePad(){
+
+  signCanvas = document.getElementById("signature-pad");
+
+  if(!signCanvas) return;
+
+  signCtx = signCanvas.getContext("2d");
+
+  signCtx.lineWidth = 2;
+  signCtx.lineCap = "round";
+
+  signCanvas.addEventListener("mousedown", startDraw);
+  signCanvas.addEventListener("mousemove", drawDraw);
+  signCanvas.addEventListener("mouseup", stopDraw);
+
+  signCanvas.addEventListener("touchstart", startDraw);
+  signCanvas.addEventListener("touchmove", drawDraw);
+  signCanvas.addEventListener("touchend", stopDraw);
+}
+
+function getPosition(e){
+
+  const rect = signCanvas.getBoundingClientRect();
+
+  if(e.touches){
+
+    return {
+      x: e.touches[0].clientX - rect.left,
+      y: e.touches[0].clientY - rect.top
+    };
+  }
+
+  return {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top
+  };
+}
+
+function startDraw(e){
+
+  drawing = true;
+
+  const pos = getPosition(e);
+
+  signCtx.beginPath();
+  signCtx.moveTo(pos.x,pos.y);
+}
+
+function drawDraw(e){
+
+  if(!drawing) return;
+
+  e.preventDefault();
+
+  const pos = getPosition(e);
+
+  signCtx.lineTo(pos.x,pos.y);
+  signCtx.stroke();
+}
+
+function stopDraw(){
+
+  drawing = false;
+}
+
+function clearSignature(){
+
+  if(!signCtx) return;
+
+  signCtx.clearRect(
+    0,
+    0,
+    signCanvas.width,
+    signCanvas.height
+  );
+}
+
+
 
 
 
