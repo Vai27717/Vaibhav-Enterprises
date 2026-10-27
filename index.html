@@ -792,6 +792,47 @@ body{
 }
 
 
+
+
+
+.check-heading {
+  font-size: 15px;
+  font-weight: bold;
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+.check-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 24px;
+  row-gap: 8px;
+  margin-bottom: 14px;
+}
+
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: bold;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.check-mark {
+  color: #006400;
+  font-size: 21px;
+  font-weight: bold;
+  display: inline-block;
+  min-width: 22px;
+  flex-shrink: 0;
+}
+
+
+
+
+
+
 </style>
 </head>
 
@@ -1621,9 +1662,18 @@ body{
     <textarea id="a_material" rows="6"></textarea>
 
     <!-- Payment -->
-    <label><b>Payment Schedule</b></label>
-    <button type="button" onclick="insertPayment()">Insert Default</button>
-    <textarea id="a_payment" rows="6"></textarea>
+    
+<!-- Payment -->
+<label><b>Payment Schedule</b></label>
+<button type="button" onclick="insertPayment()">Insert Default</button>
+
+<textarea
+  id="a_payment"
+  rows="6"
+  onkeydown="autoNumberPaymentEnter(event)"
+  placeholder="1}. Advance:"
+></textarea>
+
 
     <!-- Working Period -->
     <label>Working Period</label>
@@ -2932,6 +2982,81 @@ function generateCompletionPDF() {
     <p><b>Work Details:</b></p>
     <p>${formattedItems}</p>
 
+     
+${
+  (d.subject || "").toLowerCase().includes("new construction")
+    ? `
+      <div class="check-heading">HAVE CHECKED:</div>
+
+      <div class="check-grid">
+        <div class="check-item">
+  <span class="check-mark">✔</span>
+  <span>All RCC and Concrete Work</span>
+</div>
+
+<div class="check-item">
+  <span class="check-mark">✔</span>
+  <span>Brick Work</span>
+</div>
+
+<div class="check-item">
+  <span class="check-mark">✔</span>
+  <span>Plaster Work</span>
+</div>
+
+<div class="check-item">
+  <span class="check-mark">✔</span>
+  <span>Electrical Work</span>
+</div>
+
+<div class="check-item">
+  <span class="check-mark">✔</span>
+  <span>Plumbing Work</span>
+</div>
+
+<div class="check-item">
+  <span class="check-mark">✔</span>
+  <span>Flooring Work Tiles & Marbles</span>
+</div>
+
+<div class="check-item">
+  <span class="check-mark">✔</span>
+  <span>Kitchen</span>
+</div>
+
+<div class="check-item">
+  <span class="check-mark">✔</span>
+  <span>Bathroom</span>
+</div>
+
+<div class="check-item">
+  <span class="check-mark">✔</span>
+  <span>Doors</span>
+</div>
+
+<div class="check-item">
+  <span class="check-mark">✔</span>
+  <span>Grill and Sliding Windows</span>
+</div>
+
+<div class="check-item">
+  <span class="check-mark">✔</span>
+  <span>External and Internal Painting Work</span>
+</div>
+
+<div class="check-item">
+  <span class="check-mark">✔</span>
+  <span>Fabrication Work</span>
+</div>
+      </div>
+    `
+    : ""
+}
+
+
+
+
+
     <p>
       We, the house owner ${ownerName}, have checked all the above points and we have no complaints.
       All the above points have been done according to our wishes.
@@ -2945,8 +3070,11 @@ function generateCompletionPDF() {
       <tr>
         <td style="vertical-align:top;">
           <div style="height:50px;"></div>
-          <b>Owner</b><br>
-          ${ownerName}
+          <b>Owner</b>
+        <br><br>
+        <b>${ownerName}</b>
+        <br><br>
+        Date: ${today}
         </td>
 
         <td style="text-align:center; vertical-align:top; padding-left:60px;">
@@ -3760,6 +3888,46 @@ function getWorkDescFromEstimate() {
   return text.trim();
 }
 
+
+
+
+function autoNumberPaymentEnter(event) {
+  if (event.key !== "Enter") return;
+
+  const textarea = event.target;
+  const text = textarea.value;
+  const cursor = textarea.selectionStart;
+
+  // Current line शोधा
+  const lineStart = text.lastIndexOf("\n", cursor - 1) + 1;
+  const lineEndIndex = text.indexOf("\n", cursor);
+  const lineEnd = lineEndIndex === -1 ? text.length : lineEndIndex;
+
+  const currentLine = text.slice(lineStart, lineEnd);
+
+  // Current line चा number शोधा
+  const match = currentLine.match(/^\s*(\d+)\}\./);
+
+  if (!match) return;
+
+  event.preventDefault();
+
+  const nextNumber = Number(match[1]) + 1;
+
+  // Cursor जिथे आहे तिथे नवीन numbered line
+  const before = text.slice(0, cursor);
+  const after = text.slice(cursor);
+
+  const insertion = `\n${nextNumber}}. `;
+
+  textarea.value = before + insertion + after;
+
+  const newCursor = cursor + insertion.length;
+  textarea.setSelectionRange(newCursor, newCursor);
+
+  // Input event trigger करा
+  textarea.dispatchEvent(new Event("input", { bubbles: true }));
+}
 
 
 
