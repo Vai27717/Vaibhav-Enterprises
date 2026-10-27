@@ -3073,6 +3073,7 @@ function printAgreement() {
   const d = JSON.parse(
     localStorage.getItem("agreement_" + estimateSelect.value)
   );
+
   if (!d) {
     alert("Save Agreement first");
     return;
@@ -3081,27 +3082,26 @@ function printAgreement() {
   const ownerName = d.clientName || "House Owner";
   const today = new Date().toLocaleDateString("en-GB");
 
-    // ---- Total Amount Safe Logic ----
-let totalAmount = d.totalAmount;
+  // ---- Total Amount Safe Logic ----
+  let totalAmount = d.totalAmount;
 
-if (!totalAmount && d.totalSqft && d.ratePerSqft) {
-  totalAmount = d.totalSqft * d.ratePerSqft;
-}
+  if (!totalAmount && d.totalSqft && d.ratePerSqft) {
+    totalAmount = d.totalSqft * d.ratePerSqft;
+  }
 
-totalAmount = totalAmount || 0;
-
+  totalAmount = totalAmount || 0;
 
   // -------- Ground Floor Logic --------
   let groundBlock = "";
   let groundSqft = 0;
 
-
-   
-
   if (d.roomDimensions) {
     d.roomDimensions.split("\n").forEach(line => {
+
       const m = line.match(/(\d+)\s*['’]?\s*[xX]\s*(\d+)/);
+
       if (/ground/i.test(line) && m) {
+
         const sqft = parseInt(m[1]) * parseInt(m[2]);
         groundSqft += sqft;
 
@@ -3114,11 +3114,13 @@ totalAmount = totalAmount || 0;
     });
 
     if (groundSqft > 0) {
+
       groundBlock += `
         <p class="small">
           *footing {plinth} will be calculated in 50% of the ground floor area.
           ${groundSqft / 2} square feet
         </p>
+
         <div class="line">
           __________________________________________________________________________________________________________________
         </div>
@@ -3128,26 +3130,96 @@ totalAmount = totalAmount || 0;
 
   const w = window.open("", "", "width=900,height=700");
 
+  if (!w) {
+    alert("Please allow pop-ups to print the Agreement PDF.");
+    return;
+  }
+
+  w.document.open();
+
   w.document.write(`
+  <!DOCTYPE html>
   <html>
   <head>
     <title>Agreement</title>
+
+    <meta charset="UTF-8">
+
     <style>
-      body { font-family: Arial; font-size:14px; line-height:1.5; }
-      .company { color:orange; font-size:26px; font-weight:bold; text-align:center; }
-      .center { text-align:center; }
-      .line { margin:10px 0; }
-      p { margin:4px 0; }
-      .small { font-size:12px; }
-      .sign-table { width:100%; margin-top:40px; }
+      body {
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #000;
+      }
+
+      .company {
+        color: orange;
+        font-size: 26px;
+        font-weight: bold;
+        text-align: center;
+      }
+
+      .center {
+        text-align: center;
+      }
+
+      .line {
+        margin: 10px 0;
+      }
+
+      p {
+        margin: 4px 0;
+      }
+
+      .small {
+        font-size: 12px;
+      }
+
+      .sign-table {
+        width: 100%;
+        margin-top: 40px;
+      }
+
+      .notes-section {
+        margin-top: 15px;
+        font-size: 13px;
+        line-height: 1.6;
+        page-break-inside: avoid;
+      }
+
+      .notes-section h3 {
+        margin-bottom: 8px;
+        font-size: 15px;
+      }
+
+      .notes-section p {
+        margin: 6px 0;
+        text-align: justify;
+      }
+
+      @media print {
+        body {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
+        .notes-section {
+          display: block !important;
+          visibility: visible !important;
+        }
+      }
     </style>
+
   </head>
 
   <body>
 
     <div class="company">Vaibhav Enterprises</div>
+
     <div class="center">
       All types Construction, Home Renovation Ss, Ms. Fabrication and Civil Work Done Will be here.<br>
+
       Contact: 9049764945 / 8080588206 |
       Email: dalvivaibhav456@gmail.com |
       www.vaibhaventerprises.info
@@ -3157,42 +3229,48 @@ totalAmount = totalAmount || 0;
       _______________________________________________________________________________________________________________________
     </div>
 
-    <!-- Registration, Agreement Title & Date -->
-<table style="width:100%; margin-bottom:10px; border-collapse:collapse;">
-  <tr>
-    <td style="color:red; font-weight:bold; text-align:left; width:40%;">
-      Rg. No. MH-26-0106699
-    </td>
+    <table style="width:100%;">
+      <tr>
+        <td style="color:red;font-weight:bold;">
+          Rg. No. MH-26-0106699
+        </td>
 
-    <td style="text-align:center; font-weight:bold; width:30%;">
-      <span style="font-size:16px;">AGREEMENT</span>
-    </td>
-
-    <td style="text-align:right; color:red; font-weight:bold; width:30%;">
-      Date: ${today}
-    </td>
-  </tr>
-</table>
-
+        <td style="text-align:right;color:red;font-weight:bold;">
+          Date: ${today}
+        </td>
+      </tr>
+    </table>
 
     <p><b>To,</b></p>
+
     <p><b>Name:</b> ${ownerName}</p>
+
     <p><b>Address:</b> ${d.clientAddress || ""}</p>
+
     <p><b>Mobile:</b> ${d.clientMobile || ""}</p>
 
-    <p><b>Subject:</b> ${d.subject}</p>
+    <p><b>Subject:</b> ${d.subject || ""}</p>
 
     <div class="line">
       ______________________________________________________________________________________________________________________
     </div>
 
     <p><b>Room Dimensions:</b></p>
-    <p>${(d.roomDimensions || "").replace(/\n/g,"<br>")}</p>
 
-    <p style="color:red;"><b>Total Square Feet:</b> ${d.totalSqft}</p>
-    <p style="color:red;"><b>Total Amount:</b> ₹ ${totalAmount}</p>
-    <p><b>In Words:</b> Rupees ${numberToIndianWords(totalAmount)} Only</p>
+    <p>${(d.roomDimensions || "").replace(/\n/g, "<br>")}</p>
 
+    <p style="color:red;">
+      <b>Total Square Feet:</b> ${d.totalSqft || 0}
+    </p>
+
+    <p style="color:red;">
+      <b>Total Amount:</b> ₹ ${totalAmount}
+    </p>
+
+    <p>
+      <b>In Words:</b>
+      Rupees ${numberToIndianWords(totalAmount)} Only
+    </p>
 
     <div class="line">
       _______________________________________________________________________________________________________________________
@@ -3201,42 +3279,289 @@ totalAmount = totalAmount || 0;
     ${groundBlock}
 
     <p><b>Work Description:</b></p>
-    <p>${(d.workDescription || "").replace(/\n/g,"<br>")}</p>
+
+    <p>${(d.workDescription || "").replace(/\n/g, "<br>")}</p>
 
     <p><b>Material In Use This Project:</b></p>
-    <p>${(d.materialInUse || "").replace(/\n/g,"<br>")}</p>
+
+    <p>${(d.materialInUse || "").replace(/\n/g, "<br>")}</p>
 
     <p><b>Working Period:</b></p>
-    <p>${d.startDate} to ${d.endDate}</p>
+
+    <p>${d.startDate || ""} to ${d.endDate || ""}</p>
 
     <p><b>Payment Schedule:</b></p>
-    <p>${(d.paymentSchedule || "").replace(/\n/g,"<br>")}</p>
+
+    <p>${(d.paymentSchedule || "").replace(/\n/g, "<br>")}</p>
+
+    
+    <!-- NOTES / TERMS AND CONDITIONS -->
+
+    <div class="notes-section">
+
+      <hr>
+
+      <h3>Notes / Terms &amp; Conditions:</h3>
+
+      
+      ${
+        (d.subject || "").trim().toLowerCase() === "new construction"
+        ? `
+          <p>
+            <b>1. Curing:</b>
+            Watering the building (curing) shall be the responsibility
+            of the house owner. If the house owner is unable to carry out
+            the curing work, additional payment shall be made separately
+            for the same.
+          </p>
+        `
+        : ""
+      }
+
+      <p>
+        <b>${(d.subject || "").trim().toLowerCase() === "new construction" ? "2" : "1"}. Payment Schedule:</b>
+        The house owner must make payments to the contractor according
+        to the agreed Payment Schedule. If payment is not made on time,
+        the contractor reserves the right to stop the work until the
+        outstanding payment is received.
+      </p>
+
+      <p>
+        <b>${(d.subject || "").trim().toLowerCase() === "new construction" ? "3" : "2"}. Increase in Market Rates:</b>
+        If material or market rates increase after the estimate rates
+        have been agreed upon, the additional cost arising from the
+        increase shall be payable separately by the house owner.
+      </p>
+
+      <p>
+        <b>${(d.subject || "").trim().toLowerCase() === "new construction" ? "4" : "3"}. Extra Work / Changes:</b>
+        If any changes or modifications are requested in the agreed
+        work, additional labour, material, and transportation charges
+        for such extra work shall be paid separately by the house owner.
+      </p>
+       
+      
+      <p>
+  <b>${(d.subject || "").trim().toLowerCase() === "new construction" ? "5" : "4"}. Communication &amp; Coordination:</b>
+  For the smooth execution of the work, the house owner shall appoint
+  one main responsible person to communicate and discuss all matters
+  related to the work with Vaibhav Enterprises. All family members
+  shall discuss and resolve any differences among themselves before
+  communicating instructions, changes, or decisions to the contractor.
+  Only the appointed person shall convey the final instructions and
+  decisions regarding the work to Vaibhav Enterprises.
+  </p>
+  
+     
+<p>
+  <b>${(d.subject || "").trim().toLowerCase() === "new construction" ? "6" : "5"}. Work Duration &amp; Extension:</b>
+  The agreed work duration may be extended if the work takes longer
+  than expected due to site conditions, changes in work, material
+  availability, weather conditions, or other unavoidable circumstances.
+  The house owner shall not put undue pressure on the contractor to
+  complete the work hurriedly or insist on early completion by giving
+  unreasonable excuses. The work shall be carried out with proper
+  quality and care.
+</p>
+
+
+
+<p>
+  <b>${(d.subject || "").trim().toLowerCase() === "new construction" ? "7" : "6"}. Disputes &amp; Amicable Resolution:</b>
+  In case of any dispute, disagreement, or misunderstanding arising
+  during the execution of the work, the house owner and the contractor
+  shall make every effort to resolve the matter amicably through
+  mutual discussion and understanding, without engaging in unnecessary
+  arguments or disputes.
+</p>
+
+
+<p>
+  <b>${(d.subject || "").trim().toLowerCase() === "new construction" ? "8" : "7"}. Estimate Verification &amp; Material Changes:</b>
+  The house owner shall carefully check and verify the work details
+  and materials specified in the approved estimate before the work
+  begins. Once verified and approved, no objections or excuses
+  regarding the agreed work or materials shall be accepted later.
+  If any changes are made to the work or materials specified in the
+  estimate, the total project amount may increase or decrease
+  accordingly, and the revised amount shall be discussed and agreed
+  upon by both the house owner and the contractor.
+</p>
+
+     
+<p>
+  <b>${(d.subject || "").trim().toLowerCase() === "new construction" ? "9" : "8"}. Work Stoppage &amp; Settlement of Outstanding Dues:</b>
+  If the house owner instructs the contractor to commence the work
+  and subsequently stops or discontinues the work before completion,
+  the house owner shall be liable to pay for all work completed and
+  expenses incurred up to the date of stoppage, including labour,
+  transportation, materials, and other contractor expenses. The final
+  account shall be prepared based on the actual work completed and
+  expenses incurred, and all outstanding dues shall be settled within
+  15 days from the date of work stoppage. Payment shall be made by
+  cheque or another mutually agreed payment method. If a cheque is
+  dishonoured, applicable bank charges and other lawful costs shall
+  be payable by the house owner. Failure to settle the dues or
+  repeated avoidance of payment may result in appropriate legal
+  action as permitted by law.
+</p>
+
+
+<p>
+  <b>${(d.subject || "").trim().toLowerCase() === "new construction" ? "10" : "9"}. Neighbour Coordination &amp; Site Cleaning:</b>
+  During the execution of the work, the house owner shall be responsible
+  for handling and resolving any disputes, complaints, or conflicts
+  involving neighbours or nearby residents in connection with the
+  work. If any neighbour or nearby resident creates a dispute or
+  argument with the contractor, the house owner shall take
+  responsibility for resolving the matter amicably. Upon completion
+  of the work, the contractor shall be responsible for cleaning the
+  work area and the surrounding area of the house affected by the
+  construction or renovation work and removing the waste generated
+  by the work.
+</p>
+
+
+
+${
+  (d.subject || "").trim().toLowerCase() === "new construction"
+    ? `
+      <p>
+        <b>11. Architectural Plan &amp; Construction Approval:</b>
+        The house owner shall carefully review and understand the plan
+        provided by the architect before the commencement of construction.
+        The contractor shall carry out the construction work strictly
+        according to the approved architectural plan. No changes or
+        modifications shall be made to the approved plan without prior
+        approval from the architect. The architect's decision regarding
+        the interpretation and technical aspects of the plan shall be
+        final, subject to applicable laws and the agreed project terms.
+        Any approved changes that affect the cost or work duration shall
+        be discussed and agreed upon by the house owner and the contractor.
+      </p>
+    `
+    : ""
+}
+  
+ 
+${
+  (d.subject || "").trim().toLowerCase().includes("new construction")
+    ? `
+      <p>
+        <b>Water &amp; Electricity Arrangement:</b>
+        Before commencement of the work, the house owner shall make
+        proper arrangements for water and electricity at the
+        construction site. If the house owner fails to provide the
+        required facilities, any additional expenses incurred by
+        Vaibhav Enterprises for arranging water and electricity
+        shall be charged separately to the house owner. If the
+        connections are provided by the house owner, all monthly
+        water and electricity bills during the execution of the
+        work shall be paid by the house owner.
+      </p>
+    `
+    : ""
+}
+
+   
+${
+  (d.subject || "").trim().toLowerCase().includes("new construction")
+    ? `
+      <p>
+        <b>Hard Rock Excavation &amp; Additional Charges:</b>
+        During the excavation work for the plinth (footing), if hard
+        rock is encountered, additional charges for JCB, rock breaking,
+        or other machinery required to remove the rock shall be
+        communicated to the house owner based on the actual site
+        conditions and work involved. The house owner shall accept
+        and pay these additional charges as applicable. Since the
+        presence of hard rock cannot be determined in advance, the
+        contractor cannot provide prior notice or confirm the exact
+        additional cost before excavation begins.
+      </p>
+    `
+    : ""
+}
+    
+
+${
+  (d.subject || "").trim().toLowerCase().includes("renovation")
+    ? `
+      <p>
+        <b>Risk of Damage During Demolition Work:</b>
+        During renovation work, if demolition or breaking work is
+        required in critical or sensitive areas, there may be a risk
+        of damage to adjoining structures or nearby portions of the
+        property. The contractor shall inform the house owner in
+        advance about such risks before commencing the work. If any
+        damage occurs to adjoining or nearby portions due to existing
+        site conditions or the nature of the demolition work, the
+        responsibility and applicable repair or restoration costs
+        shall be assessed based on the actual circumstances and
+        applicable law. Any such risks and the proposed work shall
+        be discussed with the house owner before proceeding.
+      </p>
+    `
+    : ""
+}
+
+
+
+    <hr>
+
+    </div>
+
+
+    <!-- SIGNATURE SECTION -->
 
     <table class="sign-table">
+
       <tr>
+
         <td>
           <div style="height:60px;"></div>
-          <b>Owner</b>
+          
+        <b>Owner</b>
+        <br><br>
+        <b>${ownerName}</b>
+        <br><br>
+        Date: ${today}
+
         </td>
 
-      <td style="text-align:right;">
-  <div style="height:60px;"></div>
-  <div style="display:inline-block; text-align:center; margin-right:40px;">
-    <b>Thank You</b><br><br>
-    <b>For Vaibhav Enterprises</b>
-  </div>
-</td>
+        <td style="text-align:right;">
 
+          <div style="height:60px;"></div>
 
+          <div style="display:inline-block; text-align:center; margin-right:40px;">
+
+            <b>Thank You</b>
+
+            <br><br>
+
+            <b>For Vaibhav Enterprises</b>
+
+          </div>
+
+        </td>
 
       </tr>
+
     </table>
 
   </body>
   </html>
   `);
 
-  w.print();
+  w.document.close();
+
+  w.focus();
+
+  // Wait for the document to render before printing
+  w.onload = function () {
+    w.print();
+  };
+
 }
 
 
