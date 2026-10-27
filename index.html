@@ -305,23 +305,251 @@ table tbody tr:hover {
 .close { float:right; cursor:pointer; }
 
 
-/* Completion Modal – Proper Form Alignment */
-#completionModal input,
-#completionModal textarea {
+/* =====================================
+   COMPLETION MODAL - MOBILE RESPONSIVE
+===================================== */
+
+#completionModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+
   width: 100%;
+  height: 100%;
+  height: 100dvh;
+
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 99998;
+
+  /* Center alignment */
+  align-items: center;
+  justify-content: center;
+
+  /* Modal scrolling */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+
+  padding: 10px;
   box-sizing: border-box;
-  padding: 8px 10px;
-  margin-bottom: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 14px;
 }
 
-/* Long answer field same width as form */
-#completionModal textarea {
-  resize: vertical;   /* user height बदलू शकतो */
-  min-height: 120px;
+/* =====================================
+   COMPLETION MODAL CONTENT
+===================================== */
+
+#completionModal .modal-content {
+  position: relative;
+
+  background: #f2f2f2;
+  color: #000;
+
+  width: 100%;
+  max-width: 520px;
+
+  max-height: 90vh;
+  max-height: 90dvh;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  margin: auto;
+  padding: 20px;
+
+  border-radius: 12px;
+  box-sizing: border-box;
+
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
+
+/* =====================================
+   HEADING
+===================================== */
+
+#completionModal h3 {
+  margin: 0 35px 18px 0;
+  font-size: 22px;
+  font-weight: bold;
+  color: #222;
+}
+
+/* =====================================
+   CLOSE BUTTON
+===================================== */
+
+#completionModal .close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+
+  font-size: 30px;
+  line-height: 1;
+
+  cursor: pointer;
+  color: #333;
+
+  padding: 4px 8px;
+}
+
+/* =====================================
+   LABELS
+===================================== */
+
+#completionModal label {
+  display: block;
+
+  margin-top: 10px;
+  margin-bottom: 5px;
+
+  font-weight: 600;
+  font-size: 14px;
+
+  color: #222;
+}
+
+/* =====================================
+   INPUTS AND TEXTAREA
+===================================== */
+
+#completionModal input,
+#completionModal textarea,
+#completionModal select {
+  display: block;
+
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  padding: 11px 12px;
+  margin: 0 0 12px 0;
+
+  border: 1px solid #ccc;
+  border-radius: 7px;
+
+  background: #fff;
+  color: #111;
+
+  font-family: inherit;
+  font-size: 16px;
+
+  box-sizing: border-box;
+}
+
+/* =====================================
+   DATE INPUTS
+===================================== */
+
+#completionModal input[type="date"] {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+
+  padding: 9px 10px;
+
+  font-size: 16px;
+
+  -webkit-appearance: auto;
+  appearance: auto;
+}
+
+/* =====================================
+   WORK DETAILS TEXTAREA
+===================================== */
+
+#completionModal textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+/* =====================================
+   SAVE AND PDF BUTTONS
+===================================== */
+
+#completionModal button {
+  min-height: 44px;
+
+  padding: 11px 20px;
+  margin: 5px 5px 0 0;
+
+  border: none;
+  border-radius: 7px;
+
+  background: #1769aa;
+  color: #fff;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+/* Button press effect */
+
+#completionModal button:active {
+  opacity: 0.8;
+}
+
+/* =====================================
+   MOBILE RESPONSIVE
+===================================== */
+
+@media (max-width: 600px) {
+
+  #completionModal {
+    padding: 8px;
+  }
+
+  #completionModal .modal-content {
+    width: 100%;
+    max-width: 100%;
+
+    max-height: 92vh;
+    max-height: 92dvh;
+
+    padding: 16px;
+    border-radius: 10px;
+  }
+
+  #completionModal h3 {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  #completionModal input,
+  #completionModal textarea {
+    font-size: 16px;
+  }
+
+  #completionModal button {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+
+}
+
+/* =====================================
+   VERY SMALL MOBILE
+===================================== */
+
+@media (max-width: 360px) {
+
+  #completionModal {
+    padding: 5px;
+  }
+
+  #completionModal .modal-content {
+    padding: 12px;
+  }
+
+  #completionModal button {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+}
+
 
 
 /* Common Modal */
