@@ -971,7 +971,7 @@ body{
     </div>
     <div>
       <label class="muted">Work Title</label>
-      <input id="est-work" class="w-full">
+      <input id="est-work" class="w-full" oninput="updateConstructionDetails()">
     </div>
   </div>
 
@@ -2170,6 +2170,119 @@ function numberToWords(amount){
     return convert_to_words(amount) + " Rupees Only";
 }
 
+
+
+ 
+/* ---------- Construction Estimate Auto Details ---------- */
+
+function isConstructionWork() {
+    const work = (document.getElementById('est-work')?.value || '')
+        .trim()
+        .toLowerCase();
+
+    return work.includes('new construction') ||
+           work.includes('construction');
+}
+
+
+
+function getConstructionDetails(rate) {
+    const total = Math.max(0, Number(rate) || 0);
+
+    const materials = [
+        { name: 'Cement', percent: 16.4 },
+        { name: 'Sand', percent: 12.3 },
+        { name: 'Aggregate', percent: 7.4 },
+        { name: 'Reinforcement (Steel)', percent: 24.6 },
+        { name: 'Finishers', percent: 16.5 },
+        { name: 'Fitting', percent: 22.8 }
+    ];
+
+    const materialLines = materials.map(item => {
+        const amount = Math.round(total * item.percent / 100);
+        return `${item.name} ${item.percent}% = ₹${amount}`;
+    });
+
+    const workCosts = [
+        ['Excavation', 45],
+        ['Foundation', 180],
+        ['RCC', 345],
+        ['Bricks Work', 135],
+        ['Plaster', 90],
+        ['Flooring', 150],
+        ['Electrical', 120],
+        ['Plumbing', 105],
+        ['Doors', 60],
+        ['Grill & Sliding Window', 120],
+        ['Paint', 75],
+        ['Transportation and Other', 75]
+    ];
+
+    const workLines = workCosts.map((item, index) => {
+        const amount = Math.round(total * item[1] / 1500);
+        return `${index + 1}. ${item[0]} = ₹${amount}`;
+    });
+
+    const labour = Math.round(total * 450 / 1500);
+    const material = Math.round(total * 975 / 1500);
+    const transport = total - labour - material;
+
+    return {
+        materialDescription:
+            'Material Cost (Per 1 Sq.ft.)\n' +
+            materialLines.join('\n'),
+
+        workDescription:
+            'Work Cost (Per 1 Sq.ft.)\n' +
+            workLines.join('\n'),
+
+        labourDescription:
+            'Labour And Material (Per 1 Sq.ft.)\n' +
+            `1. Labour = ₹${labour}\n` +
+            `2. Material = ₹${material}\n` +
+            `3. Transportation and Other = ₹${transport}\n` +
+            `Total = ₹${total}`
+    };
+}
+
+
+
+
+
+function updateConstructionDetails() {
+    if (!isConstructionWork()) return;
+
+    const rows = document.querySelectorAll('#est-items .item-row');
+    if (!rows.length) return;
+
+    const firstRow = rows[0];
+    const nameInput = firstRow.querySelector('.item-name');
+    const descInput = firstRow.querySelector('.item-desc');
+    const rateInput = firstRow.querySelector('.item-rate');
+
+    // Rate रिकामा असला तरी 0 वापरा
+    const rate = Math.max(0, Number(rateInput?.value) || 0);
+
+    const details = getConstructionDetails(rate);
+
+    if (nameInput && !nameInput.value.trim()) {
+        nameInput.value = 'New Construction';
+    }
+
+    if (descInput) {
+        descInput.value = [
+            details.materialDescription,
+            details.workDescription,
+            details.labourDescription
+        ].join('\n\n');
+    }
+}
+
+
+
+
+
+
 /* ---------- Items (for estimate/invoice) ---------- */
 function addItem(prefix, data = {}) {
     const container = document.getElementById(prefix + '-items');
@@ -2200,12 +2313,20 @@ function addItem(prefix, data = {}) {
     const rateInput = row.querySelector('.item-rate');
     const amtInput = row.querySelector('.item-amt');
 
-    [qtyInput, rateInput].forEach(i => i.addEventListener('input', () => {
-        const q = parseFloat(qtyInput.value) || 0;
-        const r = parseFloat(rateInput.value) || 0;
-        amtInput.value = (q * r).toFixed(2);
-        recalcAll();
-    }));
+   
+[qtyInput, rateInput].forEach(i => i.addEventListener('input', () => {
+    const q = parseFloat(qtyInput.value) || 0;
+    const r = parseFloat(rateInput.value) || 0;
+
+    amtInput.value = (q * r).toFixed(2);
+
+    if (prefix === 'est') {
+        updateConstructionDetails();
+    }
+
+    recalcAll();
+}));
+
 
     // Unit auto-fill on item select
     const partInput = row.querySelector('.item-name');
@@ -2215,7 +2336,8 @@ function addItem(prefix, data = {}) {
             row.querySelector('.item-unit').value = match.unit;
         }
     });
-
+    updateConstructionDetails();
+    
     recalcAll();
 }
 
@@ -2258,6 +2380,8 @@ function recalcAll() {
     if (el('inv-words')) el('inv-words').textContent = numberToWords(invTotalDisplay) + " only";
     
     renderInvoiceProfits();
+
+    if (prefix === 'est') updateConstructionDetails();
 }
 
 
