@@ -971,7 +971,7 @@ body{
     </div>
     <div>
       <label class="muted">Work Title</label>
-      <input id="est-work" class="w-full">
+      <input id="est-work" class="w-full" oninput="updateConstructionDetails()">
     </div>
   </div>
 
@@ -2170,7 +2170,142 @@ function numberToWords(amount){
     return convert_to_words(amount) + " Rupees Only";
 }
 
+
+
+
+
+
+
+
+/* ---------- Construction Estimate Calculation ---------- */
+
+function isConstructionWork() {
+    const work = (document.getElementById('est-work')?.value || '')
+        .trim()
+        .toLowerCase();
+
+    return /\bconstruction\b/.test(work);
+}
+
+function getConstructionDetails(rate, quantity = 0) {
+    const total = Math.max(0, Number(rate) || 0);
+    const qty = Math.max(0, Number(quantity) || 0);
+
+    const materials = [
+        { name: 'Cement', percent: 16.4 },
+        { name: 'Sand', percent: 12.3 },
+        { name: 'Aggregate', percent: 7.4 },
+        { name: 'Reinforcement (Steel)', percent: 24.6 },
+        { name: 'Finishers', percent: 16.5 },
+        { name: 'Fitting', percent: 22.8 }
+    ];
+
+    const materialLines = materials.map(item => {
+        const amount = Math.round(total * item.percent / 100);
+        return `${item.name} ${item.percent}% = ₹${amount}`;
+    });
+
+    const workCosts = [
+        ['Excavation', 45],
+        ['Foundation', 180],
+        ['RCC', 345],
+        ['Bricks Work', 135],
+        ['Plaster', 90],
+        ['Flooring', 150],
+        ['Electrical', 120],
+        ['Plumbing', 105],
+        ['Doors', 60],
+        ['Grill & Sliding Window', 120],
+        ['Paint', 75],
+        ['Transportation and Other', 75]
+    ];
+
+    const workLines = workCosts.map((item, index) => {
+        const amount = Math.round(total * item[1] / 1500);
+        return `${index + 1}. ${item[0]} = ₹${amount}`;
+    });
+
+    const labour = Math.round(total * 450 / 1500);
+    const material = Math.round(total * 975 / 1500);
+    const transport = total - labour - material;
+
+    const details = [
+        'Material Cost (Per 1 Sq.ft.)',
+        ...materialLines,
+        '',
+        'Work Cost (Per 1 Sq.ft.)',
+        ...workLines,
+        '',
+        'Labour And Material (Per 1 Sq.ft.)',
+        `1. Labour = ₹${labour}`,
+        `2. Material = ₹${material}`,
+        `3. Transportation and Other = ₹${transport}`,
+        `Total = ₹${total}`
+    ];
+
+    // Quantity भरलेली असल्यासच Material Quantity दाखवा
+    if (qty > 0) {
+        const materialQuantities = [
+            ['Cement', 0.400, 'Bag'],
+            ['Sand', 1.900, 'Cu. Ft.'],
+            ['Aggregate', 1.450, 'Cu. Ft.'],
+            ['Steel', 3.750, 'Kg'],
+            ['Bricks', 8.500, 'Nos']
+        ];
+
+        const quantityLines = materialQuantities.map((item, index) => {
+            const required = (item[1] * qty).toFixed(3);
+
+            return `${index + 1}. ${item[0]} ${item[1].toFixed(3)} ${item[2]} (Per 1 Sq.ft.) = ${required} ${item[2]}`;
+        });
+
+        details.push(
+            '',
+            'Material Quantity (Per 1 Sq.ft.)',
+            ...quantityLines
+        );
+    }
+
+    return details.join('\n');
+}
+
+function updateConstructionDetails() {
+    if (!isConstructionWork()) return;
+
+    const rows = document.querySelectorAll('#est-items .item-row');
+    if (!rows.length) return;
+
+    const firstRow = rows[0];
+    const nameInput = firstRow.querySelector('.item-name');
+    const descInput = firstRow.querySelector('.item-desc');
+    const rateInput = firstRow.querySelector('.item-rate');
+    const qtyInput = firstRow.querySelector('.item-qty');
+
+    const rate = Math.max(0, Number(rateInput?.value) || 0);
+    const quantity = Math.max(0, Number(qtyInput?.value) || 0);
+
+    if (nameInput && !nameInput.value.trim()) {
+        nameInput.value = 'New Construction';
+    }
+
+    if (descInput) {
+        descInput.value = getConstructionDetails(rate, quantity);
+    }
+}
+
+
+
+
+
+
+
+
+
+
 /* ---------- Items (for estimate/invoice) ---------- */
+
+/* ---------- Items (for estimate/invoice) ---------- */
+
 function addItem(prefix, data = {}) {
     const container = document.getElementById(prefix + '-items');
     const row = document.createElement('div');
@@ -2182,20 +2317,28 @@ function addItem(prefix, data = {}) {
 
     row.innerHTML = `
         <div class="flex items-center">
-            <input type="text" class="item-name flex-1 p-2 border rounded" list="material-list" placeholder="Item" value="${data.name || ''}">
-            <button type="button" class="smallbtn ml-2 bg-red-500 text-white" onclick="this.closest('.item-row').remove(); recalcAll()">✕</button>
+            <input type="text" class="item-name flex-1 p-2 border rounded"
+                list="material-list" placeholder="Item"
+                value="${data.name || ''}">
+            <button type="button" class="smallbtn ml-2 bg-red-500 text-white"
+                onclick="this.closest('.item-row').remove(); recalcAll(); if (this.closest('#est-items')) updateConstructionDetails();">✕</button>
         </div>
-        <textarea class="item-desc w-full p-2 border rounded" placeholder="Description (long answer)">${data.description || data.desc || ''}</textarea>
+        <textarea class="item-desc w-full p-2 border rounded"
+            placeholder="Description (long answer)">${data.description || data.desc || ''}</textarea>
         <div class="grid grid-cols-4 gap-2">
-            <input type="number" class="item-qty p-2 border rounded" placeholder="Qty" value="${qty}" oninput="recalcAll()" min="0">
-            <input type="text" class="item-unit p-2 border rounded" placeholder="Unit" value="${data.unit || ''}">
-            <input type="number" class="item-rate p-2 border rounded" placeholder="Rate" value="${rate}" oninput="recalcAll()" min="0">
-            <input type="number" class="item-amt p-2 border rounded bg-gray-600 text-white" placeholder="Amount" value="${amount.toFixed(2)}" disabled>
+            <input type="number" class="item-qty p-2 border rounded"
+                placeholder="Qty" value="${qty}" oninput="recalcAll()" min="0">
+            <input type="text" class="item-unit p-2 border rounded"
+                placeholder="Unit" value="${data.unit || ''}">
+            <input type="number" class="item-rate p-2 border rounded"
+                placeholder="Rate" value="${rate}" oninput="recalcAll()" min="0">
+            <input type="number" class="item-amt p-2 border rounded bg-gray-600 text-white"
+                placeholder="Amount" value="${amount.toFixed(2)}" disabled>
         </div>
     `;
+
     container.appendChild(row);
 
-    // Qty * Rate calculation
     const qtyInput = row.querySelector('.item-qty');
     const rateInput = row.querySelector('.item-rate');
     const amtInput = row.querySelector('.item-amt');
@@ -2203,21 +2346,33 @@ function addItem(prefix, data = {}) {
     [qtyInput, rateInput].forEach(i => i.addEventListener('input', () => {
         const q = parseFloat(qtyInput.value) || 0;
         const r = parseFloat(rateInput.value) || 0;
+
         amtInput.value = (q * r).toFixed(2);
+
+        if (prefix === 'est') {
+            updateConstructionDetails();
+        }
+
         recalcAll();
     }));
 
-    // Unit auto-fill on item select
     const partInput = row.querySelector('.item-name');
+
     partInput.addEventListener('change', () => {
         const match = (DATA.materials || []).find(m => m.part === partInput.value);
+
         if (match && match.unit) {
             row.querySelector('.item-unit').value = match.unit;
         }
     });
 
+    if (prefix === 'est') {
+        updateConstructionDetails();
+    }
+
     recalcAll();
 }
+
 
 /* ---------- Recalc totals ---------- */
 function recalcAll() {
@@ -2371,7 +2526,12 @@ try {
     "Date": rec.date,
     "Work Title": rec.work,
     "Estimate Number": rec.id,
-    "Items": JSON.stringify(rec.items),
+    "Items": JSON.stringify(rec.items.map(item => ({
+  ...item,
+  description: (item.description || item.desc || '')
+    .split('Material Quantity (Per 1 Sq.ft.)')[0]
+    .trim()
+}))),
     "Subtotal": rec.subtotal,
     "Discount": rec.discount,
     "Grand Total": rec.grandTotal,
@@ -2521,55 +2681,90 @@ async function deleteEstimate(estNo) {
 
 
 
-async function shareEstimate(estNo){
+
+async function shareEstimate(estNo) {
   try {
-    const res = await fetch(`${DEPLOY_URL}?action=getsingle&estimateNumber=${encodeURIComponent(estNo)}`);
+    const res = await fetch(
+      `${DEPLOY_URL}?action=getsingle&estimateNumber=${encodeURIComponent(estNo)}`
+    );
+
     const r = await res.json();
-    if(!r["Estimate Number"]){
+
+    if (!r["Estimate Number"]) {
       alert("Record not found for sharing");
       return;
     }
 
     const items = JSON.parse(r["Items"] || "[]");
     const lines = [];
+
     lines.push('🧾 Estimate Details');
     lines.push('');
-    
+
     lines.push('*Vaibhav Enterprises*');
     lines.push('');
+
     lines.push('_Dear Sir/Madam,_');
     lines.push('Estimate No.: ' + r["Estimate Number"]);
     lines.push('Customer Name: ' + r["Customer Name"]);
     lines.push('Contact No.: ' + r["Customer Whatsapp"]);
     lines.push('Date: ' + new Date(r["Date"]).toLocaleDateString());
     lines.push('');
+
     lines.push('Item Details:');
+
     items.forEach(it => {
-      lines.push('• *' + it.name +'*');
-      lines.push('_Description: ' + (it.description || '').trim() + '_');
+      lines.push('• *' + it.name + '*');
+
+      // Material Quantity विभाग फक्त WhatsApp साठी लपवा
+      const description = (it.description || '')
+        .split(/\n\s*Material Quantity \(Per 1 Sq\.ft\.\)\s*\n/i)[0]
+        .trim();
+
+      lines.push('_Description: ' + description + '_');
+
       lines.push('Qty | Unit | Rate | Amount');
-      lines.push(`${it.quantity} | ${it.unit || ''} | ₹${it.rate} | ₹${(it.quantity * it.rate)}`);
+      lines.push(
+        `${it.quantity} | ${it.unit || ''} | ₹${it.rate} | ₹${(it.quantity * it.rate)}`
+      );
     });
+
     lines.push('');
     lines.push('Subtotal: ₹' + r["Subtotal"]);
+
     if (parseFloat(r["Discount"]) > 0) {
-    lines.push('Discount: ' + r["Discount"] + '%');
+      lines.push('Discount: ' + r["Discount"] + '%');
     }
+
     lines.push('*Final Amount: ₹' + r["Grand Total"] + '*');
     lines.push('_In words: ' + numberToWords(r["Grand Total"] || 0) + '_');
     lines.push('');
+
     lines.push('_Regarding,_');
     lines.push('');
     lines.push('_Vaibhav Enterprises_');
     lines.push('');
-    lines.push('Download Estimate PDF:https://vai27717.github.io/Your-Estimate/?view=customer&id=' + r["Estimate Number"]);
+
+    lines.push(
+      'Download Estimate PDF:https://vai27717.github.io/Your-Estimate/?view=customer&id=' +
+      r["Estimate Number"]
+    );
+
     lines.push('');
     lines.push('_Thank you for connecting with Vaibhav Enterprises_');
-    window.open('https://wa.me/?text=' + encodeURIComponent(lines.join('\n')), '_blank');
-  } catch(err){
-    alert("Share failed: "+err.message);
+
+    window.open(
+      'https://wa.me/?text=' + encodeURIComponent(lines.join('\n')),
+      '_blank'
+    );
+
+  } catch (err) {
+    alert("Share failed: " + err.message);
   }
 }
+
+
+
 
 
 
@@ -2579,6 +2774,12 @@ function exportEstimatePDF() {
   const doc = new jsPDF();
   let y = 15;
 
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const leftMargin = 14;
+  const rightMargin = 14;
+  const contentWidth = pageWidth - leftMargin - rightMargin;
+
   // --- COMPANY INFO ---
   const c = DATA.company || {};
   const cname = c.name || "Vaibhav Enterprises";
@@ -2587,34 +2788,60 @@ function exportEstimatePDF() {
   const creg = (c.regNo && c.regNo.trim() !== "") ? c.regNo.trim() : "";
   const caddr = (c.address && c.address.trim() !== "") ? c.address.trim() : "";
 
+  // --- DATE FORMAT HELPER ---
+  function formatEstimateDate(value) {
+    if (!value) return "";
+
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+    if (match) {
+      return `${match[3]}-${match[2]}-${match[1]}`;
+    }
+
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return "";
+
+    return [
+      String(date.getDate()).padStart(2, "0"),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      date.getFullYear()
+    ].join("-");
+  }
+
+  function addPageIfNeeded(requiredHeight = 8) {
+    if (y + requiredHeight > pageHeight - 20) {
+      doc.addPage();
+      y = 20;
+    }
+  }
+
   // --- HEADER ---
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.setTextColor(255, 102, 0);
-  doc.text(cname, 105, y, { align: "center" });
+  doc.text(cname, pageWidth / 2, y, { align: "center" });
   y += 6;
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(0);
 
-  // ✅ Mob + Address + Website
   let contactLine = `Mob: ${ccontact}`;
   if (caddr) contactLine += ` | ${caddr}`;
   if (cwebsite) contactLine += ` | ${cwebsite}`;
-  doc.text(contactLine, 105, y, { align: "center" });
-  y += 5;
 
-  // ✅ Reg. No — show only if available
+  const contactLines = doc.splitTextToSize(contactLine, contentWidth);
+  doc.text(contactLines, pageWidth / 2, y, { align: "center" });
+  y += contactLines.length * 4.5;
+
   if (creg) {
-    doc.text(`Reg. No: ${creg}`, 105, y, { align: "center" });
+    doc.text(`Reg. No: ${creg}`, pageWidth / 2, y, { align: "center" });
     y += 5;
   }
 
-  // Orange underline
   doc.setDrawColor(255, 102, 0);
   doc.setLineWidth(0.5);
-  doc.line(14, y, 196, y);
+  doc.line(leftMargin, y, pageWidth - rightMargin, y);
   y += 10;
 
   // --- RECORD DATA ---
@@ -2629,138 +2856,244 @@ function exportEstimatePDF() {
       items: [],
       subtotal: 0,
       discount: 0,
-      total: 0,
+      grandTotal: 0
     };
 
-  // --- LEFT SIDE ---
+  // --- CUSTOMER DETAILS ---
   doc.setFontSize(11);
-  doc.text("To,", 14, y);
-  y += 6;
-  doc.text(`Customer Name: ${rec.client}`, 14, y);
-  y += 6;
-  doc.text(`Contact No.: ${rec.contact}`, 14, y);
-  y += 6;
-  doc.text(`Work Title: ${rec.work}`, 14, y);
 
-  // --- RIGHT SIDE ---
-  let rightY = y - 18;
-  doc.text(`Estimate No.: ${rec.id}`, 140, rightY);
+  doc.text("To,", leftMargin, y);
+  y += 6;
+
+  const customerLines = [
+    `Customer Name: ${rec.client || ""}`,
+    `Contact No.: ${rec.contact || ""}`,
+    `Work Title: ${rec.work || ""}`
+  ];
+
+  customerLines.forEach(line => {
+    const lines = doc.splitTextToSize(line, 115);
+    doc.text(lines, leftMargin, y);
+    y += lines.length * 5.5;
+  });
+
+  // --- RIGHT SIDE DETAILS ---
+  let rightY = y - 16;
+
+  doc.text(`Estimate No.: ${rec.id || ""}`, 140, rightY);
   rightY += 6;
-  const dt = rec.date ? rec.date.split("-").reverse().join("-") : "";
+
+  const dt = formatEstimateDate(rec.date);
   doc.text(`Estimate Date: ${dt}`, 140, rightY);
   rightY += 6;
 
-  // ✅ Add Due Date (Estimate Date + 7 days)
   if (rec.date) {
-    const due = new Date(rec.date);
-    due.setDate(due.getDate() + 7);
-    const dueDate = due.toISOString().split("T")[0].split("-").reverse().join("-");
-    doc.text(`Due Date: ${dueDate}`, 140, rightY);
+    const match = String(rec.date).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    let due;
+
+    if (match) {
+      due = new Date(
+        Number(match[1]),
+        Number(match[2]) - 1,
+        Number(match[3])
+      );
+    } else {
+      due = new Date(rec.date);
+    }
+
+    if (!isNaN(due.getTime())) {
+      due.setDate(due.getDate() + 7);
+
+      const dueDate = [
+        String(due.getDate()).padStart(2, "0"),
+        String(due.getMonth() + 1).padStart(2, "0"),
+        due.getFullYear()
+      ].join("-");
+
+      doc.text(`Due Date: ${dueDate}`, 140, rightY);
+    }
   }
 
-  y += 10;
-
-  // --- TABLE HEADERS ---
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.text("Item / Description", 14, y);
-  doc.text("Qty", 90, y);
-  doc.text("Unit", 110, y);
-  doc.text("Rate", 130, y);
-  doc.text("Amount", 196 - 14, y, { align: "right" });
+  y = Math.max(y, rightY + 8);
   y += 4;
 
-  // Orange line
+  // --- TABLE HEADERS ---
+  addPageIfNeeded(15);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+
+  doc.text("Item / Description", leftMargin, y);
+  doc.text("Qty", 105, y);
+  doc.text("Unit", 122, y);
+  doc.text("Rate", 151, y, { align: "right" });
+  doc.text("Amount", pageWidth - rightMargin, y, { align: "right" });
+
+  y += 4;
+
   doc.setDrawColor(255, 102, 0);
-  doc.setLineWidth(0.5);
-  doc.line(14, y, 196, y);
+  doc.line(leftMargin, y, pageWidth - rightMargin, y);
   y += 6;
 
-  doc.setFont("helvetica", "normal");
-
   // --- TABLE ROWS ---
-  rec.items.forEach((it) => {
-    const qtyText = it.quantity ? String(it.quantity) : "0";
-    const descText = (it.description || "").trim();
+  (rec.items || []).forEach((it) => {
+    const qtyText = it.quantity != null ? String(it.quantity) : "0";
+    
+     
+const descText = (it.description || "")
+    .split(/\r?\n/)
+    .filter(line => !/^\s*(Material\s+)?Quantity\s*\(Per\s*1\s*Sq\.ft\.\)/i.test(line))
+    .join("\n")
+    .split(/^\s*1\.\s*Cement\s+0\.400\s+Bag\b/im)[0]
+    .replace(/₹/g, "Rs.")
+    .replace(/%/g, " percent")
+    .replace(/=/g, ":")
+    .replace(/[()]/g, "")
+    .trim();
+
+
+
+    addPageIfNeeded(12);
 
     doc.setFont("helvetica", "bold");
-    doc.text(it.name || "(No Item Name)", 14, y);
-    doc.text(qtyText, 90, y);
-    doc.text(it.unit || "", 110, y);
-    doc.text(money(it.rate), 140, y, { align: "right" });
-    doc.text(money(it.quantity * it.rate), 196 - 14, y, { align: "right" });
-    y += 5;
+    doc.setFontSize(10);
 
+    const itemNameLines = doc.splitTextToSize(
+      String(it.name || "(No Item Name)"),
+      82
+    );
+
+    doc.text(itemNameLines, leftMargin, y);
+    doc.text(qtyText, 105, y);
+    doc.text(String(it.unit || ""), 122, y);
+    doc.text(money(it.rate), 151, y, { align: "right" });
+    doc.text(money((Number(it.quantity) || 0) * (Number(it.rate) || 0)),
+      pageWidth - rightMargin, y, { align: "right" });
+
+    y += Math.max(itemNameLines.length * 4.5, 5);
+
+    // --- DESCRIPTION: preserve line breaks and wrap safely ---
     if (descText) {
-      doc.setFont("helvetica", "italic");
-      doc.setFontSize(10);
-      doc.text(descText, 16, y);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      y += 6;
+      doc.setFontSize(9);
+
+      const originalLines = descText.split(/\r\n|\r|\n/);
+
+      originalLines.forEach(originalLine => {
+        const wrappedLines = doc.splitTextToSize(
+          originalLine || " ",
+          contentWidth - 4
+        );
+
+        wrappedLines.forEach(line => {
+          addPageIfNeeded(6);
+          doc.text(line, leftMargin + 2, y);
+          y += 4.5;
+        });
+      });
+
+      y += 3;
     }
 
-    if (y > 240) {
-      doc.addPage();
-      y = 20;
-    }
+    y += 2;
   });
 
-  // Orange line before totals
-  y += 2;
+  // --- LINE BEFORE TOTALS ---
+  addPageIfNeeded(25);
+
   doc.setDrawColor(255, 102, 0);
-  doc.line(14, y, 196, y);
+  doc.line(leftMargin, y, pageWidth - rightMargin, y);
   y += 8;
 
   // --- TOTALS ---
   const subtotal = parseFloat(rec.subtotal) || 0;
   const discountPercent = parseFloat(rec.discount) || 0;
-  const discountValue = (subtotal * discountPercent) / 100;
+  const discountValue = subtotal * discountPercent / 100;
   const finalAmount = subtotal - discountValue;
 
   doc.setFont("helvetica", "normal");
-  doc.text("Subtotal: " + money(subtotal), 196 - 14, y, { align: "right" });
+  doc.setFontSize(10);
+
+  doc.text(
+    "Subtotal: " + money(subtotal),
+    pageWidth - rightMargin,
+    y,
+    { align: "right" }
+  );
   y += 6;
 
   if (discountPercent > 0) {
+    addPageIfNeeded(8);
+
     doc.text(
       `Discount (${discountPercent.toFixed(2)}%): ${money(discountValue)}`,
-      196 - 14,
+      pageWidth - rightMargin,
       y,
       { align: "right" }
     );
     y += 6;
   }
 
+  addPageIfNeeded(8);
+
   doc.setFont("helvetica", "bold");
   doc.setTextColor(255, 0, 0);
-  doc.text("Amount: " + money(finalAmount), 196 - 14, y, { align: "right" });
+  doc.text(
+    "Amount: " + money(finalAmount),
+    pageWidth - rightMargin,
+    y,
+    { align: "right" }
+  );
+
   doc.setTextColor(0);
-  doc.setFont("helvetica", "normal");
   y += 10;
 
-  // --- In words ---
+  // --- AMOUNT IN WORDS ---
+  addPageIfNeeded(12);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+
   const words = numberToWords(finalAmount || 0);
-  doc.setFontSize(10);
-  doc.text("In words: " + words, 196 - 14, y, { align: "right" });
-  y += 15;
+  const wordsLines = doc.splitTextToSize(
+    "In words: " + words,
+    contentWidth
+  );
+
+  doc.text(wordsLines, leftMargin, y);
+  y += wordsLines.length * 4.5 + 8;
 
   // --- SIGNATURE ---
+  addPageIfNeeded(18);
+
   doc.setFontSize(11);
-  doc.text("Thank you", 196 - 35, y);
+  doc.text("Thank you", pageWidth - 49, y);
   y += 6;
+
   doc.setFont("helvetica", "bold");
-  doc.text(`For ${cname}`, 196 - 50, y);
+  doc.text(`For ${cname}`, pageWidth - 64, y);
 
-  // --- FOOTER ---
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
+  // --- FOOTER ON EVERY PAGE ---
+  const pageCount = doc.internal.getNumberOfPages();
 
-  const footerText = cwebsite
-    ? `Thank you for connecting with ${cname} | ${cwebsite}`
-    : `Thank you for connecting with ${cname}`;
+  for (let page = 1; page <= pageCount; page++) {
+    doc.setPage(page);
 
-  doc.text(footerText, 105, 290, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+
+    const footerText = cwebsite
+      ? `Thank you for connecting with ${cname} | ${cwebsite}`
+      : `Thank you for connecting with ${cname}`;
+
+    const footerLines = doc.splitTextToSize(footerText, contentWidth);
+    doc.text(
+      footerLines,
+      pageWidth / 2,
+      pageHeight - 8,
+      { align: "center" }
+    );
+  }
 
   doc.save(`${rec.id}_estimate.pdf`);
 }
