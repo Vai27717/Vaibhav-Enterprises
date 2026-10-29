@@ -12,7 +12,11 @@
  
  <head>
 <meta charset="utf-8" />
-<title>Vaibhav Enterprises - App (All in one)</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="application-name" content="Vaibhav Enterprises">
+<title>Vaibhav Enterprises - Smart Mobile App</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -833,6 +837,59 @@ body{
 
 
 
+
+/* ===== Smart Mobile App enhancements (layout only; existing app logic preserved) ===== */
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body { margin: 0 !important; padding: 8px !important; padding-bottom: 22px !important; overflow-x: hidden; }
+.nav { top: 0; margin: 0 0 10px; padding: 8px; border-radius: 12px; gap: 8px; }
+.nav > div:first-child { min-width: 0; max-width: 100%; }
+.nav .smallbtn, .nav button { min-height: 42px; white-space: nowrap; touch-action: manipulation; }
+.tab-content, .panel, .container { max-width: 100% !important; width: auto; box-sizing: border-box; }
+input, select, textarea { max-width: 100%; box-sizing: border-box; font-size: 16px; min-height: 40px; }
+button { min-height: 40px; touch-action: manipulation; }
+img, canvas, iframe { max-width: 100%; }
+.card { box-sizing: border-box; max-width: 100%; }
+/* Let long tables scroll horizontally on narrow screens if they don't have card labels. */
+@media (max-width: 640px) {
+  body { padding: 6px !important; padding-bottom: 14px !important; }
+  .nav { border-radius: 10px; }
+  .nav > div:first-child { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .nav > div:first-child > .flex.flex-1 { width: 100%; flex: 1 1 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; padding-bottom: 4px; }
+  .nav > div:first-child > .flex.flex-1 .smallbtn { flex: 0 0 auto; padding: 9px 12px; font-size: 13px; }
+  .nav > div:first-child > .flex.gap-2 { width: 100%; display: flex; flex-wrap: wrap; margin-top: 0 !important; }
+  .nav input[type="file"] { width: 100%; min-width: 0; }
+  .nav > div:last-child { width: 100%; text-align: center !important; font-size: 14px; padding: 4px 0 2px; }
+  .tab-content, .panel { padding: 10px !important; border-radius: 10px; }
+  .card { padding: 10px !important; margin: 6px 0; border-radius: 10px; }
+  h1 { font-size: 1.35rem !important; } h2 { font-size: 1.2rem !important; } h3 { font-size: 1.05rem !important; }
+  button, .smallbtn { max-width: 100%; }
+  /* Keep the existing mobile table-card layout, but make each row easier to read/tap. */
+  table, thead, tbody, tr, th, td { box-sizing: border-box; }
+  tr { overflow-wrap: anywhere; }
+  td { min-width: 0; }
+  .grid { min-width: 0; }
+  [class*="grid-cols-"] { grid-template-columns: minmax(0, 1fr) !important; }
+  #summary-cards { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .modal, [role="dialog"] { max-width: 100vw; }
+}
+@media (max-width: 380px) {
+  #summary-cards { grid-template-columns: minmax(0, 1fr) !important; }
+  .nav > div:first-child > .flex.flex-1 .smallbtn { padding: 8px 10px; font-size: 12px; }
+}
+
+</style>
+<style>
+/* Material List: keep saved items in one horizontal row on mobile only */
+@media (max-width: 640px) {
+  #ve-item-list-modal table { display: table !important; width: 100% !important; min-width: 480px !important; table-layout: auto !important; }
+  #ve-item-list-modal thead { display: table-header-group !important; }
+  #ve-item-list-modal tbody { display: table-row-group !important; }
+  #ve-item-list-modal tr { display: table-row !important; width: auto !important; margin: 0 !important; padding: 0 !important; border: 0 !important; }
+  #ve-item-list-modal th, #ve-item-list-modal td { display: table-cell !important; width: auto !important; padding: 6px 5px !important; vertical-align: middle !important; }
+  #ve-item-list-modal td::before { content: none !important; display: none !important; }
+  #ve-item-list-modal td input { min-width: 65px; max-width: 100%; box-sizing: border-box; }
+  #ve-item-list-modal > .modal-content > div[style*="overflow-x:auto"] { overflow-x: auto !important; }
+}
 </style>
 </head>
 
@@ -843,11 +900,7 @@ body{
 <div class="nav">
   <div class="flex flex-1 overflow-x-auto whitespace-nowrap gap-2 py-1">
     <button class="smallbtn flex-shrink-0" onclick="show('home')">Home</button>
-   <button
-  class="smallbtn flex-shrink-0"
-  onclick="window.open('https://vai27717.github.io/Home-Exp./','_blank')">
-  H.Expenses
-</button>
+   <button class="smallbtn flex-shrink-0" onclick="show('h-expenses'); renderHExpenses()">H.Expenses</button>
     <button class="smallbtn flex-shrink-0" onclick="show('est')">Estimates</button>
     <button class="smallbtn flex-shrink-0" onclick="show('inv')">Invoices</button>
     <button class="smallbtn flex-shrink-0" onclick="show('orders')">Orders</button>
@@ -911,6 +964,7 @@ body{
        <button class="smallbtn bg-blue-500" onclick="openQuickExpensePopup()">
     ⚡Exp.
   </button>
+       <button class="smallbtn" onclick="openVEItemListModal()">🧱 Material List</button>
  
      
     <!-- 🆕 Home Invoice Select Dropdown -->
@@ -970,9 +1024,21 @@ body{
       <input id="est-date" type="date" class="w-full">
     </div>
     <div>
-      <label class="muted">Work Title</label>
-      <input id="est-work" class="w-full" oninput="updateConstructionDetails()">
-    </div>
+  <label class="muted">Work Title</label>
+  <input id="est-work" class="w-full"
+         list="est-work-suggestions"
+         oninput="updateConstructionDetails()">
+
+  <datalist id="est-work-suggestions">
+    <option value="Construction">
+    <option value="New Construction">
+    <option value="Renovation">
+    <option value="Fabrication">
+    <option value="Maintenance">
+    <option value="Repairing">
+  </datalist>
+</div>
+
   </div>
 
   <div id="est-items" class="mt-3 space-y-2"></div>
@@ -1426,6 +1492,75 @@ body{
 
 
 
+<div id="h-expenses" class="card max-w-5xl mx-auto" style="display:none">
+  <h2 class="text-2xl font-bold mb-2">🏠 Home Expenses — Bank Wise Account</h2>
+  <p class="muted mb-4">घरातील स्वतंत्र खर्च / जमा येथे नोंदवा. Vaibhav Enterprises मधील Payment In आणि Paid Payment Out देखील आपोआप दिसतील.</p>
+
+  <div class="grid md:grid-cols-3 gap-3 mb-4">
+    <div class="p-3 rounded bg-green-100 text-green-900"><div class="text-sm">Total Credit / Payment In</div><div id="he-total-credit" class="text-xl font-bold">₹0.00</div></div>
+    <div class="p-3 rounded bg-red-100 text-red-900"><div class="text-sm">Total Debit / Payment Out</div><div id="he-total-debit" class="text-xl font-bold">₹0.00</div></div>
+    <div class="p-3 rounded bg-blue-100 text-blue-900"><div class="text-sm">Net Balance</div><div id="he-net-balance" class="text-xl font-bold">₹0.00</div></div>
+  </div>
+
+  <h3 class="font-bold mb-2">➕ Add Home Entry</h3>
+  <input type="hidden" id="he-edit-id">
+  <div class="grid md:grid-cols-2 gap-3 mb-3">
+    <div><label class="muted">Date *</label><input type="date" id="he-entry-date" class="w-full p-2 border rounded"></div>
+    <div><label class="muted">Bank *</label><select id="he-entry-bank" class="w-full p-2 border rounded"><option value="">-- Select Bank --</option><option>Kotak Bank</option><option>SBI Bank</option><option>HDFC Bank</option><option>Cash</option></select></div>
+    <div><label class="muted">Payment Type *</label><select id="he-entry-type" class="w-full p-2 border rounded"><option value="">-- Select Payment In / Out --</option><option value="in">Payment In (Credit)</option><option value="out">Payment Out (Debit)</option></select></div>
+    <div><label class="muted">Amount (₹) *</label><input type="number" min="0.01" step="0.01" id="he-entry-amount" class="w-full p-2 border rounded" placeholder="Amount"></div>
+    <div class="md:col-span-2"><label class="muted">Description *</label><input id="he-entry-description" class="w-full p-2 border rounded" placeholder="घरखर्च / किराणा / वीज बिल / पगार..."></div>
+  </div>
+  <div class="flex flex-wrap gap-2 mb-5"><button class="smallbtn" onclick="saveHomeExpense()">💾 Save</button><button class="smallbtn" onclick="resetHomeExpenseForm()">Clear</button><button class="smallbtn" onclick="exportHomeExpensesPDF()">📄 Bank Wise PDF</button><button class="smallbtn" onclick="openHomeMaterialModal()">🧱 Material List</button></div>
+
+  <h3 class="font-bold mb-2">Bank Wise Credit / Debit</h3>
+  <div class="overflow-x-auto mb-5"><table class="w-full text-sm" style="min-width:560px"><thead><tr><th>Bank / Account</th><th>Credit (₹)</th><th>Debit (₹)</th><th>Balance (₹)</th></tr></thead><tbody id="he-bank-summary"></tbody></table></div>
+
+  <h3 class="font-bold mb-2">Date Wise Payment Details</h3>
+  <div class="grid md:grid-cols-3 gap-2 mb-3">
+    <div><label class="muted">Bank (select to view records)</label><select id="he-filter-bank" class="w-full p-2 border rounded" onchange="renderHExpenses()"><option value="">-- Select Bank --</option><option>Kotak Bank</option><option>SBI Bank</option><option>HDFC Bank</option><option>Cash</option></select></div>
+    <div><label class="muted">Date From</label><input type="date" id="he-date-from" class="w-full p-2 border rounded" onchange="renderHExpenses()"></div>
+    <div><label class="muted">Date To</label><input type="date" id="he-date-to" class="w-full p-2 border rounded" onchange="renderHExpenses()"></div>
+  </div>
+  <div class="overflow-x-auto"><table class="w-full text-sm" style="min-width:900px"><thead><tr><th>Date</th><th>Name / Description</th><th>Invoice / Order</th><th>Bank</th><th>Particular</th><th>Credit (₹)</th><th>Debit (₹)</th><th>Action</th></tr></thead><tbody id="he-ledger-rows"></tbody></table></div>
+  <p id="he-no-records" class="muted text-center mt-3">कृपया Bank निवडा. Bank निवडल्याशिवाय नोंदी दिसणार नाहीत.</p>
+</div>
+
+<div id="he-material-modal" class="modal" style="display:none;z-index:9999">
+ <div class="modal-content" style="max-width:650px;max-height:85vh;overflow:auto;background:#f8fafc;color:#111">
+  <span class="close" onclick="closeHomeMaterialModal()">×</span><h3 class="text-xl font-bold mb-3">🧱 Home Material List</h3>
+  <div class="grid grid-cols-3 gap-2 mb-3"><div><label>Name / Item</label><input id="he-mat-name" class="w-full p-2 border rounded" placeholder="Cement"></div><div><label>Unit</label><input id="he-mat-unit" class="w-full p-2 border rounded" placeholder="Bag / Kg / Nos"></div><div><label>Qty</label><input id="he-mat-qty" type="number" min="1" value="1" class="w-full p-2 border rounded"></div></div>
+  <button class="smallbtn mb-3" onclick="addHomeMaterialRow()">＋ Add Item</button>
+  <div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr><th>Sr.</th><th>Name</th><th>Qty</th><th>Unit</th><th>− / +</th><th>Action</th></tr></thead><tbody id="he-material-rows"></tbody></table></div>
+  <div class="flex flex-wrap gap-2 mt-4"><button class="smallbtn" onclick="saveHomeMaterials()">💾 Save List</button><button class="smallbtn" onclick="shareHomeMaterialsWhatsApp()">🟢 Share WhatsApp</button><button class="smallbtn" onclick="closeHomeMaterialModal()">Close</button></div>
+ </div>
+</div>
+
+<div id="ve-item-list-modal" class="modal" style="display:none;z-index:10000">
+ <div class="modal-content" style="max-width:700px;max-height:88vh;overflow:auto;background:#f8fafc;color:#111;width:95%">
+  <span class="close" onclick="closeVEItemListModal()">×</span>
+  <h3 style="color:#111;font-size:22px;margin-bottom:12px">🧱 Vaibhav Enterprises - Material List</h3>
+  <p style="color:#444;font-size:13px;margin-bottom:12px">Imported Item List मधील Items येथे दिसतील. Name, Quantity आणि Unit बदलू शकता.</p>
+  <div class="grid grid-cols-3 gap-2 mb-3">
+   <div><label style="color:#111">Item</label><input id="ve-mat-name" class="w-full" list="ve-imported-material-options" placeholder="Type Item Name" oninput="autoFillVEItemUnit()"><datalist id="ve-imported-material-options"></datalist></div>
+   <div><label style="color:#111">Quantity</label><input id="ve-mat-qty" type="number" min="0.01" step="any" value="1" class="w-full"></div>
+   <div><label style="color:#111">Unit</label><input id="ve-mat-unit" class="w-full" placeholder="Bag / Kg / Nos"></div>
+  </div>
+  <button class="smallbtn mb-3" onclick="addVEItemListRow()">＋ Add Item</button>
+  <div style="overflow-x:auto">
+   <table class="w-full text-sm" style="min-width:480px">
+    <thead><tr><th>Sr.</th><th>Item</th><th>Quantity</th><th>Unit</th><th>Action</th></tr></thead>
+    <tbody id="ve-item-list-rows"></tbody>
+   </table>
+  </div>
+  <div class="flex flex-wrap gap-2 mt-4">
+   <button class="smallbtn" onclick="saveVEItemList()">💾 Save / Update</button>
+   <button class="smallbtn" onclick="shareVEItemListWhatsApp()">🟢 Share WhatsApp</button>
+   <button class="smallbtn" onclick="closeVEItemListModal()">Close</button>
+  </div>
+ </div>
+</div>
+
 <div id="orders" class="card max-w-4xl mx-auto" style="display:none">
   <h2>Orders</h2>
 
@@ -1576,6 +1711,15 @@ body{
   </div>
 
   <div id="daily-rows" class="space-y-2"></div>
+
+  <!-- Date-wise activity from Payments, Paid Payments, Orders and Labor Attendance -->
+  <div class="mt-4 p-3 rounded border border-gray-600">
+    <h3 class="text-lg font-bold mb-2">Daily Activity</h3>
+    <label class="muted block mb-1">Select Date</label>
+    <input id="dr-activity-date" type="date" class="p-2 border rounded w-full"
+           onchange="renderDailyActivity(this.value)">
+    <div id="dr-activity-list" class="mt-3 space-y-3"></div>
+  </div>
 
   <div class="mt-2 flex gap-2">
     <button class="smallbtn" onclick="addDailyRow()">+ Add Row</button>
@@ -1728,6 +1872,8 @@ function loadData(){
   DATA.counters = DATA.counters || { est:0, inv:0, exp:0, meas:0, pay:0, lab:0, ord:0, pp:0 };
   DATA.orders = DATA.orders || [];
   DATA.paidPayments = DATA.paidPayments || [];
+  DATA.homeExpenses = DATA.homeExpenses || [];
+  DATA.homeMaterials = DATA.homeMaterials || [];
 
   renderAll(); 
 }
@@ -1933,6 +2079,262 @@ initCompanyRegistration();
 
 
 
+function renderHExpenses() {
+  const summaryBody = document.getElementById('he-bank-summary');
+  const ledgerBody = document.getElementById('he-ledger-rows');
+  if (!summaryBody || !ledgerBody) return;
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const amount = value => Number.parseFloat(value) || 0;
+  const fmt = value => amount(value).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const bankNames = ['Kotak Bank', 'SBI Bank', 'HDFC Bank', 'Cash'];
+  const records = [];
+  (DATA.payments || []).forEach((p, i) => {
+    const credit = amount(p.received);
+    if (credit <= 0) return;
+    records.push({id:'IN-'+(p.id || `${p.invoiceNo||'NA'}-${p.date||''}-${i}`),source:'ve-in',date:p.date||'',name:p.client||p.name||'—',invoice:p.invoiceNo||'—',bank:p.bank||'Cash',particular:p.note||p.work||'Payment In',credit,debit:0,type:'in'});
+  });
+  (DATA.paidPayments || []).forEach((p, i) => {
+    const debit = amount(p.amount);
+    if (debit <= 0) return;
+    records.push({id:'OUT-'+(p.id || `${p.invoiceNo||'NA'}-${p.date||''}-${i}`),source:'ve-out',date:p.date||'',name:p.name||p.labor||p.client||'—',invoice:[p.invoiceNo,p.orderId&&p.orderId!=='N/A'?p.orderId:''].filter(Boolean).join(' / ')||'—',bank:p.bank||'Cash',particular:p.note||p.labor||'Payment Out',credit:0,debit,type:'out'});
+  });
+  (DATA.homeExpenses || []).forEach(r => records.push({...r,source:'home',name:r.description||'Home Expense',invoice:'Home Entry',particular:r.description||'',credit:r.type==='in'?amount(r.amount):0,debit:r.type==='out'?amount(r.amount):0}));
+
+  const bankTotals = Object.fromEntries(bankNames.map(bank => [bank,{credit:0,debit:0}]));
+  records.forEach(r => { const bank=r.bank||''; if(!bankTotals[bank]) bankTotals[bank]={credit:0,debit:0}; bankTotals[bank].credit+=amount(r.credit); bankTotals[bank].debit+=amount(r.debit); });
+  summaryBody.innerHTML = Object.entries(bankTotals).map(([bank,t])=>`<tr><td>${esc(bank)}</td><td class="text-green-700">₹${fmt(t.credit)}</td><td class="text-red-700">₹${fmt(t.debit)}</td><td class="font-bold">₹${fmt(t.credit-t.debit)}</td></tr>`).join('');
+  const totalCredit=records.reduce((a,r)=>a+amount(r.credit),0), totalDebit=records.reduce((a,r)=>a+amount(r.debit),0);
+  document.getElementById('he-total-credit').textContent='₹'+fmt(totalCredit);
+  document.getElementById('he-total-debit').textContent='₹'+fmt(totalDebit);
+  document.getElementById('he-net-balance').textContent='₹'+fmt(totalCredit-totalDebit);
+  const bankFilter=document.getElementById('he-filter-bank').value;
+  const from=document.getElementById('he-date-from').value, to=document.getElementById('he-date-to').value;
+  const filtered=bankFilter ? records.filter(r=>r.bank===bankFilter&&(!from||r.date>=from)&&(!to||r.date<=to)).sort((a,b)=>String(b.date).localeCompare(String(a.date))) : [];
+  ledgerBody.innerHTML=filtered.map(r=>`<tr><td>${esc(r.date||'—')}</td><td>${esc(r.name)}</td><td>${esc(r.invoice||'—')}</td><td>${esc(r.bank||'—')}</td><td>${esc(r.particular||'—')}</td><td class="text-green-700">${r.credit?'₹'+fmt(r.credit):'—'}</td><td class="text-red-700">${r.debit?'₹'+fmt(r.debit):'—'}</td><td>${r.source==='home'?`<button class="smallbtn" onclick="editHomeExpense('${esc(r.id)}')">Edit</button> <button class="smallbtn" onclick="deleteHomeExpense('${esc(r.id)}')">Delete</button>`:'Auto'}</td></tr>`).join('');
+  const no=document.getElementById('he-no-records'); no.style.display=filtered.length?'none':'block';
+  no.textContent=bankFilter?(filtered.length?'':'या Bank / Date Filter साठी कोणतीही नोंद नाही.'):'कृपया Bank निवडा. Bank निवडल्याशिवाय नोंदी दिसणार नाहीत.';
+}
+
+function resetHomeExpenseForm(){
+  ['he-edit-id','he-entry-bank','he-entry-type','he-entry-amount','he-entry-description'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('he-entry-date').value=new Date().toISOString().slice(0,10);
+}
+function saveHomeExpense(){
+  const id=document.getElementById('he-edit-id').value, date=document.getElementById('he-entry-date').value, bank=document.getElementById('he-entry-bank').value, type=document.getElementById('he-entry-type').value, amount=Number(document.getElementById('he-entry-amount').value), description=document.getElementById('he-entry-description').value.trim();
+  if(!date||!bank||!type||!description||!(amount>0)){alert('कृपया Date, Bank, Payment In/Out, Amount आणि Description भरा.');return;}
+  DATA.homeExpenses=DATA.homeExpenses||[];
+  const row={id:id||('HE-'+Date.now()),date,bank,type,amount,description};
+  const index=DATA.homeExpenses.findIndex(r=>String(r.id)===String(id));
+  if(index>=0) DATA.homeExpenses[index]=row; else DATA.homeExpenses.push(row);
+  saveData(); resetHomeExpenseForm();
+}
+function editHomeExpense(id){
+  const r=(DATA.homeExpenses||[]).find(x=>String(x.id)===String(id)); if(!r)return;
+  document.getElementById('he-edit-id').value=r.id; document.getElementById('he-entry-date').value=r.date||''; document.getElementById('he-entry-bank').value=r.bank||''; document.getElementById('he-entry-type').value=r.type||''; document.getElementById('he-entry-amount').value=r.amount||''; document.getElementById('he-entry-description').value=r.description||'';
+  document.getElementById('h-expenses').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function deleteHomeExpense(id){if(!confirm('ही Home Expense नोंद Delete करायची आहे का?'))return;DATA.homeExpenses=(DATA.homeExpenses||[]).filter(r=>String(r.id)!==String(id));saveData();if(document.getElementById('he-edit-id').value===String(id))resetHomeExpenseForm();}
+function exportHomeExpensesPDF(){
+  const bank=document.getElementById('he-filter-bank').value;
+  if(!bank){alert('PDF काढण्यासाठी आधी Bank निवडा.');return;}
+  if(!window.jspdf||!window.jspdf.jsPDF){alert('PDF library load झाली नाही.');return;}
+  const from=document.getElementById('he-date-from').value,to=document.getElementById('he-date-to').value;
+  const rows=[];
+  (DATA.payments||[]).forEach(p=>{
+    const amountIn=Number(p.received)||0;
+    if((p.bank||'Cash')===bank&&amountIn>0&&(!from||p.date>=from)&&(!to||p.date<=to))
+      rows.push([p.date||'',p.client||p.name||'—',p.note||p.work||'Payment In',amountIn,0]);
+  });
+  (DATA.paidPayments||[]).forEach(p=>{
+    const amountOut=Number(p.amount)||0;
+    if((p.bank||'Cash')===bank&&amountOut>0&&(!from||p.date>=from)&&(!to||p.date<=to))
+      rows.push([p.date||'',p.name||p.labor||p.client||'—',p.note||p.labor||'Payment Out',0,amountOut]);
+  });
+  (DATA.homeExpenses||[]).forEach(r=>{
+    if(r.bank===bank&&(!from||r.date>=from)&&(!to||r.date<=to))
+      rows.push([r.date||'',r.description||'Home Expense',r.description||'Home Expense',r.type==='in'?(Number(r.amount)||0):0,r.type==='out'?(Number(r.amount)||0):0]);
+  });
+  rows.sort((a,b)=>String(a[0]).localeCompare(String(b[0])));
+  const totalCredit=rows.reduce((sum,r)=>sum+(Number(r[3])||0),0);
+  const totalDebit=rows.reduce((sum,r)=>sum+(Number(r[4])||0),0);
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const pageW=doc.internal.pageSize.getWidth(),pageH=doc.internal.pageSize.getHeight();
+  const margin=12, tableW=pageW-margin*2;
+  const widths=[25,45,113,45,45];
+  const headers=['Date','Name','Description / Particular','Credit (IN)','Debit (OUT)'];
+  const fmt=n=>(Number(n)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+  let y=12;
+  function drawReportHeading(){
+    doc.setFillColor(24,45,72);doc.roundedRect(margin,y,tableW,19,2,2,'F');
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(15);
+    doc.text('HOME EXPENSES - BANK WISE REPORT',margin+5,y+7);
+    doc.setFont('helvetica','normal');doc.setFontSize(9);
+    doc.text('Bank: '+bank+'   |   Period: '+(from||'Beginning')+' to '+(to||'Today'),margin+5,y+14);
+    y+=25;
+    drawTableHeader();
+  }
+  function drawTableHeader(){
+    let x=margin;const h=9;
+    headers.forEach((head,i)=>{
+      if(i===3)doc.setFillColor(20,125,65);else if(i===4)doc.setFillColor(180,35,45);else doc.setFillColor(52,73,94);
+      doc.rect(x,y,widths[i],h,'F');doc.setDrawColor(255,255,255);doc.rect(x,y,widths[i],h,'S');
+      doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(8);
+      const lines=doc.splitTextToSize(head,widths[i]-3);doc.text(lines,x+1.5,y+5.8);x+=widths[i];
+    });y+=h;
+  }
+  drawReportHeading();
+  doc.setFont('helvetica','normal');doc.setFontSize(8);
+  rows.forEach((r,index)=>{
+    const cells=[String(r[0]||'—'),String(r[1]||'—'),String(r[2]||'—'),fmt(r[3]),fmt(r[4])];
+    const wrapped=cells.map((v,i)=>doc.splitTextToSize(v,widths[i]-4));
+    const rowH=Math.max(8,...wrapped.map(lines=>lines.length*4+3));
+    if(y+rowH+18>pageH){doc.addPage();y=12;drawReportHeading();doc.setFont('helvetica','normal');doc.setFontSize(8);}
+    if(index%2===0)doc.setFillColor(244,247,250);else doc.setFillColor(255,255,255);
+    doc.rect(margin,y,tableW,rowH,'F');
+    let x=margin;
+    wrapped.forEach((lines,i)=>{
+      doc.setDrawColor(205,213,220);doc.rect(x,y,widths[i],rowH,'S');
+      if(i===3)doc.setTextColor(20,125,65);else if(i===4)doc.setTextColor(180,35,45);else doc.setTextColor(35,43,52);
+      doc.setFont('helvetica',(i===3||i===4)?'bold':'normal');
+      doc.text(lines,x+2,y+4.8);x+=widths[i];
+    });
+    y+=rowH;
+  });
+  const totalH=10;
+  if(y+totalH+8>pageH){doc.addPage();y=12;drawReportHeading();}
+  doc.setFillColor(230,235,240);doc.rect(margin,y,tableW,totalH,'F');
+  let x=margin;
+  const totalCells=['','','TOTAL',fmt(totalCredit),fmt(totalDebit)];
+  totalCells.forEach((value,i)=>{
+    doc.setDrawColor(150,160,170);doc.rect(x,y,widths[i],totalH,'S');
+    if(i===3){doc.setTextColor(20,125,65);doc.setFillColor(218,245,226);doc.rect(x,y,widths[i],totalH,'F');doc.setDrawColor(150,160,170);doc.rect(x,y,widths[i],totalH,'S');}
+    else if(i===4){doc.setTextColor(180,35,45);doc.setFillColor(255,225,228);doc.rect(x,y,widths[i],totalH,'F');doc.setDrawColor(150,160,170);doc.rect(x,y,widths[i],totalH,'S');}
+    else doc.setTextColor(35,43,52);
+    doc.setFont('helvetica','bold');doc.setFontSize(8);if(value)doc.text(value,x+2,y+6.2);x+=widths[i];
+  });
+  doc.setTextColor(35,43,52);doc.setFont('helvetica','bold');doc.setFontSize(9);
+  if(y+9>pageH-10){doc.addPage();y=15;} else {y+=totalH+5;}
+  doc.setFillColor(235,239,243);doc.roundedRect(margin,y,tableW,9,1,1,'F');
+  doc.setTextColor(35,43,52);doc.text('TOTAL CREDIT: INR '+fmt(totalCredit),margin+4,y+6);
+  doc.setTextColor(180,35,45);doc.text('TOTAL DEBIT: INR '+fmt(totalDebit),margin+tableW/2,y+6);
+  doc.setTextColor(20,100,55);doc.text('NET BALANCE: INR '+fmt(totalCredit-totalDebit),margin+tableW-4,y+6,{align:'right'});
+  doc.setTextColor(100,100,100);doc.setFont('helvetica','normal');doc.setFontSize(7);
+  const pageCount=doc.internal.getNumberOfPages();
+  for(let pg=1;pg<=pageCount;pg++){doc.setPage(pg);doc.text('Vaibhav Enterprises - Page '+pg+' of '+pageCount, pageW-margin,pageH-5,{align:'right'});}
+  doc.save('Home_Expenses_'+bank.replace(/\s/g,'_')+'.pdf');
+}
+function openHomeMaterialModal(){document.getElementById('he-material-modal').style.display='block';renderHomeMaterials();}
+function closeHomeMaterialModal(){document.getElementById('he-material-modal').style.display='none';}
+function renderHomeMaterials(){const body=document.getElementById('he-material-rows');if(!body)return;body.innerHTML=(DATA.homeMaterials||[]).map((r,i)=>`<tr><td>${i+1}</td><td>${String(r.name||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</td><td>${Number(r.qty)||1}</td><td>${String(r.unit||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</td><td><button class="smallbtn" onclick="changeHomeMaterialQty(${i},-1)">−</button> <button class="smallbtn" onclick="changeHomeMaterialQty(${i},1)">+</button></td><td><button class="smallbtn" onclick="removeHomeMaterialRow(${i})">Delete</button></td></tr>`).join('');}
+function addHomeMaterialRow(){const name=document.getElementById('he-mat-name').value.trim(),unit=document.getElementById('he-mat-unit').value.trim();if(!name||!unit){alert('Name आणि Unit भरा.');return;}DATA.homeMaterials=DATA.homeMaterials||[];const qty=Math.max(1,Number(document.getElementById('he-mat-qty').value)||1);DATA.homeMaterials.push({name,unit,qty});document.getElementById('he-mat-name').value='';document.getElementById('he-mat-unit').value='';document.getElementById('he-mat-qty').value='1';renderHomeMaterials();}
+function changeHomeMaterialQty(i,delta){const r=DATA.homeMaterials[i];if(!r)return;r.qty=Math.max(1,(Number(r.qty)||1)+delta);renderHomeMaterials();}
+function removeHomeMaterialRow(i){DATA.homeMaterials.splice(i,1);renderHomeMaterials();}
+function saveHomeMaterials(){saveData();alert('Material List Save झाली.');}
+function shareHomeMaterialsWhatsApp(){const rows=DATA.homeMaterials||[];if(!rows.length){alert('आधी Material Items Add करा.');return;}const msg='Home Material List\n'+rows.map((r,i)=>`${i+1}. ${r.name} - ${r.qty||1} ${r.unit}`).join('\n');window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
+
+window.addEventListener('DOMContentLoaded',()=>{const d=document.getElementById('he-entry-date');if(d&&!d.value)d.value=new Date().toISOString().slice(0,10);});
+
+let veItemListDraft = [];
+
+function openVEItemListModal(){
+  DATA.materials = DATA.materials || [];
+  DATA.veManualMaterials = DATA.veManualMaterials || [];
+  veItemListDraft = DATA.veManualMaterials.map(m => ({
+    part: m.part || m.name || '',
+    unit: m.unit || '',
+    qty: m.qty === undefined || m.qty === null || m.qty === '' ? 1 : Number(m.qty)
+  }));
+  const dl = document.getElementById('ve-imported-material-options');
+  if(dl){
+    dl.innerHTML = '';
+    DATA.materials.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.part || m.name || '';
+      if(opt.value) dl.appendChild(opt);
+    });
+  }
+  document.getElementById('ve-item-list-modal').style.display = 'block';
+  renderVEItemListRows();
+}
+function closeVEItemListModal(){
+  document.getElementById('ve-item-list-modal').style.display = 'none';
+}
+function autoFillVEItemUnit(){
+  const part = document.getElementById('ve-mat-name').value.trim().toLowerCase();
+  const match = (DATA.materials || []).find(m => String(m.part || m.name || '').trim().toLowerCase() === part);
+  if(match && match.unit) document.getElementById('ve-mat-unit').value = match.unit;
+}
+function renderVEItemListRows(){
+  const body = document.getElementById('ve-item-list-rows');
+  if(!body) return;
+  const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  body.innerHTML = veItemListDraft.map((m,i)=>`<tr>
+    <td>${i+1}</td>
+    <td><input class="w-full" value="${esc(m.part)}" onchange="updateVEItemListField(${i},'part',this.value)"></td>
+    <td><input class="w-full" type="number" min="0.01" step="any" value="${Number(m.qty)||1}" onchange="updateVEItemListField(${i},'qty',this.value)"></td>
+    <td><input class="w-full" value="${esc(m.unit)}" onchange="updateVEItemListField(${i},'unit',this.value)"></td>
+    <td><button class="smallbtn" onclick="removeVEItemListRow(${i})">Delete</button></td>
+  </tr>`).join('');
+  if(!veItemListDraft.length) body.innerHTML='<tr><td colspan="5" style="text-align:center;color:#555">Saved Manual Items येथे दिसतील. वर Item type करून dropdown मधून निवडा किंवा नवीन Item लिहा, Quantity आणि Unit भरा, मग Add Item करा.</td></tr>';
+}
+function updateVEItemListField(i,key,value){
+  if(!veItemListDraft[i]) return;
+  veItemListDraft[i][key] = key==='qty' ? Math.max(0.01,Number(value)||1) : value;
+}
+function addVEItemListRow(){
+  const part=document.getElementById('ve-mat-name').value.trim();
+  const unit=document.getElementById('ve-mat-unit').value.trim();
+  const qty=Math.max(0.01,Number(document.getElementById('ve-mat-qty').value)||1);
+  if(!part || !unit){alert('Item आणि Unit भरा.');return;}
+  veItemListDraft.push({part,unit,qty});
+  document.getElementById('ve-mat-name').value='';
+  document.getElementById('ve-mat-unit').value='';
+  document.getElementById('ve-mat-qty').value='1';
+  renderVEItemListRows();
+}
+function removeVEItemListRow(i){
+  veItemListDraft.splice(i,1);
+  renderVEItemListRows();
+}
+function saveVEItemList(){
+  DATA.veManualMaterials = veItemListDraft.map(m=>({part:String(m.part||'').trim(),unit:String(m.unit||'').trim(),qty:Math.max(0.01,Number(m.qty)||1)})).filter(m=>m.part);
+
+  // Save newly typed manual items into the main imported/master material list too.
+  DATA.materials = DATA.materials || [];
+  DATA.veManualMaterials.forEach(item=>{
+    const itemName = String(item.part || '').trim();
+    if(!itemName) return;
+    const existing = DATA.materials.find(m=>String(m.part || m.name || '').trim().toLowerCase() === itemName.toLowerCase());
+    if(existing){
+      // Keep the existing master item, but fill its unit if it was missing.
+      if(!String(existing.unit || '').trim() && String(item.unit || '').trim()) existing.unit = String(item.unit).trim();
+    }else{
+      DATA.materials.push({part:itemName, unit:String(item.unit || '').trim()});
+    }
+  });
+
+  saveData();
+  refreshMaterialsDatalist();
+  renderMaterialsDropdown();
+  const dl = document.getElementById('ve-imported-material-options');
+  if(dl){
+    dl.innerHTML = '';
+    DATA.materials.forEach(m=>{
+      const opt=document.createElement('option');
+      opt.value=m.part || m.name || '';
+      if(opt.value) dl.appendChild(opt);
+    });
+  }
+  alert('Manual Material List आणि नवीन Item Name / Unit Save झाले.');
+}
+function shareVEItemListWhatsApp(){
+  const rows=veItemListDraft.filter(m=>String(m.part||'').trim());
+  if(!rows.length){alert('Manual Material List रिकामी आहे.');return;}
+  const msg='Vaibhav Enterprises - Manual Material List\n'+rows.map((m,i)=>`${i+1}. ${m.part} - ${m.qty||1} ${m.unit||''}`.trim()).join('\n');
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
 function renderAll() {
   renderEstimatesList();
   renderInvoicesList();
@@ -1941,6 +2343,7 @@ function renderAll() {
   renderOrders(); 
   renderPaymentsList();
   renderPaidPayments();
+  renderHExpenses();
   renderDailyReports();
   
   populateInvoiceSelects(); // Important for all connected modules
@@ -1996,6 +2399,14 @@ function show(id) {
   // Show only the selected section
   const elToShow = document.getElementById(id);
   if (elToShow) elToShow.style.display = 'block';
+  if (id === 'daily' && typeof renderDailyActivity === 'function') {
+    const dateInput = document.getElementById('dr-activity-date');
+    if (dateInput && !dateInput.value) {
+      const now = new Date();
+      dateInput.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    }
+    renderDailyActivity(dateInput?.value || '');
+  }
 
   // Scroll to top for better UX
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -7094,6 +7505,7 @@ const rec = {
 
   selectedOrderId = null;
   saveData();
+  if (el('dr-activity-date')?.value) renderDailyActivity(el('dr-activity-date').value);
   //syncReceivedOrdersToExpensesCombined();
   renderOrders();
 
@@ -7720,7 +8132,8 @@ function savePayments() {
 });
 
 
-    saveData(); 
+    saveData();
+    if (el('dr-activity-date')?.value) renderDailyActivity(el('dr-activity-date').value); 
     alert("Payments saved/updated for Invoice: " + invNo);
 
     // Clear form
@@ -8029,7 +8442,8 @@ function savePaidPayment() {
         DATA.paidPayments.push(record);
     });
 
-    saveData(); 
+    saveData();
+    if (el('dr-activity-date')?.value) renderDailyActivity(el('dr-activity-date').value); 
     alert(`Paid Payments saved/updated for: ${invNo || orderId}`);
 
     // Order ID साठी Payment Status "Paid" करा (हा भाग जसाच्या तसा ठेवा)
@@ -8623,6 +9037,79 @@ document.querySelectorAll('#daily-rows .daily-row').forEach(row => {
     el('daily-rows').innerHTML = '';
     addDailyRow();
 }
+
+function renderDailyActivity(selectedDate) {
+  const box = document.getElementById('dr-activity-list');
+  if (!box) return;
+
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[ch]));
+  const moneyText = value => '₹' + (parseFloat(value) || 0).toFixed(2);
+  const sections = [];
+
+  // Payment In (Received Payments)
+  const received = (DATA.payments || []).filter(p => p.date === selectedDate);
+  sections.push({
+    title: 'Payment In',
+    total: received.reduce((sum, p) => sum + (parseFloat(p.received) || 0), 0),
+    rows: received.map(p => `${p.invoiceNo || ''} | ${p.client || ''} | ${p.note || p.bank || 'Received'} | ${moneyText(p.received)}`)
+  });
+
+  // Payment Out (Paid Payments)
+  const paid = (DATA.paidPayments || []).filter(p => p.date === selectedDate);
+  sections.push({
+    title: 'Payment Out',
+    total: paid.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0),
+    rows: paid.map(p => `${p.invoiceNo || ''} ${p.orderId && p.orderId !== 'N/A' ? '| ' + p.orderId : ''} | ${p.name || p.labor || ''} | ${p.note || p.bank || 'Paid'} | ${moneyText(p.amount)}`)
+  });
+
+  // Orders
+  const orders = (DATA.orders || []).filter(o => o.date === selectedDate);
+  sections.push({
+    title: 'Order',
+    total: null,
+    rows: orders.map(o => `${o.id || ''} | ${o.client || ''} | ${o.work || ''} | ${o.status || 'Order'} | ${((o.items || []).map(it => it.part || it.name || '').filter(Boolean)).join(', ')}`)
+  });
+
+  // Labor Attendance by date
+  const laborRows = [];
+  (DATA.labor || []).forEach(l => {
+    (l.days || []).filter(d => d.date === selectedDate).forEach(d => {
+      laborRows.push({
+        text: `${l.name || ''} | Status: ${d.status || '-'} | Advance: ${moneyText(d.advance)} | Transport: ${moneyText(d.transport)}`,
+        advance: parseFloat(d.advance) || 0,
+        transport: parseFloat(d.transport) || 0
+      });
+    });
+  });
+  sections.push({
+    title: 'Labor Attendance',
+    total: null,
+    rows: laborRows.map(r => r.text),
+    summary: laborRows.length
+      ? `Entries: ${laborRows.length} | Advance: ${moneyText(laborRows.reduce((s,r)=>s+r.advance,0))} | Transport: ${moneyText(laborRows.reduce((s,r)=>s+r.transport,0))}`
+      : ''
+  });
+
+  if (!selectedDate) {
+    box.innerHTML = '<p class="muted">Please select a date to view daily activity.</p>';
+    return;
+  }
+
+  box.innerHTML = sections.map(section => `
+    <div class="p-3 rounded border border-gray-600">
+      <div class="font-bold text-yellow-400">${esc(section.title)}
+        ${section.total !== null ? `<span class="float-right">${moneyText(section.total)}</span>` : ''}
+      </div>
+      ${section.summary ? `<div class="text-sm mt-1">${esc(section.summary)}</div>` : ''}
+      ${section.rows.length
+        ? `<ul class="list-disc list-inside mt-2 text-sm space-y-1">${section.rows.map(row => `<li>${esc(row)}</li>`).join('')}</ul>`
+        : '<div class="muted mt-1">No activity on this date.</div>'}
+    </div>
+  `).join('');
+}
+
 
 function renderDailyReports() {
     const box = el('saved-daily');
@@ -9643,6 +10130,7 @@ function saveQuickAttendance(){
 
   // ✅ SAVE
   saveData();
+  if (el('dr-activity-date')?.value) renderDailyActivity(el('dr-activity-date').value);
 
   // ✅ FORCE UI REPAINT (MOST IMPORTANT)
   if (typeof renderAll === "function") renderAll();
@@ -10725,5 +11213,14 @@ window.addEventListener("load", () => {
 
 
 
+
+<script>
+// Installable PWA support. Core app remains online-first for Firestore sync.
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').catch(function (err) { console.warn('PWA service worker registration failed:', err); });
+  });
+}
+</script>
 </body>
 </html>
