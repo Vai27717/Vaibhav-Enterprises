@@ -1524,13 +1524,14 @@ img, canvas, iframe { max-width: 100%; }
     <div><label class="muted">Date *</label><input type="date" id="he-entry-date" class="w-full p-2 border rounded"></div>
     <div><label class="muted">Bank *</label><select id="he-entry-bank" class="w-full p-2 border rounded"><option value="">-- Select Bank --</option><option>Kotak Bank</option><option>SBI Bank</option><option>HDFC Bank</option><option>Cash</option></select></div>
     <div><label class="muted">Payment Type *</label><select id="he-entry-type" class="w-full p-2 border rounded"><option value="">-- Select Payment In / Out --</option><option value="in">Payment In (Credit)</option><option value="out">Payment Out (Debit)</option></select></div>
+    <div id="he-transfer-to-wrap" style="display:none"><label class="muted">Transfer To Bank *</label><select id="he-transfer-to-bank" class="w-full p-2 border rounded"><option value="">-- Select To Bank --</option><option>Kotak Bank</option><option>SBI Bank</option><option>HDFC Bank</option><option>Cash</option></select></div>
     <div><label class="muted">Amount (₹) *</label><input type="number" min="0.01" step="0.01" id="he-entry-amount" class="w-full p-2 border rounded" placeholder="Amount"></div>
     <div class="md:col-span-2"><label class="muted">Description *</label><input id="he-entry-description" class="w-full p-2 border rounded" placeholder="घरखर्च / किराणा / वीज बिल / पगार..."></div>
   </div>
-  <div class="flex flex-wrap gap-2 mb-5"><button class="smallbtn" onclick="saveHomeExpense()">💾 Save</button><button class="smallbtn" onclick="resetHomeExpenseForm()">Clear</button><button class="smallbtn" onclick="exportHomeExpensesPDF()">📄 Bank Wise PDF</button><button class="smallbtn" onclick="openHomeMaterialModal()">🧱 Material List</button></div>
+  <div class="flex flex-wrap gap-2 mb-5"><button class="smallbtn" onclick="saveHomeExpense()">💾 Save</button><button class="smallbtn" onclick="toggleHomeTransferMode()" id="he-transfer-button">⇄ Transfer</button><button class="smallbtn" onclick="resetHomeExpenseForm()">Clear</button><button class="smallbtn" onclick="exportHomeExpensesPDF()">📄 Bank Wise PDF</button><button class="smallbtn" onclick="openHomeMaterialModal()">🧱 Material List</button></div>
 
   <h3 class="font-bold mb-2">Bank Wise Credit / Debit</h3>
-  <div class="overflow-x-auto mb-5"><table class="w-full text-sm" style="min-width:560px"><thead><tr><th>Bank / Account</th><th>Credit (₹)</th><th>Debit (₹)</th><th>Balance (₹)</th></tr></thead><tbody id="he-bank-summary"></tbody></table></div>
+  <div id="he-bank-summary" class="mb-5 space-y-3"></div>
 
   <h3 class="font-bold mb-2">Date Wise Payment Details</h3>
   <div class="grid md:grid-cols-3 gap-2 mb-3">
@@ -2118,27 +2119,51 @@ function renderHExpenses() {
 
   const bankTotals = Object.fromEntries(bankNames.map(bank => [bank,{credit:0,debit:0}]));
   records.forEach(r => { const bank=r.bank||''; if(!bankTotals[bank]) bankTotals[bank]={credit:0,debit:0}; bankTotals[bank].credit+=amount(r.credit); bankTotals[bank].debit+=amount(r.debit); });
-  summaryBody.innerHTML = Object.entries(bankTotals).map(([bank,t])=>`<tr><td>${esc(bank)}</td><td class="text-green-700">₹${fmt(t.credit)}</td><td class="text-red-700">₹${fmt(t.debit)}</td><td class="font-bold">₹${fmt(t.credit-t.debit)}</td></tr>`).join('');
-  const totalCredit=records.reduce((a,r)=>a+amount(r.credit),0), totalDebit=records.reduce((a,r)=>a+amount(r.debit),0);
+  summaryBody.innerHTML = Object.entries(bankTotals).map(([bank,t])=>`<section class="rounded border p-2"><h4 class="font-bold mb-2">${esc(bank)}</h4><div class="overflow-x-auto"><table class="w-full text-sm" style="min-width:430px"><thead><tr><th>Bank / Account</th><th>Credit (₹)</th><th>Debit (₹)</th><th>Balance (₹)</th></tr></thead><tbody><tr><td>${esc(bank)}</td><td class="text-green-700">₹${fmt(t.credit)}</td><td class="text-red-700">₹${fmt(t.debit)}</td><td class="font-bold">₹${fmt(t.credit-t.debit)}</td></tr></tbody></table></div></section>`).join('');
+  // Internal transfers affect individual bank balances, but must not change overall Credit / Debit / Net Balance totals.
+  const overallRecords=records.filter(r=>!r.transferId);
+  const totalCredit=overallRecords.reduce((a,r)=>a+amount(r.credit),0), totalDebit=overallRecords.reduce((a,r)=>a+amount(r.debit),0);
   document.getElementById('he-total-credit').textContent='₹'+fmt(totalCredit);
   document.getElementById('he-total-debit').textContent='₹'+fmt(totalDebit);
   document.getElementById('he-net-balance').textContent='₹'+fmt(totalCredit-totalDebit);
   const bankFilter=document.getElementById('he-filter-bank').value;
   const from=document.getElementById('he-date-from').value, to=document.getElementById('he-date-to').value;
   const filtered=bankFilter ? records.filter(r=>r.bank===bankFilter&&(!from||r.date>=from)&&(!to||r.date<=to)).sort((a,b)=>String(b.date).localeCompare(String(a.date))) : [];
-  ledgerBody.innerHTML=filtered.map(r=>`<tr><td>${esc(r.date||'—')}</td><td>${esc(r.name)}</td><td>${esc(r.invoice||'—')}</td><td>${esc(r.bank||'—')}</td><td>${esc(r.particular||'—')}</td><td class="text-green-700">${r.credit?'₹'+fmt(r.credit):'—'}</td><td class="text-red-700">${r.debit?'₹'+fmt(r.debit):'—'}</td><td>${r.source==='home'?`<button class="smallbtn" onclick="editHomeExpense('${esc(r.id)}')">Edit</button> <button class="smallbtn" onclick="deleteHomeExpense('${esc(r.id)}')">Delete</button>`:'Auto'}</td></tr>`).join('');
+  ledgerBody.innerHTML=filtered.map(r=>`<tr><td>${esc(r.date||'—')}</td><td>${esc(r.name)}</td><td>${esc(r.invoice||'—')}</td><td>${esc(r.bank||'—')}</td><td>${esc(r.particular||'—')}</td><td class="text-green-700">${r.credit?'₹'+fmt(r.credit):'—'}</td><td class="text-red-700">${r.debit?'₹'+fmt(r.debit):'—'}</td><td>${r.source==='home'?(r.transferId?`<button class="smallbtn" onclick="deleteHomeExpense('${esc(r.id)}')">Delete Transfer</button>`:`<button class="smallbtn" onclick="editHomeExpense('${esc(r.id)}')">Edit</button> <button class="smallbtn" onclick="deleteHomeExpense('${esc(r.id)}')">Delete</button>`):'Auto'}</td></tr>`).join('');
   const no=document.getElementById('he-no-records'); no.style.display=filtered.length?'none':'block';
   no.textContent=bankFilter?(filtered.length?'':'या Bank / Date Filter साठी कोणतीही नोंद नाही.'):'कृपया Bank निवडा. Bank निवडल्याशिवाय नोंदी दिसणार नाहीत.';
 }
 
+let homeTransferMode = false;
+function toggleHomeTransferMode(){
+  if(homeTransferMode){ saveHomeExpense(); return; }
+  homeTransferMode = true;
+  document.getElementById('he-transfer-to-wrap').style.display = homeTransferMode ? 'block' : 'none';
+  document.getElementById('he-transfer-button').textContent = homeTransferMode ? '✓ Complete Transfer' : '⇄ Transfer';
+  document.getElementById('he-entry-type').disabled = homeTransferMode;
+  if(homeTransferMode) document.getElementById('he-entry-type').value = '';
+  else document.getElementById('he-transfer-to-bank').value = '';
+}
 function resetHomeExpenseForm(){
-  ['he-edit-id','he-entry-bank','he-entry-type','he-entry-amount','he-entry-description'].forEach(id=>document.getElementById(id).value='');
+  ['he-edit-id','he-entry-bank','he-entry-type','he-entry-amount','he-entry-description','he-transfer-to-bank'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('he-entry-date').value=new Date().toISOString().slice(0,10);
+  homeTransferMode=false;
+  document.getElementById('he-transfer-to-wrap').style.display='none';
+  document.getElementById('he-transfer-button').textContent='⇄ Transfer';
+  document.getElementById('he-entry-type').disabled=false;
 }
 function saveHomeExpense(){
   const id=document.getElementById('he-edit-id').value, date=document.getElementById('he-entry-date').value, bank=document.getElementById('he-entry-bank').value, type=document.getElementById('he-entry-type').value, amount=Number(document.getElementById('he-entry-amount').value), description=document.getElementById('he-entry-description').value.trim();
-  if(!date||!bank||!type||!description||!(amount>0)){alert('कृपया Date, Bank, Payment In/Out, Amount आणि Description भरा.');return;}
   DATA.homeExpenses=DATA.homeExpenses||[];
+  if(homeTransferMode){
+    const toBank=document.getElementById('he-transfer-to-bank').value;
+    if(!date||!bank||!toBank||bank===toBank||!description||!(amount>0)){alert('कृपया Date, From Bank, To Bank, Amount आणि Description भरा. दोन्ही Bank वेगळे निवडा.');return;}
+    const transferId='HT-'+Date.now();
+    DATA.homeExpenses.push({id:transferId+'-OUT',transferId,date,bank,type:'out',amount,description:'Transfer to '+toBank+' - '+description});
+    DATA.homeExpenses.push({id:transferId+'-IN',transferId,date,bank:toBank,type:'in',amount,description:'Transfer from '+bank+' - '+description});
+    saveData(); resetHomeExpenseForm(); return;
+  }
+  if(!date||!bank||!type||!description||!(amount>0)){alert('कृपया Date, Bank, Payment In/Out, Amount आणि Description भरा.');return;}
   const row={id:id||('HE-'+Date.now()),date,bank,type,amount,description};
   const index=DATA.homeExpenses.findIndex(r=>String(r.id)===String(id));
   if(index>=0) DATA.homeExpenses[index]=row; else DATA.homeExpenses.push(row);
@@ -2149,7 +2174,7 @@ function editHomeExpense(id){
   document.getElementById('he-edit-id').value=r.id; document.getElementById('he-entry-date').value=r.date||''; document.getElementById('he-entry-bank').value=r.bank||''; document.getElementById('he-entry-type').value=r.type||''; document.getElementById('he-entry-amount').value=r.amount||''; document.getElementById('he-entry-description').value=r.description||'';
   document.getElementById('h-expenses').scrollIntoView({behavior:'smooth',block:'start'});
 }
-function deleteHomeExpense(id){if(!confirm('ही Home Expense नोंद Delete करायची आहे का?'))return;DATA.homeExpenses=(DATA.homeExpenses||[]).filter(r=>String(r.id)!==String(id));saveData();if(document.getElementById('he-edit-id').value===String(id))resetHomeExpenseForm();}
+function deleteHomeExpense(id){if(!confirm('ही Home Expense नोंद Delete करायची आहे का?'))return;const row=(DATA.homeExpenses||[]).find(r=>String(r.id)===String(id));DATA.homeExpenses=(DATA.homeExpenses||[]).filter(r=>row&&row.transferId?String(r.transferId)!==String(row.transferId):String(r.id)!==String(id));saveData();if(document.getElementById('he-edit-id').value===String(id))resetHomeExpenseForm();}
 function exportHomeExpensesPDF(){
   const bank=document.getElementById('he-filter-bank').value;
   if(!bank){alert('PDF काढण्यासाठी आधी Bank निवडा.');return;}
