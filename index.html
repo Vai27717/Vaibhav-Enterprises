@@ -983,6 +983,47 @@ img, canvas, iframe { max-width: 100%; }
   }
 }
 </style>
+<style>
+/* Smart Home Dashboard */
+.home-dashboard { overflow:hidden; }
+.home-welcome{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:20px;margin-bottom:16px;border-radius:16px;background:linear-gradient(120deg,#102a43,#145374 58%,#0e7490);border:1px solid rgba(125,211,252,.25);box-shadow:0 10px 28px rgba(0,0,0,.24)}
+.home-eyebrow,.home-section-label{color:#7dd3fc;font-size:10px;font-weight:800;letter-spacing:1.5px}
+.home-welcome h1{margin:4px 0;color:#fff;font-size:25px;font-weight:800}
+.home-welcome p{margin:0;color:#dbeafe;font-size:13px}
+.home-live-badge{flex-shrink:0;padding:7px 10px;border-radius:30px;background:rgba(2,6,23,.28);color:#d1fae5;font-size:10px;font-weight:800;letter-spacing:.6px}
+.home-live-badge span{display:inline-block;width:7px;height:7px;margin-right:5px;border-radius:50%;background:#4ade80;box-shadow:0 0 8px #4ade80}
+#summary-cards{gap:12px!important}
+#summary-cards .card-summary{min-width:0;padding:16px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.13);box-shadow:0 7px 18px rgba(0,0,0,.22);transition:transform .2s ease,box-shadow .2s ease}
+#summary-cards .card-summary p{margin:0;font-size:12px;font-weight:700;opacity:.92}
+#summary-cards .card-summary h3{margin:7px 0 0;color:#fff;font-size:clamp(17px,2.5vw,23px);font-weight:800;overflow-wrap:anywhere}
+.home-quick-actions{display:flex;align-items:center;flex-wrap:wrap;gap:9px;padding:13px;margin:12px 0 16px;border-radius:14px;background:#252f3b;border:1px solid #3c4b5b}
+.home-quick-actions .home-section-label{flex:1 0 100%}
+.home-quick-actions button{flex:1 1 145px;min-height:44px}
+.home-invoice-filter{padding:13px;border:1px solid #3c4b5b;border-radius:12px;background:#252f3b}
+.home-invoice-filter select{width:min(100%,420px)}
+.home-activity-panel{margin:18px 0;padding:16px;border-radius:16px;background:linear-gradient(145deg,#273746,#202b36);border:1px solid #425466;box-shadow:0 8px 22px rgba(0,0,0,.2)}
+.home-activity-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;padding-bottom:12px;border-bottom:1px solid #465564}
+.home-activity-heading h2{margin:3px 0;color:#fff;font-size:21px;font-weight:800}
+.home-activity-heading p{margin:0;color:#cbd5e1;font-size:12px}
+.home-date-control{min-width:170px}
+.home-date-control label{display:block;color:#cbd5e1;font-size:11px;margin-bottom:4px}
+.home-date-control input{width:100%;background:#17212b!important}
+.home-activity-list>div{background:#18232e;border:1px solid #3b4b5b;border-radius:11px}
+.home-activity-list ul{padding-left:3px;overflow-wrap:anywhere}
+#home-summary,#home>.mt-6{padding:14px;border-radius:14px;background:#252f3b;border:1px solid #3c4b5b}
+#home-summary h2,#home>.mt-6 h2{color:#fff}
+@media(max-width:640px){
+.home-welcome{padding:15px;align-items:flex-start}.home-welcome h1{font-size:21px}
+.home-live-badge{font-size:9px;padding:6px 8px}
+#summary-cards{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+#summary-cards .card-summary{padding:12px 10px}
+.home-quick-actions button{flex:1 1 calc(50% - 9px);padding:9px 7px;font-size:12px}
+.home-activity-heading{align-items:stretch;flex-direction:column}
+.home-date-control{width:100%;min-width:0}.home-activity-panel{padding:12px}
+}
+@media(max-width:380px){.home-welcome{flex-direction:column}#summary-cards{grid-template-columns:1fr!important}}
+</style>
+
 </head>
 
 
@@ -1018,7 +1059,15 @@ img, canvas, iframe { max-width: 100%; }
 
 
 
-<div id="home" class="tab-content" style="display:none"> 
+<div id="home" class="tab-content home-dashboard" style="display:none">
+    <div class="home-welcome">
+      <div>
+        <div class="home-eyebrow">VAIBHAV ENTERPRISES</div>
+        <h1>Business Dashboard</h1>
+        <p>Welcome back — your business overview at a glance.</p>
+      </div>
+      <div class="home-live-badge"><span></span> LIVE OVERVIEW</div>
+    </div> 
     
     <div id="summary-cards" class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         <div id="total-invoice-card" class="card-summary bg-blue-600">
@@ -1050,17 +1099,15 @@ img, canvas, iframe { max-width: 100%; }
         Current Filter: <span id="current-invoice-no" class="text-yellow-400">All Data</span>
          
       </div>
-      <button class="smallbtn" onclick="openQuickAttendance()">
-       ✏️ Atten.
-        </button>
-       <button class="smallbtn bg-blue-500" onclick="openQuickExpensePopup()">
-    ⚡Exp.
-  </button>
-       <button class="smallbtn" onclick="openVEItemListModal()">🧱 Material List</button>
- 
-     
+      <div class="home-quick-actions">
+        <div class="home-section-label">QUICK ACTIONS</div>
+        <button class="smallbtn" onclick="openQuickAttendance()">✏️ Attendance</button>
+        <button class="smallbtn bg-blue-500" onclick="openQuickExpensePopup()">⚡ Quick Expense</button>
+        <button class="smallbtn" onclick="openVEItemListModal()">🧱 Material List</button>
+      </div>
+
     <!-- 🆕 Home Invoice Select Dropdown -->
-<div class="mb-4 text-center">
+<div class="home-invoice-filter mb-4 text-center">
   <label class="muted block mb-1 text-gray-300">Select Invoice</label>
   <select id="home-inv-select" class="p-2 border rounded w-64 text-black" onchange="updateHomeDashboard(this.value)">
     <option value="">-- Select Invoice --</option>
@@ -1068,6 +1115,23 @@ img, canvas, iframe { max-width: 100%; }
 </div>
    
 
+
+    <!-- Daily Activity moved from Daily Reports to Home; existing date-wise logic retained -->
+    <section class="home-activity-panel">
+      <div class="home-activity-heading">
+        <div>
+          <div class="home-section-label">DAILY SITE TRACKER</div>
+          <h2>📅 Daily Activity</h2>
+          <p>Payments, orders and labor attendance for the selected date.</p>
+        </div>
+        <div class="home-date-control">
+          <label for="dr-activity-date">Select Date</label>
+          <input id="dr-activity-date" type="date"
+                 onchange="renderDailyActivity(this.value)">
+        </div>
+      </div>
+      <div id="dr-activity-list" class="home-activity-list mt-3 space-y-3"></div>
+    </section>
 
     <div id="home-summary" class="mt-4">
       <h2 class="text-xl font-bold mb-4">Invoice-wise Expense & Profit</h2>
@@ -1805,15 +1869,6 @@ img, canvas, iframe { max-width: 100%; }
 
   <div id="daily-rows" class="space-y-2"></div>
 
-  <!-- Date-wise activity from Payments, Paid Payments, Orders and Labor Attendance -->
-  <div class="mt-4 p-3 rounded border border-gray-600">
-    <h3 class="text-lg font-bold mb-2">Daily Activity</h3>
-    <label class="muted block mb-1">Select Date</label>
-    <input id="dr-activity-date" type="date" class="p-2 border rounded w-full"
-           onchange="renderDailyActivity(this.value)">
-    <div id="dr-activity-list" class="mt-3 space-y-3"></div>
-  </div>
-
   <div class="mt-2 flex gap-2">
     <button class="smallbtn" onclick="addDailyRow()">+ Add Row</button>
     <button class="smallbtn" onclick="saveDaily()">Save</button>
@@ -2516,7 +2571,7 @@ function show(id) {
   // Show only the selected section
   const elToShow = document.getElementById(id);
   if (elToShow) elToShow.style.display = 'block';
-  if (id === 'daily' && typeof renderDailyActivity === 'function') {
+  if ((id === 'home' || id === 'daily') && typeof renderDailyActivity === 'function') {
     const dateInput = document.getElementById('dr-activity-date');
     if (dateInput && !dateInput.value) {
       const now = new Date();
@@ -9179,6 +9234,17 @@ function renderDailyActivity(selectedDate) {
     title: 'Payment Out',
     total: paid.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0),
     rows: paid.map(p => `${p.invoiceNo || ''} ${p.orderId && p.orderId !== 'N/A' ? '| ' + p.orderId : ''} | ${p.name || p.labor || ''} | ${p.note || p.bank || 'Paid'} | ${moneyText(p.amount)}`)
+  });
+
+  // H. Expenses (Manual entries and internal bank transfers)
+  const homeExpenseRows = (DATA.homeExpenses || []).filter(r => r.date === selectedDate);
+  const homeCredit = homeExpenseRows.filter(r => r.type === 'in').reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+  const homeDebit = homeExpenseRows.filter(r => r.type === 'out').reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+  sections.push({
+    title: 'H. Expenses',
+    total: null,
+    summary: `Credit: ${moneyText(homeCredit)} | Debit: ${moneyText(homeDebit)}`,
+    rows: homeExpenseRows.map(r => `${r.bank || ''} | ${r.type === 'in' ? 'Credit' : r.type === 'out' ? 'Debit' : 'Entry'} | ${r.description || (r.transferId ? 'Bank Transfer' : 'Home Expense')} | ${moneyText(r.amount)}`)
   });
 
   // Orders
