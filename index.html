@@ -885,7 +885,40 @@ img, canvas, iframe { max-width: 100%; }
 </style>
 
   
-  /* ===== HOME MATERIAL POPUP WIDTH FIX ===== */
+  
+  
+  <style>
+/* Material List: keep saved items in one horizontal row on mobile only */
+@media (max-width: 640px) {
+  #ve-item-list-modal table { display: table !important; width: 100% !important; min-width: 480px !important; table-layout: auto !important; }
+  #ve-item-list-modal thead { display: table-header-group !important; }
+  #ve-item-list-modal tbody { display: table-row-group !important; }
+  #ve-item-list-modal tr { display: table-row !important; width: auto !important; margin: 0 !important; padding: 0 !important; border: 0 !important; }
+  #ve-item-list-modal th, #ve-item-list-modal td { display: table-cell !important; width: auto !important; padding: 6px 5px !important; vertical-align: middle !important; }
+  #ve-item-list-modal td::before { content: none !important; display: none !important; }
+  #ve-item-list-modal td input { min-width: 65px; max-width: 100%; box-sizing: border-box; }
+  #ve-item-list-modal > .modal-content > div[style*="overflow-x:auto"] { overflow-x: auto !important; }
+}
+</style>
+<style>
+/* Main navigation: keep all section buttons on one horizontally scrollable line on mobile. */
+@media (max-width: 640px) {
+  .nav { display: flex !important; flex-wrap: wrap !important; align-items: stretch !important; }
+  .nav > div:first-child {
+    display: flex !important; flex-wrap: nowrap !important; align-items: center !important;
+    width: 100% !important; max-width: 100% !important; min-width: 0 !important;
+    flex: 1 1 100% !important; overflow-x: auto !important; overflow-y: hidden !important;
+    white-space: nowrap !important; -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+  }
+  .nav > div:first-child > button { flex: 0 0 auto !important; white-space: nowrap !important; }
+  .nav > div:first-child > .flex.gap-2 { flex: 0 0 auto !important; width: auto !important; flex-wrap: nowrap !important; }
+  .nav > div:first-child input[type="file"] { width: 180px !important; min-width: 180px !important; }
+  .nav > div:last-child { width: 100% !important; flex: 1 1 100% !important; }
+}
+
+
+
+/* ===== HOME MATERIAL POPUP WIDTH FIX ===== */
 
 #he-material-modal {
     position: fixed !important;
@@ -959,35 +992,12 @@ img, canvas, iframe { max-width: 100%; }
         margin: 5px auto !important;
     }
 }
-  
-  <style>
-/* Material List: keep saved items in one horizontal row on mobile only */
-@media (max-width: 640px) {
-  #ve-item-list-modal table { display: table !important; width: 100% !important; min-width: 480px !important; table-layout: auto !important; }
-  #ve-item-list-modal thead { display: table-header-group !important; }
-  #ve-item-list-modal tbody { display: table-row-group !important; }
-  #ve-item-list-modal tr { display: table-row !important; width: auto !important; margin: 0 !important; padding: 0 !important; border: 0 !important; }
-  #ve-item-list-modal th, #ve-item-list-modal td { display: table-cell !important; width: auto !important; padding: 6px 5px !important; vertical-align: middle !important; }
-  #ve-item-list-modal td::before { content: none !important; display: none !important; }
-  #ve-item-list-modal td input { min-width: 65px; max-width: 100%; box-sizing: border-box; }
-  #ve-item-list-modal > .modal-content > div[style*="overflow-x:auto"] { overflow-x: auto !important; }
-}
-</style>
-<style>
-/* Main navigation: keep all section buttons on one horizontally scrollable line on mobile. */
-@media (max-width: 640px) {
-  .nav { display: flex !important; flex-wrap: wrap !important; align-items: stretch !important; }
-  .nav > div:first-child {
-    display: flex !important; flex-wrap: nowrap !important; align-items: center !important;
-    width: 100% !important; max-width: 100% !important; min-width: 0 !important;
-    flex: 1 1 100% !important; overflow-x: auto !important; overflow-y: hidden !important;
-    white-space: nowrap !important; -webkit-overflow-scrolling: touch; scrollbar-width: thin;
-  }
-  .nav > div:first-child > button { flex: 0 0 auto !important; white-space: nowrap !important; }
-  .nav > div:first-child > .flex.gap-2 { flex: 0 0 auto !important; width: auto !important; flex-wrap: nowrap !important; }
-  .nav > div:first-child input[type="file"] { width: 180px !important; min-width: 180px !important; }
-  .nav > div:last-child { width: 100% !important; flex: 1 1 100% !important; }
-}
+
+
+
+
+
+
 </style>
 </head>
 
