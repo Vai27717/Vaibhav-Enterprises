@@ -1043,6 +1043,7 @@ img, canvas, iframe { max-width: 100%; }
     <button class="smallbtn flex-shrink-0" onclick="show('daily')">Daily Reports</button>
     <button class="smallbtn flex-shrink-0" onclick="show('labor')">Labor Attendance</button>
     <button class="smallbtn flex-shrink-0" onclick="show('payments')">Payments</button>
+    <button class="smallbtn flex-shrink-0" onclick="openSignatureModal()">✍️ Signature</button>
     
   <div class="flex gap-2 items-center flex-shrink-0 mt-2 md:mt-0">
     <button onclick="exportToExcel()" class="smallbtn">Export Excel</button>
@@ -1903,6 +1904,7 @@ img, canvas, iframe { max-width: 100%; }
 
     <input id="c_totalAmount" placeholder="Total Amount">
 
+    <button type="button" onclick="openOwnerSignature('completion')">✍️ Owner Signature</button>
     <button onclick="saveCompletion()">Save</button>
     <button onclick="generateCompletionPDF()">PDF</button>
   </div>
@@ -1973,6 +1975,7 @@ img, canvas, iframe { max-width: 100%; }
     <input type="date" id="a_endDate">
 
     <div class="agreement-actions" style="margin-top:10px;">
+      <button type="button" onclick="openOwnerSignature('agreement')">✍️ Owner Signature</button>
       <button onclick="saveAgreement()">Save</button>
       <button onclick="printAgreement()">PDF</button>
     </div>
@@ -2009,6 +2012,7 @@ let DATA = {
   paidPayments: [],  // ✅ New
   categories: ["Material", "Labor", "Transport", "Miscellaneous"], // Default categories
   materials: [],
+  companySignature: "",
   counters: { est:0, inv:0, exp:0, meas:0, pay:0, lab:0, ord:0, pp:0 } // ✅ Updated counters
 };
 
@@ -3692,11 +3696,12 @@ const descText = (it.description || "")
   addPageIfNeeded(18);
 
   doc.setFontSize(11);
-  doc.text("Thank you", pageWidth - 49, y);
-  y += 6;
-
+  doc.text("Thank You For", pageWidth - 64, y);
+  y += 3;
+  addSavedCompanySignature(doc, pageWidth - 64, y, 38, 12);
+  y += 13;
   doc.setFont("helvetica", "bold");
-  doc.text(`For ${cname}`, pageWidth - 64, y);
+  doc.text(cname, pageWidth - 64, y);
 
   // --- FOOTER ON EVERY PAGE ---
   const pageCount = doc.internal.getNumberOfPages();
@@ -4027,7 +4032,8 @@ ${
     <table class="sign-table">
       <tr>
         <td style="vertical-align:top;">
-          <div style="height:50px;"></div>
+          ${getOwnerSignatureHtml("completion", estimateSelect.value)}
+          <br>
           <b>Owner</b>
         <br><br>
         <b>${ownerName}</b>
@@ -4037,13 +4043,18 @@ ${
 
         <td style="text-align:center; vertical-align:top; padding-left:60px;">
           <div style="height:50px;"></div>
-          <b>Thank You</b><br><br>
-          <b>For Vaibhav Enterprises</b>
+          <b>Thank You For</b><br>
+          ${getCompanySignatureHtml()}<br>
+          <b>Vaibhav Enterprises</b>
         </td>
       </tr>
     </table>
 
-  </body>
+  
+
+
+
+</body>
   </html>
   `);
 
@@ -4611,8 +4622,8 @@ ${
       <tr>
 
         <td>
-          <div style="height:60px;"></div>
-          
+          ${getOwnerSignatureHtml("agreement", estimateSelect.value)}
+          <br>
         <b>Owner</b>
         <br><br>
         <b>${ownerName}</b>
@@ -4627,11 +4638,13 @@ ${
 
           <div style="display:inline-block; text-align:center; margin-right:40px;">
 
-            <b>Thank You</b>
+            <b>Thank You For</b>
 
-            <br><br>
+            <br>
+            ${getCompanySignatureHtml()}
+            <br>
 
-            <b>For Vaibhav Enterprises</b>
+            <b>Vaibhav Enterprises</b>
 
           </div>
 
@@ -5274,11 +5287,12 @@ function exportInvoicePDF() {
 
   // ---------- SIGNATURE ----------
   doc.setFontSize(11);
-  doc.text("Thank you", 196 - 35, y);
-  y += 6;
+  doc.text("Thank You For", 196 - 50, y);
+  y += 3;
+  addSavedCompanySignature(doc, 196 - 50, y, 38, 12);
+  y += 13;
   doc.setFont("helvetica", "bold");
-  // ✅ Company name 'Vaibhav Enterprises' chya jagi 'cname' vaparat ahe
-  doc.text(`For ${cname}`, 196 - 50, y);
+  doc.text(cname, 196 - 50, y);
 
   // --- FOOTER ---
   doc.setFontSize(10);
@@ -6344,22 +6358,16 @@ if (y > 245) {
   y += 12;
 }
 
-// Center Thank You
+// Thank You + saved company signature
 doc.setFont("helvetica", "bold");
 doc.setFontSize(11);
-doc.text("Thank You", 175, y, { align: "right" });
-
-// Right side signature block
-y += 16;
-
+doc.text("Thank You For", 190, y, { align: "right" });
+y += 3;
+addSavedCompanySignature(doc, 152, y, 38, 12);
+y += 13;
 doc.setFont("helvetica", "bold");
 doc.setFontSize(12);
-doc.text("For Vaibhav Enterprises", 190, y, { align: "right" });
-
-y += 8;
-doc.setFont("helvetica", "normal");
-doc.setFontSize(11);
-doc.text("Authorized Signatory", 185, y, { align: "right" });
+doc.text("Vaibhav Enterprises", 190, y, { align: "right" });
 
   // --- FOOTER ONLY ON LAST PAGE ---
   doc.setFontSize(9);
@@ -7487,16 +7495,14 @@ function downloadMeasurementPDF(id){
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  doc.text("Thank You", 14, y);
+  doc.text("Thank You For", pageWidth - 14, y, { align: "right" });
 
-  y += 14;
+  y += 3;
+  addSavedCompanySignature(doc, pageWidth - 52, y, 38, 12);
+  y += 13;
 
   doc.setFont("helvetica", "bold");
-  doc.text("For Vaibhav Enterprises", pageWidth - 14, y, { align: "right" });
-
-  y += 6;
-  doc.setFont("helvetica", "normal");
-  doc.text("Authorized Signatory", pageWidth - 14, y, { align: "right" });
+  doc.text("Vaibhav Enterprises", pageWidth - 14, y, { align: "right" });
 
   /* ===== Save PDF ===== */
   const safeName = (rec.client || "Measurement").replace(/[^\w\s-]/g, '').replace(/\s+/g, '_');
@@ -11539,5 +11545,183 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
   });
 }
 </script>
+
+
+<!-- Company Signature Setup -->
+<div id="companySignatureModal" class="modal" style="display:none; z-index:100000;">
+  <div class="modal-content" style="width: min(94vw, 560px); max-width:560px; background:#f7f7f7; color:#111; margin:5vh auto; box-sizing:border-box;">
+    <span class="close" onclick="closeSignatureModal()" style="font-size:28px;">×</span>
+    <h3 style="color:#111; margin:0 0 8px;">Company Signature</h3>
+    <p style="color:#333; font-size:13px; margin:0 0 10px;">मोबाईलवर बोटाने किंवा S Pen ने निळ्या रंगात सही करा.</p>
+    <canvas id="companySignatureCanvas" style="display:block; width:100%; height:190px; background:#fff; border:1px solid #777; border-radius:8px; touch-action:none;"></canvas>
+    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:12px;">
+      <button type="button" onclick="clearCompanySignature()">Clear</button>
+      <button type="button" onclick="saveCompanySignature()">Save Signature</button>
+    </div>
+    <p id="companySignatureStatus" style="color:#166534; font-size:12px; text-align:center; margin:8px 0 0;"></p>
+  </div>
+</div>
+
+<script>
+(function(){
+  let sigCanvas, sigCtx, drawing = false, hasNewStroke = false;
+  function setupSignatureCanvas(){
+    sigCanvas = document.getElementById("companySignatureCanvas");
+    if(!sigCanvas || sigCanvas.dataset.ready) return;
+    sigCtx = sigCanvas.getContext("2d");
+    const resize = () => {
+      const old = sigCanvas.toDataURL();
+      const rect = sigCanvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      sigCanvas.width = Math.max(1, Math.round(rect.width * dpr));
+      sigCanvas.height = Math.max(1, Math.round(190 * dpr));
+      sigCtx = sigCanvas.getContext("2d");
+      sigCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      sigCtx.lineCap = "round";
+      sigCtx.lineJoin = "round";
+      sigCtx.strokeStyle = "#0645AD";
+      sigCtx.lineWidth = 2.7;
+      if(old && old !== "data:,"){
+        const img = new Image();
+        img.onload = () => sigCtx.drawImage(img, 0, 0, rect.width, 190);
+        img.src = old;
+      }
+    };
+    resize();
+    sigCanvas.dataset.ready = "1";
+    sigCanvas.addEventListener("pointerdown", e => {
+      e.preventDefault(); drawing = true; hasNewStroke = true;
+      sigCanvas.setPointerCapture?.(e.pointerId);
+      const r = sigCanvas.getBoundingClientRect();
+      sigCtx.beginPath(); sigCtx.moveTo(e.clientX-r.left, e.clientY-r.top);
+    });
+    sigCanvas.addEventListener("pointermove", e => {
+      if(!drawing) return;
+      e.preventDefault();
+      const r = sigCanvas.getBoundingClientRect();
+      sigCtx.lineTo(e.clientX-r.left, e.clientY-r.top);
+      sigCtx.stroke();
+    });
+    ["pointerup","pointercancel","lostpointercapture"].forEach(ev =>
+      sigCanvas.addEventListener(ev, () => { drawing = false; })
+    );
+    window.addEventListener("resize", () => {
+      if(document.getElementById("companySignatureModal")?.style.display !== "none") resize();
+    });
+  }
+  window.openSignatureModal = function(){
+    const modal = document.getElementById("companySignatureModal");
+    modal.style.display = "block";
+    setupSignatureCanvas();
+    const saved = getCompanySignatureData();
+    const canvas = document.getElementById("companySignatureCanvas");
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    hasNewStroke = false;
+    if(saved){
+      const img = new Image();
+      img.onload = () => {
+        const r = canvas.getBoundingClientRect();
+        ctx.drawImage(img,0,0,r.width,190);
+      };
+      img.src = saved;
+    }
+    document.getElementById("companySignatureStatus").textContent = saved ? "Saved signature loaded." : "Please draw your signature.";
+  };
+  window.closeSignatureModal = function(){ document.getElementById("companySignatureModal").style.display = "none"; };
+  window.clearCompanySignature = function(){
+    setupSignatureCanvas();
+    const c = document.getElementById("companySignatureCanvas");
+    c.getContext("2d").clearRect(0,0,c.width,c.height);
+    hasNewStroke = false;
+    document.getElementById("companySignatureStatus").textContent = "Signature cleared from canvas. Press Save Signature to update.";
+  };
+  window.saveCompanySignature = function(){
+    const c = document.getElementById("companySignatureCanvas");
+    if(!c || !hasNewStroke) return alert("कृपया आधी सही करा.");
+    DATA.companySignature = c.toDataURL("image/png");
+    if(typeof saveData === "function") saveData();
+    else localStorage.setItem("ve_final_v1", JSON.stringify(DATA));
+    document.getElementById("companySignatureStatus").textContent = "Signature saved successfully. It will appear in supported PDFs.";
+    hasNewStroke = false;
+  };
+})();
+
+function getCompanySignatureData(){
+  return (typeof DATA !== "undefined" && DATA.companySignature) ? DATA.companySignature : "";
+}
+function addSavedCompanySignature(doc, x, y, width, height){
+  const signature = getCompanySignatureData();
+  if(signature){
+    try { doc.addImage(signature, "PNG", x, y, width, height); }
+    catch(err){ console.warn("Company signature could not be added to PDF:", err); }
+  }
+}
+function getCompanySignatureHtml(){
+  const signature = getCompanySignatureData();
+  return signature
+    ? `<img src="${signature}" alt="Company Signature" style="display:inline-block;width:145px;height:48px;object-fit:contain;vertical-align:middle;">`
+    : `<span style="display:inline-block;width:145px;height:48px;"></span>`;
+}
+</script>
+
+<!-- Separate Owner Signature -->
+<div id="ownerSignatureModal" class="modal" style="display:none; z-index:100001;">
+  <div class="modal-content" style="width:min(94vw,560px);max-width:560px;background:#f7f7f7;color:#111;margin:5vh auto;box-sizing:border-box;">
+    <span class="close" onclick="closeOwnerSignature()" style="font-size:28px;">×</span>
+    <h3 style="color:#111;margin:0 0 8px;">Owner Signature</h3>
+    <p style="color:#333;font-size:13px;margin:0 0 10px;">मोबाईलवर बोटाने किंवा S Pen ने सही करा.</p>
+    <canvas id="ownerSignatureCanvas" style="display:block;width:100%;height:190px;background:#fff;border:1px solid #777;border-radius:8px;touch-action:none;"></canvas>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px;">
+      <button type="button" onclick="clearOwnerSignature()">Clear</button>
+      <button type="button" onclick="saveOwnerSignature()">Save Owner Signature</button>
+    </div>
+    <p id="ownerSignatureStatus" style="color:#166534;font-size:12px;text-align:center;margin:8px 0 0;"></p>
+  </div>
+</div>
+<script>
+(function(){
+  let canvas, ctx, drawing=false, hasNewStroke=false, currentType="completion";
+  function key(type,id){return "ve_owner_signature_"+type+"_"+id;}
+  function setup(){
+    canvas=document.getElementById("ownerSignatureCanvas");
+    if(!canvas||canvas.dataset.ready)return;
+    const resize=()=>{
+      const old=canvas.toDataURL(), rect=canvas.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+      canvas.width=Math.max(1,Math.round(rect.width*dpr)); canvas.height=Math.max(1,Math.round(190*dpr));
+      ctx=canvas.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0);
+      ctx.lineCap="round";ctx.lineJoin="round";ctx.strokeStyle="#0645AD";ctx.lineWidth=2.7;
+      if(old&&old!=="data:,"){const img=new Image();img.onload=()=>ctx.drawImage(img,0,0,rect.width,190);img.src=old;}
+    };
+    resize();canvas.dataset.ready="1";
+    canvas.addEventListener("pointerdown",e=>{e.preventDefault();drawing=true;hasNewStroke=true;canvas.setPointerCapture?.(e.pointerId);const r=canvas.getBoundingClientRect();ctx.beginPath();ctx.moveTo(e.clientX-r.left,e.clientY-r.top);});
+    canvas.addEventListener("pointermove",e=>{if(!drawing)return;e.preventDefault();const r=canvas.getBoundingClientRect();ctx.lineTo(e.clientX-r.left,e.clientY-r.top);ctx.stroke();});
+    ["pointerup","pointercancel","lostpointercapture"].forEach(ev=>canvas.addEventListener(ev,()=>drawing=false));
+    window.addEventListener("resize",()=>{if(document.getElementById("ownerSignatureModal").style.display!=="none")resize();});
+  }
+  window.openOwnerSignature=function(type){
+    if(!estimateSelect.value){alert("Estimate select kara");return;}
+    currentType=type;document.getElementById("ownerSignatureModal").style.display="block";setup();
+    const c=document.getElementById("ownerSignatureCanvas"),cctx=c.getContext("2d");
+    cctx.clearRect(0,0,c.width,c.height);hasNewStroke=false;
+    const saved=localStorage.getItem(key(currentType,estimateSelect.value));
+    if(saved){const img=new Image();img.onload=()=>{const r=c.getBoundingClientRect();cctx.drawImage(img,0,0,r.width,190);};img.src=saved;}
+    document.getElementById("ownerSignatureStatus").textContent=saved?"Saved owner signature loaded.":"Please draw owner signature.";
+  };
+  window.closeOwnerSignature=function(){document.getElementById("ownerSignatureModal").style.display="none";};
+  window.clearOwnerSignature=function(){setup();const c=document.getElementById("ownerSignatureCanvas");c.getContext("2d").clearRect(0,0,c.width,c.height);hasNewStroke=false;document.getElementById("ownerSignatureStatus").textContent="Canvas cleared.";};
+  window.saveOwnerSignature=function(){
+    const c=document.getElementById("ownerSignatureCanvas");
+    if(!c||!hasNewStroke){alert("कृपया आधी सही करा.");return;}
+    localStorage.setItem(key(currentType,estimateSelect.value),c.toDataURL("image/png"));hasNewStroke=false;
+    document.getElementById("ownerSignatureStatus").textContent="Owner signature saved successfully.";
+  };
+  window.getOwnerSignatureHtml=function(type,id){
+    const sig=localStorage.getItem(key(type,id));
+    return sig?`<img src="${sig}" alt="Owner Signature" style="display:inline-block;width:145px;height:48px;object-fit:contain;vertical-align:middle;">`:`<span style="display:inline-block;width:145px;height:48px;"></span>`;
+  };
+})();
+</script>
+
 </body>
 </html>
