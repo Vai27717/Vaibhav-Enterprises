@@ -1319,7 +1319,7 @@ img, canvas, iframe { max-width: 100%; }
     <table class="w-full border">
       <thead>
         <tr class="bg-gray-50">
-          <th>Date</th><th>Item Name</th><th>Category</th>
+          <th>Date</th><th>Item Name</th><th>Category</th><th>Bank / Account</th>
         </tr>
         <tr class="bg-gray-50">
           <th>Qty</th><th>Unit</th><th>Rate</th><th>Amount</th><th>Action</th>
@@ -1346,7 +1346,7 @@ img, canvas, iframe { max-width: 100%; }
   <table class="w-full border">
     <thead>
       <tr class="bg-gray-50">
-        <th>Date</th><th>Invoice No</th><th>Category</th><th>Items</th>
+        <th>Date</th><th>Invoice No</th><th>Category</th><th>Items</th><th>Bank / Account</th>
         <th>Qty</th><th>Unit</th><th>Rate</th><th>Amount</th><th>Action</th>
       </tr>
     </thead>
@@ -2012,6 +2012,24 @@ let DATA = {
   counters: { est:0, inv:0, exp:0, meas:0, pay:0, lab:0, ord:0, pp:0 } // ✅ Updated counters
 };
 
+function normalizeExpenseBankData(){
+  if (!Array.isArray(DATA.expenses)) DATA.expenses = [];
+  let changed = false;
+  DATA.expenses.forEach(exp => {
+    const itemCount = String(exp.name || '').split(',').length;
+    const banks = String(exp.bank || '').split(',').map(v => v.trim());
+    const normalized = Array.from({length:itemCount}, (_, i) => banks[i] || 'Cash');
+    const value = normalized.join(', ');
+    if (exp.bank !== value) { exp.bank = value; changed = true; }
+  });
+  return changed;
+}
+
+function expenseBankAt(record, index){
+  const banks = String(record?.bank || '').split(',').map(v => v.trim());
+  return banks[index] || 'Cash';
+}
+
 function loadData(){ 
   const s = localStorage.getItem(KEY); 
   if(s) DATA = JSON.parse(s); 
@@ -2022,6 +2040,7 @@ function loadData(){
   DATA.paidPayments = DATA.paidPayments || [];
   DATA.homeExpenses = DATA.homeExpenses || [];
   DATA.homeMaterials = DATA.homeMaterials || [];
+  if (normalizeExpenseBankData()) localStorage.setItem(KEY, JSON.stringify(DATA));
 
   renderAll(); 
 }
@@ -2241,10 +2260,25 @@ function renderHExpenses() {
     if (credit <= 0) return;
     records.push({id:'IN-'+(p.id || `${p.invoiceNo||'NA'}-${p.date||''}-${i}`),source:'ve-in',date:p.date||'',name:p.client||p.name||'—',invoice:p.invoiceNo||'—',bank:p.bank||'Cash',particular:p.note||p.work||'Payment In',credit,debit:0,type:'in'});
   });
-  (DATA.paidPayments || []).forEach((p, i) => {
-    const debit = amount(p.amount);
-    if (debit <= 0) return;
-    records.push({id:'OUT-'+(p.id || `${p.invoiceNo||'NA'}-${p.date||''}-${i}`),source:'ve-out',date:p.date||'',name:p.name||p.labor||p.client||'—',invoice:[p.invoiceNo,p.orderId&&p.orderId!=='N/A'?p.orderId:''].filter(Boolean).join(' / ')||'—',bank:p.bank||'Cash',particular:p.note||p.labor||'Payment Out',credit:0,debit,type:'out'});
+  // Work Expenses are shown as H. Expenses Debit (bank-wise).
+  (DATA.expenses || []).forEach((exp, i) => {
+    const dates = String(exp.date || '').split(',').map(v => v.trim());
+    const names = String(exp.name || '').split(',').map(v => v.trim());
+    const quantities = String(exp.quantity || '').split(',').map(v => v.trim());
+    const units = String(exp.unit || '').split(',').map(v => v.trim());
+    const rates = String(exp.rate || '').split(',').map(v => v.trim());
+    const categories = String(exp.category || '').split(',').map(v => v.trim());
+    dates.forEach((date, j) => {
+      const debit = (parseFloat(quantities[j]) || 0) * (parseFloat(rates[j]) || 0);
+      if (debit <= 0) return;
+      records.push({
+        id:'WORK-'+(exp.id || `${exp.invoiceNo||'NA'}-${date}-${j}`),
+        source:'work-expense', date, name:names[j] || 'Work Expense',
+        invoice:exp.invoiceNo || '—', bank:expenseBankAt(exp, j) || 'Cash',
+        particular:categories[j] || 'Work Expenses',
+        credit:0, debit, type:'out'
+      });
+    });
   });
   (DATA.homeExpenses || []).forEach(r => records.push({...r,source:'home',name:r.description||'Home Expense',invoice:'Home Entry',particular:r.description||'',credit:r.type==='in'?amount(r.amount):0,debit:r.type==='out'?amount(r.amount):0}));
 
@@ -2317,10 +2351,18 @@ function exportHomeExpensesPDF(){
     if((p.bank||'Cash')===bank&&amountIn>0&&(!from||p.date>=from)&&(!to||p.date<=to))
       rows.push([p.date||'',p.client||p.name||'—',p.note||p.work||'Payment In',amountIn,0]);
   });
-  (DATA.paidPayments||[]).forEach(p=>{
-    const amountOut=Number(p.amount)||0;
-    if((p.bank||'Cash')===bank&&amountOut>0&&(!from||p.date>=from)&&(!to||p.date<=to))
-      rows.push([p.date||'',p.name||p.labor||p.client||'—',p.note||p.labor||'Payment Out',0,amountOut]);
+  (DATA.expenses||[]).forEach(exp=>{
+    const dates=String(exp.date||'').split(',').map(v=>v.trim());
+    const names=String(exp.name||'').split(',').map(v=>v.trim());
+    const quantities=String(exp.quantity||'').split(',').map(v=>v.trim());
+    const rates=String(exp.rate||'').split(',').map(v=>v.trim());
+    const categories=String(exp.category||'').split(',').map(v=>v.trim());
+    dates.forEach((date,i)=>{
+      const amountOut=(Number(quantities[i])||0)*(Number(rates[i])||0);
+      const expenseBank=expenseBankAt(exp,i)||'Cash';
+      if(expenseBank===bank&&amountOut>0&&(!from||date>=from)&&(!to||date<=to))
+        rows.push([date,names[i]||'Work Expense',`${exp.invoiceNo||''} | ${categories[i]||'Work Expenses'}`,0,amountOut]);
+    });
   });
   (DATA.homeExpenses||[]).forEach(r=>{
     if(r.bank===bank&&(!from||r.date>=from)&&(!to||r.date<=to))
@@ -5358,6 +5400,7 @@ function loadExpenseByFilters() {
         date: rowDate,
         name: names[i],
         category: rowCat,
+        bank: expenseBankAt(rec, i),
         quantity: qtys[i],
         unit: units[i],
         rate: rates[i]
@@ -5466,13 +5509,20 @@ function addExpenseRow(data = {}) {
     row.innerHTML = `
         <td data-label="Date"><input type="date" class="exp-date w-full" value="${data.date || new Date().toISOString().slice(0, 10)}"></td>
         <td data-label="Item Name"><input type="text" class="exp-name w-full" placeholder="Item/Vendor" value="${data.name || ''}"></td>
-       <td data-label="Category">
+        <td data-label="Category">
   <input type="text" class="exp-cat w-full" placeholder="Category"
          value="${data.category || ''}" 
          oninput="filterCategorySuggestions(this)" autocomplete="off">
   <div class="cat-suggestions absolute bg-white border shadow-md z-10 hidden"></div>
 </td>
-
+        <td data-label="Bank / Account">
+          <select class="exp-bank w-full p-1 border rounded">
+            <option value="Kotak Bank" ${((data.bank || 'Cash') === 'Kotak Bank') ? 'selected' : ''}>Kotak Bank</option>
+            <option value="SBI Bank" ${((data.bank || 'Cash') === 'SBI Bank') ? 'selected' : ''}>SBI Bank</option>
+            <option value="HDFC Bank" ${((data.bank || 'Cash') === 'HDFC Bank') ? 'selected' : ''}>HDFC Bank</option>
+            <option value="Cash" ${((data.bank || 'Cash') === 'Cash') ? 'selected' : ''}>Cash</option>
+          </select>
+        </td>
 
         <td data-label="Qty"><input type="number" class="exp-qty w-full" placeholder="Qty" value="${data.quantity || 1}" oninput="calculateExpenseAmount(this)"></td>
         <td data-label="Unit"><input type="text" class="exp-unit w-full" placeholder="Unit" value="${data.unit || 'pc'}"></td>
@@ -5582,10 +5632,11 @@ if (!selDate && !selCat) {
     const rate = row.querySelector(".exp-rate").value.trim();
     const amount = parseFloat(row.querySelector(".exp-amount").value) || 0;
     const category = row.querySelector(".exp-cat").value.trim();
+    const bank = row.querySelector(".exp-bank")?.value || 'Cash';
     const date = row.querySelector(".exp-date").value;
 
     if (name && amount > 0 && date) {
-      items.push({ date, category, name, qty, unit, rate, amount });
+      items.push({ date, category, name, qty, unit, rate, amount, bank });
     }
   });
 
@@ -5605,6 +5656,7 @@ if (!selDate && !selCat) {
     const oldUnits = existing.unit.split(",").map(s => s.trim());
     const oldRates = existing.rate.split(",").map(s => s.trim());
     const oldCats  = existing.category.split(",").map(s => s.trim());
+    const oldBanks = String(existing.bank || '').split(",").map(s => s.trim());
 
     let keptData = [];
 
@@ -5624,7 +5676,7 @@ if (!selDate && !selCat) {
       if (!isMatched) {
         keptData.push({
           date: d, name: oldNames[i], qty: oldQtys[i], 
-          unit: oldUnits[i], rate: oldRates[i], category: oldCats[i]
+          unit: oldUnits[i], rate: oldRates[i], category: oldCats[i], bank: oldBanks[i] || 'Cash'
         });
       }
     });
@@ -5643,6 +5695,7 @@ if (!selDate && !selCat) {
       existing.unit     = merged.map(i => i.unit).join(", ");
       existing.rate     = merged.map(i => i.rate).join(", ");
       existing.category = merged.map(i => i.category).join(", ");
+      existing.bank     = merged.map(i => i.bank || 'Cash').join(", ");
       existing.amount   = merged.reduce((s, i) => s + (parseFloat(i.rate) * parseFloat(i.qty) || 0), 0).toFixed(2);
       
       alert("✅ Expenses Updated Successfully");
@@ -5657,6 +5710,7 @@ if (!selDate && !selCat) {
       invoiceNo,
       date: items.map(i => i.date).join(", "),
       category: items.map(i => i.category).join(", "),
+      bank: items.map(i => i.bank || 'Cash').join(", "),
       name: items.map(i => i.name).join(", "),
       quantity: items.map(i => i.qty).join(", "),
       unit: items.map(i => i.unit).join(", "),
@@ -5671,6 +5725,8 @@ if (!selDate && !selCat) {
       FINAL RESET
   ==========================*/
   saveData();
+  const activityDate = el('dr-activity-date') ? el('dr-activity-date').value : '';
+  if (activityDate) renderDailyActivity(activityDate);
   el("exp-rows").innerHTML = "";
   el("exp-total").textContent = "0.00";
   // फिल्टर रिसेट करा जेणेकरून गोंधळ होणार नाही
@@ -5744,6 +5800,7 @@ function renderExpensesList(invoiceNo = "") {
         <td class="font-bold text-yellow-300">${e.invoiceNo}</td>
         <td>${e.category}</td>
         <td>${e.name}</td>
+        <td>${e.bank || 'Cash'}</td>
         <td>${e.quantity}</td>
         <td>${e.unit}</td>
         <td>₹${e.rate}</td>
@@ -6380,7 +6437,8 @@ el('exp-filter-date').addEventListener('change', () => {
         quantity: qtys[i],
         unit: units[i],
         rate: rates[i],
-        category: cats[i]
+        category: cats[i],
+        bank: expenseBankAt(rec, i)
       });
 
       total +=
@@ -6432,6 +6490,7 @@ function loadExpenseByDate() {
         date: rowDate,
         name: names[i],
         category: cats[i],
+        bank: expenseBankAt(rec, i),
         quantity: qtys[i],
         unit: units[i],
         rate: rates[i]
@@ -6529,6 +6588,14 @@ function addQuickExpenseRow() {
       <option value="">-- Select Category --</option>
     </select>
 
+    <label class="muted text-sm">Bank / Account</label>
+    <select class="qe-bank p-2 border rounded w-full mb-1">
+      <option value="Kotak Bank">Kotak Bank</option>
+      <option value="SBI Bank">SBI Bank</option>
+      <option value="HDFC Bank">HDFC Bank</option>
+      <option value="Cash" selected>Cash</option>
+    </select>
+
     <div class="grid grid-cols-3 gap-1 mb-1">
       <input type="number" class="qe-qty p-2 border rounded" placeholder="Qty" value="1">
       <input type="text" class="qe-unit p-2 border rounded" placeholder="Unit">
@@ -6604,6 +6671,7 @@ function saveQuickExpenses() {
   date: finalDate,
   name: r.querySelector(".qe-name").value,
       category: r.querySelector(".qe-cat").value,
+      bank: r.querySelector(".qe-bank")?.value || 'Cash',
       quantity: r.querySelector(".qe-qty").value,
       unit: r.querySelector(".qe-unit").value,
       rate: r.querySelector(".qe-rate").value
@@ -6647,6 +6715,7 @@ el("qe-search-date").addEventListener("change", () => {
       const row = el("qe-rows").lastElementChild;
       row.querySelector(".qe-name").value = names[i] || "";
       row.querySelector(".qe-cat").value  = cats[i] || "";
+      row.querySelector(".qe-bank").value = expenseBankAt(rec, i);
       row.querySelector(".qe-qty").value  = qtys[i] || 1;
       row.querySelector(".qe-unit").value = units[i] || "";
       row.querySelector(".qe-rate").value = rates[i] || 0;
@@ -7866,6 +7935,7 @@ function syncReceivedOrdersToExpensesCombined() {
         const existingRates = existing.rate.split(',').map(s => s.trim());
         const existingCats = existing.category.split(',').map(s => s.trim());
         const existingDates = existing.date.split(',').map(s => s.trim());
+        const existingBanks = String(existing.bank || '').split(',').map(s => s.trim());
 
         newData.items.forEach(it => {
     const lowerName = it.name.trim().toLowerCase();
@@ -7883,6 +7953,7 @@ function syncReceivedOrdersToExpensesCombined() {
         existingRates.push(it.rate);
         existingCats.push(it.category || newData.category);
         existingDates.push(newData.date);
+        existingBanks.push('Cash');
     }
 });
 
@@ -7901,6 +7972,7 @@ function syncReceivedOrdersToExpensesCombined() {
         existing.rate = existingRates.join(', ');
         existing.category = existingCats.join(', ');
         existing.date = existingDates.join(', ');
+        existing.bank = Array.from({length: existingNames.length}, (_, i) => existingBanks[i] || 'Cash').join(', ');
         existing.amount = allAmounts.reduce((sum, a) => sum + a, 0).toFixed(2);
 
       } else {
@@ -7910,6 +7982,7 @@ function syncReceivedOrdersToExpensesCombined() {
     invoiceNo,
     date: newData.date,
     category: newData.items.map(i => i.category).join(', '),
+    bank: newData.items.map(() => 'Cash').join(', '),
     name: newData.items.map(i => i.name).join(', '),
     quantity: newData.items.map(i => i.qty).join(', '),
     unit: newData.items.map(i => i.unit).join(', '),
@@ -8053,6 +8126,7 @@ function transferOrderToExpenses(orderId) {
     const units = existing.unit.split(',').map(s => s.trim());
     const rates = existing.rate.split(',').map(s => s.trim());
     const cats  = existing.category.split(',').map(s => s.trim());
+    const banks = String(existing.bank || '').split(',').map(s => s.trim());
     const dates = existing.date
       ? existing.date.split(',').map(s => s.trim())
       : [];
@@ -8063,6 +8137,7 @@ function transferOrderToExpenses(orderId) {
       units.push(it.unit);
       rates.push(it.rate);
       cats.push(it.category || "Order Material");
+      banks.push('Cash');
 
       // ⭐⭐⭐ MOST IMPORTANT FIX ⭐⭐⭐
       dates.push(order.date);
@@ -8073,6 +8148,7 @@ function transferOrderToExpenses(orderId) {
     existing.unit = units.join(', ');
     existing.rate = rates.join(', ');
     existing.category = cats.join(', ');
+    existing.bank = names.map((_, i) => banks[i] || 'Cash').join(', ');
     existing.date = dates.join(', ');
 
     // 🔢 amount recalc
@@ -8099,6 +8175,7 @@ function transferOrderToExpenses(orderId) {
       date: items.map(() => order.date).join(', '),
 
       category: items.map(i => i.category || "Order Material").join(', '),
+      bank: items.map(() => 'Cash').join(', '),
       name: items.map(i => i.part).join(', '),
       quantity: items.map(i => i.qty).join(', '),
       unit: items.map(i => i.unit).join(', '),
@@ -8135,6 +8212,7 @@ function updateExpenseFromOrder(order) {
 
   exp.date = order.date;
   exp.category = items.map(i => i.category || "Order Material").join(', ');
+  exp.bank = items.map(() => 'Cash').join(', ');
   exp.name = items.map(i => i.part).join(', ');
   exp.quantity = items.map(i => i.qty).join(', ');
   exp.unit = items.map(i => i.unit).join(', ');
@@ -8177,7 +8255,8 @@ el('exp-filter-date').addEventListener('change', () => {
         quantity: qtys[i],
         unit: units[i],
         rate: rates[i],
-        category: cats[i]
+        category: cats[i],
+        bank: expenseBankAt(rec, i)
       });
       total += parseFloat(rates[i] || 0) * parseFloat(qtys[i] || 1);
     }
@@ -9220,31 +9299,84 @@ function renderDailyActivity(selectedDate) {
   const moneyText = value => '₹' + (parseFloat(value) || 0).toFixed(2);
   const sections = [];
 
-  // Payment In (Received Payments)
+  if (!selectedDate) {
+    box.innerHTML = '<p class="muted">Please select a date to view daily activity.</p>';
+    return;
+  }
+
+  // H. Expenses (manual entries and internal bank transfers) for this date.
+  const homeExpenseRows = (DATA.homeExpenses || []).filter(r => r.date === selectedDate);
+  // Internal transfers move money between accounts; they are shown in H. Expenses,
+  // but are excluded from the overall Payment In / Payment Out cash-flow totals.
+  const homeCashRows = homeExpenseRows.filter(r => !r.transferId);
+  const homeCredit = homeCashRows.filter(r => r.type === 'in').reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+  const homeDebit = homeCashRows.filter(r => r.type === 'out').reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+
+  // Payment In (keep all existing Vaibhav Enterprises entries and rows unchanged;
+  // add manual H. Expenses Credit only to the displayed total).
   const received = (DATA.payments || []).filter(p => p.date === selectedDate);
+  const receivedTotal = received.reduce((sum, p) => sum + (parseFloat(p.received) || 0), 0);
   sections.push({
     title: 'Payment In',
-    total: received.reduce((sum, p) => sum + (parseFloat(p.received) || 0), 0),
-    rows: received.map(p => `${p.invoiceNo || ''} | ${p.client || ''} | ${p.note || p.bank || 'Received'} | ${moneyText(p.received)}`)
+    total: receivedTotal + homeCredit,
+    rows: [
+      ...received.map(p => `${p.invoiceNo || ''} | ${p.client || ''} | ${p.note || p.bank || 'Received'} | ${moneyText(p.received)}`),
+      ...homeCashRows.filter(r => r.type === 'in').map(r => `${r.bank || 'Cash'} | ${r.description || 'H. Expenses Credit'} | ${moneyText(r.amount)}`)
+    ]
   });
 
-  // Payment Out (Paid Payments)
+  // Work Expenses (regular project/site Expenses).
+  const workExpenseRows = [];
+  (DATA.expenses || []).forEach(exp => {
+    const dates = String(exp.date || '').split(',').map(v => v.trim());
+    const names = String(exp.name || '').split(',').map(v => v.trim());
+    const quantities = String(exp.quantity || '').split(',').map(v => v.trim());
+    const units = String(exp.unit || '').split(',').map(v => v.trim());
+    const rates = String(exp.rate || '').split(',').map(v => v.trim());
+    const categories = String(exp.category || '').split(',').map(v => v.trim());
+
+    dates.forEach((date, i) => {
+      if (date !== selectedDate) return;
+      const qty = parseFloat(quantities[i]) || 0;
+      const rate = parseFloat(rates[i]) || 0;
+      const amount = qty * rate;
+      workExpenseRows.push({
+        amount,
+        text: `${exp.invoiceNo || ''} | ${categories[i] || ''} | ${names[i] || ''} | ${expenseBankAt(exp, i)} | ${qty} ${units[i] || ''} × ${moneyText(rate)} = ${moneyText(amount)}`
+      });
+    });
+  });
+  const workExpenseTotal = workExpenseRows.reduce((sum, r) => sum + r.amount, 0);
+
+  // Payment Out total includes Paid Payments + Work Expenses + H. Expenses Debit.
+  // Existing Vaibhav Enterprises Payment Out rows remain unchanged.
   const paid = (DATA.paidPayments || []).filter(p => p.date === selectedDate);
+  const paidTotal = paid.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
   sections.push({
     title: 'Payment Out',
-    total: paid.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0),
-    rows: paid.map(p => `${p.invoiceNo || ''} ${p.orderId && p.orderId !== 'N/A' ? '| ' + p.orderId : ''} | ${p.name || p.labor || ''} | ${p.note || p.bank || 'Paid'} | ${moneyText(p.amount)}`)
+    total: paidTotal + workExpenseTotal + homeDebit,
+    rows: [
+      ...paid.map(p => `${p.invoiceNo || ''} ${p.orderId && p.orderId !== 'N/A' ? '| ' + p.orderId : ''} | ${p.name || p.labor || ''} | ${p.note || p.bank || 'Paid'} | ${moneyText(p.amount)}`),
+      ...workExpenseRows.map(r => r.text),
+      ...homeCashRows.filter(r => r.type === 'out').map(r => `${r.bank || 'Cash'} | ${r.description || 'H. Expenses Debit'} | ${moneyText(r.amount)}`)
+    ]
   });
 
-  // H. Expenses (Manual entries and internal bank transfers)
-  const homeExpenseRows = (DATA.homeExpenses || []).filter(r => r.date === selectedDate);
-  const homeCredit = homeExpenseRows.filter(r => r.type === 'in').reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
-  const homeDebit = homeExpenseRows.filter(r => r.type === 'out').reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+  sections.push({
+    title: 'Work Expenses',
+    total: workExpenseTotal,
+    rows: workExpenseRows.map(r => r.text)
+  });
+
+  // H. Expenses: show Credit and Debit totals prominently like Payment In / Payment Out.
   sections.push({
     title: 'H. Expenses',
     total: null,
-    summary: `Credit: ${moneyText(homeCredit)} | Debit: ${moneyText(homeDebit)}`,
-    rows: homeExpenseRows.map(r => `${r.bank || ''} | ${r.type === 'in' ? 'Credit' : r.type === 'out' ? 'Debit' : 'Entry'} | ${r.description || (r.transferId ? 'Bank Transfer' : 'Home Expense')} | ${moneyText(r.amount)}`)
+    summary: `Credit: ${moneyText(homeCredit)} | Debit: ${moneyText(homeDebit + workExpenseTotal)}`,
+    rows: [
+      ...homeExpenseRows.map(r => `${r.bank || ''} | ${r.type === 'in' ? 'Credit' : r.type === 'out' ? 'Debit' : 'Entry'} | ${r.description || (r.transferId ? 'Bank Transfer' : 'Home Expense')} | ${moneyText(r.amount)}`),
+      ...workExpenseRows.map(r => r.text)
+    ]
   });
 
   // Orders
@@ -9275,17 +9407,14 @@ function renderDailyActivity(selectedDate) {
       : ''
   });
 
-  if (!selectedDate) {
-    box.innerHTML = '<p class="muted">Please select a date to view daily activity.</p>';
-    return;
-  }
-
   box.innerHTML = sections.map(section => `
     <div class="p-3 rounded border border-gray-600">
-      <div class="font-bold text-yellow-400">${esc(section.title)}
-        ${section.total !== null ? `<span class="float-right">${moneyText(section.total)}</span>` : ''}
+      <div class="font-bold text-yellow-400 flex flex-wrap items-center justify-between gap-2">
+        <span>${esc(section.title)}</span>
+        ${section.total !== null ? `<span>${moneyText(section.total)}</span>` : ''}
+        ${section.title === 'H. Expenses' && section.summary ? `<span class="text-sm font-semibold">${esc(section.summary)}</span>` : ''}
       </div>
-      ${section.summary ? `<div class="text-sm mt-1">${esc(section.summary)}</div>` : ''}
+      ${section.summary && section.title !== 'H. Expenses' ? `<div class="text-sm mt-1">${esc(section.summary)}</div>` : ''}
       ${section.rows.length
         ? `<ul class="list-disc list-inside mt-2 text-sm space-y-1">${section.rows.map(row => `<li>${esc(row)}</li>`).join('')}</ul>`
         : '<div class="muted mt-1">No activity on this date.</div>'}
@@ -11368,8 +11497,13 @@ window.addEventListener("DOMContentLoaded", addResetButtonToNavbar);
         const remote = snap.data();
         // merge or overwrite — येथे मी overwrite करतो (सरल)
         DATA = remote;
+        DATA.expenses = DATA.expenses || [];
+        DATA.homeExpenses = DATA.homeExpenses || [];
+        DATA.homeMaterials = DATA.homeMaterials || [];
+        const migratedExpenseBanks = normalizeExpenseBankData();
         localStorage.setItem(KEY, JSON.stringify(DATA));
         renderAll();
+        if (migratedExpenseBanks) await saveToFirestore();
         console.log("✅ Firestore data loaded");
       } else {
         console.log("⚠️ No Firestore document found at", DOC_PATH);
