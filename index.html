@@ -3698,8 +3698,8 @@ const descText = (it.description || "")
   doc.setFontSize(11);
   doc.text("Thank You For", pageWidth - 64, y);
   y += 3;
-  addSavedCompanySignature(doc, pageWidth - 64, y, 38, 12);
-  y += 13;
+  addSavedCompanySignature(doc, pageWidth - 64, y - 5, 45, 15);
+  y += 10;
   doc.setFont("helvetica", "bold");
   doc.text(cname, pageWidth - 64, y);
 
@@ -5289,8 +5289,8 @@ function exportInvoicePDF() {
   doc.setFontSize(11);
   doc.text("Thank You For", 196 - 50, y);
   y += 3;
-  addSavedCompanySignature(doc, 196 - 50, y, 38, 12);
-  y += 13;
+  addSavedCompanySignature(doc, 196 - 50, y - 5, 45, 15);
+  y += 10;
   doc.setFont("helvetica", "bold");
   doc.text(cname, 196 - 50, y);
 
@@ -6363,8 +6363,8 @@ doc.setFont("helvetica", "bold");
 doc.setFontSize(11);
 doc.text("Thank You For", 190, y, { align: "right" });
 y += 3;
-addSavedCompanySignature(doc, 152, y, 38, 12);
-y += 13;
+addSavedCompanySignature(doc, 152, y - 5, 45, 15);
+y += 10;
 doc.setFont("helvetica", "bold");
 doc.setFontSize(12);
 doc.text("Vaibhav Enterprises", 190, y, { align: "right" });
@@ -7498,8 +7498,8 @@ function downloadMeasurementPDF(id){
   doc.text("Thank You For", pageWidth - 14, y, { align: "right" });
 
   y += 3;
-  addSavedCompanySignature(doc, pageWidth - 52, y, 38, 12);
-  y += 13;
+  addSavedCompanySignature(doc, pageWidth - 52, y - 5, 45, 15);
+  y += 10;
 
   doc.setFont("helvetica", "bold");
   doc.text("Vaibhav Enterprises", pageWidth - 14, y, { align: "right" });
@@ -11660,8 +11660,8 @@ function addSavedCompanySignature(doc, x, y, width, height){
 function getCompanySignatureHtml(){
   const signature = getCompanySignatureData();
   return signature
-    ? `<img src="${signature}" alt="Company Signature" style="display:inline-block;width:145px;height:48px;object-fit:contain;vertical-align:middle;">`
-    : `<span style="display:inline-block;width:145px;height:48px;"></span>`;
+    ? `<img src="${signature}" alt="Company Signature" style="display:inline-block;width:170px;height:56px;object-fit:contain;vertical-align:middle;position:relative;top:-8px;">`
+    : `<span style="display:inline-block;width:170px;height:56px;"></span>`;
 }
 </script>
 
@@ -11718,7 +11718,7 @@ function getCompanySignatureHtml(){
   };
   window.getOwnerSignatureHtml=function(type,id){
     const sig=localStorage.getItem(key(type,id));
-    return sig?`<img src="${sig}" alt="Owner Signature" style="display:inline-block;width:145px;height:48px;object-fit:contain;vertical-align:middle;">`:`<span style="display:inline-block;width:145px;height:48px;"></span>`;
+    return sig?`<img src="${sig}" alt="Owner Signature" style="display:inline-block;width:170px;height:56px;object-fit:contain;vertical-align:middle;position:relative;top:-8px;">`:`<span style="display:inline-block;width:170px;height:56px;"></span>`;
   };
 })();
 </script>
