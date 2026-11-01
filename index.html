@@ -3356,6 +3356,7 @@ async function shareEstimate(estNo) {
       lines.push(
         `${it.quantity} | ${it.unit || ''} | ₹${it.rate} | ₹${(it.quantity * it.rate)}`
       );
+      lines.push('');
     });
 
     lines.push('');
