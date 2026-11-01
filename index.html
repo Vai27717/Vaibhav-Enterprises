@@ -9303,35 +9303,53 @@ function renderDailyActivity(selectedDate) {
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
   }[ch]));
   const moneyText = value => '₹' + (parseFloat(value) || 0).toFixed(2);
+  // Normalize dates so ISO dates, date-time values and dd-MM-yyyy/dd-MM-yyyy
+  // records are compared consistently with the Home screen date picker.
+  const normalizeActivityDate = value => {
+    if (value instanceof Date && !isNaN(value)) {
+      return `${value.getFullYear()}-${String(value.getMonth()+1).padStart(2,'0')}-${String(value.getDate()).padStart(2,'0')}`;
+    }
+    const raw = String(value ?? '').trim();
+    if (!raw) return '';
+    const iso = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (iso) return `${iso[1]}-${String(iso[2]).padStart(2,'0')}-${String(iso[3]).padStart(2,'0')}`;
+    const local = raw.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+    if (local) return `${local[3]}-${String(local[2]).padStart(2,'0')}-${String(local[1]).padStart(2,'0')}`;
+    const parsed = new Date(raw);
+    if (!isNaN(parsed)) return `${parsed.getFullYear()}-${String(parsed.getMonth()+1).padStart(2,'0')}-${String(parsed.getDate()).padStart(2,'0')}`;
+    return raw;
+  };
+  const selectedDateKey = normalizeActivityDate(selectedDate);
   const sections = [];
 
-  if (!selectedDate) {
+  if (!selectedDateKey) {
     box.innerHTML = '<p class="muted">Please select a date to view daily activity.</p>';
     return;
   }
 
-  // H. Expenses (manual entries and internal bank transfers) for this date.
-  const homeExpenseRows = (DATA.homeExpenses || []).filter(r => r.date === selectedDate);
-  // Internal transfers move money between accounts; they are shown in H. Expenses,
-  // but are excluded from the overall Payment In / Payment Out cash-flow totals.
+  // H. Expenses manual entries and internal transfers for this date.
+  const homeExpenseRows = (DATA.homeExpenses || []).filter(r => normalizeActivityDate(r.date) === selectedDateKey);
+  // Transfers are displayed in H. Expenses, but excluded from cash-flow totals.
   const homeCashRows = homeExpenseRows.filter(r => !r.transferId);
-  const homeCredit = homeCashRows.filter(r => r.type === 'in').reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
-  const homeDebit = homeCashRows.filter(r => r.type === 'out').reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+  // Internal transfers remain visible in the H. Expenses list, but are excluded from totals.
+  const isHomeCredit = r => String(r.type || '').toLowerCase() === 'in';
+  const isHomeDebit = r => String(r.type || '').toLowerCase() === 'out';
+  const homeCredit = homeCashRows.filter(isHomeCredit).reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+  const homeDebit = homeCashRows.filter(isHomeDebit).reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
 
-  // Payment In (keep all existing Vaibhav Enterprises entries and rows unchanged;
-  // add manual H. Expenses Credit only to the displayed total).
-  const received = (DATA.payments || []).filter(p => p.date === selectedDate);
+  // Payment In combines Vaibhav Enterprises payments with manual H. Expenses credits.
+  const received = (DATA.payments || []).filter(p => normalizeActivityDate(p.date) === selectedDateKey && (parseFloat(p.received) || 0) > 0);
   const receivedTotal = received.reduce((sum, p) => sum + (parseFloat(p.received) || 0), 0);
   sections.push({
     title: 'Payment In',
     total: receivedTotal + homeCredit,
     rows: [
-      ...received.map(p => `${p.invoiceNo || ''} | ${p.client || ''} | ${p.note || p.bank || 'Received'} | ${moneyText(p.received)}`),
-      ...homeCashRows.filter(r => r.type === 'in').map(r => `${r.bank || 'Cash'} | ${r.description || 'H. Expenses Credit'} | ${moneyText(r.amount)}`)
+      ...received.map(p => `${p.bank || 'Cash'} | ${p.client || p.name || 'Customer'} | ${p.note || p.work || 'Payment In'} | ${moneyText(p.received)}`),
+      ...homeCashRows.filter(isHomeCredit).map(r => `${r.bank || 'Cash'} | ${r.description || 'H. Expenses Credit'} | ${moneyText(r.amount)}`)
     ]
   });
 
-  // Work Expenses (regular project/site Expenses).
+  // Work Expenses (regular project/site Expenses), matched item-by-item by date.
   const workExpenseRows = [];
   (DATA.expenses || []).forEach(exp => {
     const dates = String(exp.date || '').split(',').map(v => v.trim());
@@ -9342,10 +9360,11 @@ function renderDailyActivity(selectedDate) {
     const categories = String(exp.category || '').split(',').map(v => v.trim());
 
     dates.forEach((date, i) => {
-      if (date !== selectedDate) return;
+      if (normalizeActivityDate(date) !== selectedDateKey) return;
       const qty = parseFloat(quantities[i]) || 0;
       const rate = parseFloat(rates[i]) || 0;
       const amount = qty * rate;
+      if (amount <= 0) return;
       workExpenseRows.push({
         amount,
         text: `${exp.invoiceNo || ''} | ${categories[i] || ''} | ${names[i] || ''} | ${expenseBankAt(exp, i)} | ${qty} ${units[i] || ''} × ${moneyText(rate)} = ${moneyText(amount)}`
@@ -9355,8 +9374,7 @@ function renderDailyActivity(selectedDate) {
   const workExpenseTotal = workExpenseRows.reduce((sum, r) => sum + r.amount, 0);
 
   // Payment Out total includes Paid Payments + Work Expenses + H. Expenses Debit.
-  // Existing Vaibhav Enterprises Payment Out rows remain unchanged.
-  const paid = (DATA.paidPayments || []).filter(p => p.date === selectedDate);
+  const paid = (DATA.paidPayments || []).filter(p => normalizeActivityDate(p.date) === selectedDateKey);
   const paidTotal = paid.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
   sections.push({
     title: 'Payment Out',
@@ -9364,7 +9382,7 @@ function renderDailyActivity(selectedDate) {
     rows: [
       ...paid.map(p => `${p.invoiceNo || ''} ${p.orderId && p.orderId !== 'N/A' ? '| ' + p.orderId : ''} | ${p.name || p.labor || ''} | ${p.note || p.bank || 'Paid'} | ${moneyText(p.amount)}`),
       ...workExpenseRows.map(r => r.text),
-      ...homeCashRows.filter(r => r.type === 'out').map(r => `${r.bank || 'Cash'} | ${r.description || 'H. Expenses Debit'} | ${moneyText(r.amount)}`)
+      ...homeCashRows.filter(isHomeDebit).map(r => `${r.bank || 'Cash'} | ${r.description || 'H. Expenses Debit'} | ${moneyText(r.amount)}`)
     ]
   });
 
@@ -9374,19 +9392,20 @@ function renderDailyActivity(selectedDate) {
     rows: workExpenseRows.map(r => r.text)
   });
 
-  // H. Expenses: show Credit and Debit totals prominently like Payment In / Payment Out.
+  // H. Expenses totals remain based on manual H. Expenses entries and Work Expenses.
   sections.push({
     title: 'H. Expenses',
     total: null,
     summary: `Credit: ${moneyText(homeCredit)} | Debit: ${moneyText(homeDebit + workExpenseTotal)}`,
     rows: [
-      ...homeExpenseRows.map(r => `${r.bank || ''} | ${r.type === 'in' ? 'Credit' : r.type === 'out' ? 'Debit' : 'Entry'} | ${r.description || (r.transferId ? 'Bank Transfer' : 'Home Expense')} | ${moneyText(r.amount)}`),
+      ...homeExpenseRows.map(r => `${r.bank || ''} | ${isHomeCredit(r) ? 'Credit' : isHomeDebit(r) ? 'Debit' : 'Entry'} | ${r.description || (r.transferId ? 'Bank Transfer' : 'Home Expense')} | ${moneyText(r.amount)}`),
+      ...received.map(p => `${p.bank || 'Cash'} | ${p.client || p.name || 'Customer'} | ${p.note || p.work || 'Payment In'} | ${moneyText(p.received)}`),
       ...workExpenseRows.map(r => r.text)
     ]
   });
 
   // Orders
-  const orders = (DATA.orders || []).filter(o => o.date === selectedDate);
+  const orders = (DATA.orders || []).filter(o => normalizeActivityDate(o.date) === selectedDateKey);
   sections.push({
     title: 'Order',
     total: null,
@@ -9396,7 +9415,7 @@ function renderDailyActivity(selectedDate) {
   // Labor Attendance by date
   const laborRows = [];
   (DATA.labor || []).forEach(l => {
-    (l.days || []).filter(d => d.date === selectedDate).forEach(d => {
+    (l.days || []).filter(d => normalizeActivityDate(d.date) === selectedDateKey).forEach(d => {
       laborRows.push({
         text: `${l.name || ''} | Status: ${d.status || '-'} | Advance: ${moneyText(d.advance)} | Transport: ${moneyText(d.transport)}`,
         advance: parseFloat(d.advance) || 0,
@@ -9427,7 +9446,6 @@ function renderDailyActivity(selectedDate) {
     </div>
   `).join('');
 }
-
 
 function renderDailyReports() {
     const box = el('saved-daily');
