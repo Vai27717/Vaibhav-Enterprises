@@ -2716,9 +2716,9 @@ async function pickContact(form) {
     ) {
 
       const contacts = await navigator.contacts.select(
-        ['name', 'tel'],
-        { multiple: false }
-      );
+  ['name'],
+  { multiple: false }
+  );
       alert(JSON.stringify(contacts));
       
      if (contacts && contacts.length > 0) {
