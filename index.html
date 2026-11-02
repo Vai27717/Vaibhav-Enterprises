@@ -2671,25 +2671,12 @@ function refreshMaterialsDatalist() {
 }
 
 
-```javascript
+
 /* ---------- Contact picker (fallback prompt) ---------- */
 function pickContact(form){
   try{
-
-    if (navigator.contacts && navigator.contacts.getProperties) {
-      navigator.contacts.getProperties()
-        .then(p => alert('Properties: ' + JSON.stringify(p)))
-        .catch(e => alert('Error: ' + e.message));
-    } else {
-      alert('getProperties Not Supported');
-    }
-
     if('contacts' in navigator && navigator.contacts.select){
       navigator.contacts.select(['name','tel'], {multiple:false}).then(list=>{
-
-        // Contact Picker मधून मिळालेला डेटा तपासा
-        alert('Selected Contact: ' + JSON.stringify(list));
-
         if(list && list.length){
           const c = list[0];
           const name = (c.name && c.name[0])||'';
@@ -2699,18 +2686,12 @@ function pickContact(form){
           if(form==='inv'){ el('inv-client').value = name; el('inv-contact').value = tel; }
           if(form==='pay'){ el('pay-client').value = name; el('pay-contact').value = tel; }
           if(form==='msr'){ el('msr-client').value = name; el('msr-contact').value = tel; }
-          if(form==='ord'){ el('merchant-name').value = name; el('merchant-contact').value = tel; }
+          if(form==='ord'){ el('merchant-name').value = name; el('merchant-contact').value = tel; } 
         }
-      }).catch(e=>{
-        alert('Contact Picker Error: ' + e.message);
-        fallbackPrompt();
-      });
+      }).catch(e=>{ fallbackPrompt(); });
       return;
     }
-  }catch(e){
-    alert('Error: ' + e.message);
-  }
-
+  }catch(e){}
   fallbackPrompt();
 
   function fallbackPrompt(){
@@ -2722,14 +2703,9 @@ function pickContact(form){
     if(form==='inv'){ if(name) el('inv-client').value=name; if(tel) el('inv-contact').value=tel; }
     if(form==='pay'){ if(name) el('pay-client').value=name; if(tel) el('pay-contact').value=tel; }
     if(form==='msr'){ if(name) el('msr-client').value=name; if(tel) el('msr-contact').value=tel; }
-    if(form==='ord'){ if(name) el('merchant-name').value=name; if(tel) el('merchant-contact').value=tel; }
+    if(form==='ord'){ if(name) el('merchant-name').value=name; if(tel) el('merchant-contact').value=tel; } 
   }
 }
-```
-
-
-
-
 
 /* -------------------------------------------------------------
  * 📈 HOME SUMMARY / REPORTING
