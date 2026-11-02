@@ -2675,6 +2675,18 @@ function refreshMaterialsDatalist() {
 /* ---------- Contact picker (fallback prompt) ---------- */
 function pickContact(form){
   try{
+
+   if (navigator.contacts && navigator.contacts.getProperties) {
+  navigator.contacts.getProperties()
+    .then(p => alert('Properties: ' + JSON.stringify(p)))
+    .catch(e => alert('Error: ' + e.message));
+} else {
+  alert('getProperties Not Supported');
+}
+
+
+
+   
     if('contacts' in navigator && navigator.contacts.select){
       navigator.contacts.select(['name','tel'], {multiple:false}).then(list=>{
         if(list && list.length){
