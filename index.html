@@ -2672,39 +2672,79 @@ function refreshMaterialsDatalist() {
 
 
 
-/* ---------- Contact picker (fallback prompt) ---------- */
-function pickContact(form){
-  try{
-    if('contacts' in navigator && navigator.contacts.select){
-      navigator.contacts.select(['name','tel'], {multiple:false}).then(list=>{
-        if(list && list.length){
-          const c = list[0];
-          const name = (c.name && c.name[0])||'';
-          const tel = (c.tel && c.tel[0])||'';
+/* ---------- Contact Picker ---------- */
+async function pickContact(form) {
 
-          if(form==='est'){ el('est-client').value = name; el('est-contact').value = tel; }
-          if(form==='inv'){ el('inv-client').value = name; el('inv-contact').value = tel; }
-          if(form==='pay'){ el('pay-client').value = name; el('pay-contact').value = tel; }
-          if(form==='msr'){ el('msr-client').value = name; el('msr-contact').value = tel; }
-          if(form==='ord'){ el('merchant-name').value = name; el('merchant-contact').value = tel; } 
-        }
-      }).catch(e=>{ fallbackPrompt(); });
+  function setField(id, value) {
+    const field = document.getElementById(id);
+
+    if (field && value) {
+      field.value = value;
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+      field.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+
+  function fillContact(name, tel) {
+
+    const fields = {
+      est: ['est-client', 'est-contact'],
+      inv: ['inv-client', 'inv-contact'],
+      pay: ['pay-client', 'pay-contact'],
+      msr: ['msr-client', 'msr-contact'],
+      ord: ['merchant-name', 'merchant-contact']
+    };
+
+    const ids = fields[form];
+
+    if (!ids) return;
+
+    setField(ids[0], name);
+    setField(ids[1], tel);
+  }
+
+  function getValue(value) {
+    if (Array.isArray(value)) return value[0] || '';
+    return value || '';
+  }
+
+  try {
+
+    if (
+      navigator.contacts &&
+      typeof navigator.contacts.select === 'function'
+    ) {
+
+      const contacts = await navigator.contacts.select(
+        ['name', 'tel'],
+        { multiple: false }
+      );
+
+      if (contacts && contacts.length > 0) {
+
+        const contact = contacts[0];
+
+        const name = getValue(contact.name);
+        const tel = getValue(contact.tel);
+
+        fillContact(name, tel);
+      }
+
       return;
     }
-  }catch(e){}
-  fallbackPrompt();
 
-  function fallbackPrompt(){
-    const name = prompt('Contact name');
-    const tel = prompt('Contact number');
-    if(!name && !tel) return;
-
-    if(form==='est'){ if(name) el('est-client').value=name; if(tel) el('est-contact').value=tel; }
-    if(form==='inv'){ if(name) el('inv-client').value=name; if(tel) el('inv-contact').value=tel; }
-    if(form==='pay'){ if(name) el('pay-client').value=name; if(tel) el('pay-contact').value=tel; }
-    if(form==='msr'){ if(name) el('msr-client').value=name; if(tel) el('msr-contact').value=tel; }
-    if(form==='ord'){ if(name) el('merchant-name').value=name; if(tel) el('merchant-contact').value=tel; } 
+  } catch (error) {
+    console.log('Contact Picker Error:', error);
   }
+
+  // Fallback
+  const name = prompt('Contact Name');
+  if (name === null) return;
+
+  const tel = prompt('Contact Number');
+  if (tel === null) return;
+
+  fillContact(name, tel);
 }
 
 /* -------------------------------------------------------------
