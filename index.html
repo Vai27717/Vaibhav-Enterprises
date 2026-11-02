@@ -2719,8 +2719,9 @@ async function pickContact(form) {
         ['name', 'tel'],
         { multiple: false }
       );
-
-      if (contacts && contacts.length > 0) {
+      alert(JSON.stringify(contacts));
+      
+     if (contacts && contacts.length > 0) {
 
         const contact = contacts[0];
 
