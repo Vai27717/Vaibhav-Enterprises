@@ -11683,107 +11683,109 @@ function importSurveyToEstimate(selectedProject){
  }
 
  const p = selectedProject;
-
- if (!p) {
-   return alert("Selected Client Project मिळाला नाही.");
- }
+ if (!p) return alert("Selected Client Project मिळाला नाही.");
 
  const client = p.client || {};
  const rooms = Array.isArray(p.rooms) ? p.rooms : [];
-
  const areaTotal = rooms.reduce((sum,r) =>
    sum + ((Number(r.length)||0) * (Number(r.width)||0)), 0
  );
-
  const details = [];
+ const categoryTotals = new Map();
 
- // रिकामी माहिती तपासण्यासाठी
- const hasValue = v =>
-   v !== undefined &&
-   v !== null &&
-   String(v).trim() !== "" &&
-   String(v).trim() !== "-";
+ const hasValue = v => v !== undefined && v !== null &&
+   String(v).trim() !== "" && String(v).trim() !== "-";
+ const addTotal = (category, unit, value) => {
+   if (!category || !hasValue(unit) || !Number.isFinite(Number(value))) return;
+   if (!categoryTotals.has(category)) categoryTotals.set(category, new Map());
+   const units = categoryTotals.get(category);
+   units.set(unit, (units.get(unit) || 0) + Number(value));
+ };
+ const formatDimension = (feet, inches) => {
+   const f = Number(feet) || 0, i = Number(inches) || 0;
+   const out = [];
+   if (f) out.push(f + " ft");
+   if (i) out.push(i + " in");
+   return out.join(" ");
+ };
+ // Survey app च्या calcMeasure() प्रमाणे quantity मोजा.
+ const calculateMeasure = m => {
+   const l = (Number(m.l)||0) + (Number(m.li)||0)/12;
+   const w = (Number(m.w)||0) + (Number(m.wi)||0)/12;
+   const h = (Number(m.h)||0) + (Number(m.hi)||0)/12;
+   const multiplier = (m.qty === "" || m.qty == null) ? 1 : Math.max(0, Number(m.qty)||0);
+   const deductions = Array.isArray(m.deductions) ? m.deductions : [];
+   const deductionArea = deductions.reduce((sum,d) => {
+     const dl = (Number(d.l)||0) + (Number(d.li)||0)/12;
+     const dh = (Number(d.h)||0) + (Number(d.hi)||0)/12;
+     const dq = (d.qty === "" || d.qty == null) ? 1 : Math.max(0, Number(d.qty)||0);
+     return sum + dl * dh * dq;
+   }, 0);
+   switch(m.unit){
+     case "Sq.ft.": return Math.max(0, l * (h || w) - deductionArea) * multiplier;
+     case "Rft.": return (l || w) * multiplier;
+     case "Cft.": return Math.max(0, l*w*h - deductionArea*w) * multiplier;
+     case "Nos.": case "Point": case "Kg.": case "Manual": return multiplier;
+     default: return multiplier;
+   }
+ };
 
+ // प्रत्येक खोलीतील कामे व त्यांचे तपशील एकत्र करा.
  rooms.forEach(r => {
    (r.works || []).forEach(w => {
-
      const category = w.category || "";
      const sub = w.sub || "";
      const phase = w.phase || "";
-
-     // Category, Sub Category आणि Phase
      const heading = [category, sub, phase].filter(hasValue).join(" | ");
-
      const itemLines = [];
+     const isPointWork = /Plumbing|Electrical/i.test(category + " " + sub);
 
-     if(/Plumbing|Electrical/i.test(category + " " + sub)){
-
+     if(isPointWork){
        (w.points || []).forEach(pt => {
          const parts = [];
-
          if(hasValue(pt.name)) parts.push("Point: " + pt.name);
          if(hasValue(pt.location)) parts.push("Location: " + pt.location);
          if(hasValue(pt.qty)) parts.push("Quantity: " + pt.qty);
-
          if(hasValue(pt.pipeSize || pt.wire)){
-           parts.push(
-             (/Plumbing/i.test(category + " " + sub) ? "Pipe Size: " : "Wire Size: ") +
-             (pt.pipeSize || pt.wire)
-           );
+           parts.push((/Plumbing/i.test(category + " " + sub) ? "Pipe Size: " : "Wire Size: ") + (pt.pipeSize || pt.wire));
          }
-
-         if(hasValue(pt.material)){
-           parts.push("Material / Brand: " + pt.material);
-         }
-
+         if(hasValue(pt.material)) parts.push("Material / Brand: " + pt.material);
          if(parts.length){
            itemLines.push(parts.join(" | "));
+           addTotal(category, "Point", Number(pt.qty) || (hasValue(pt.qty) ? 0 : 1));
          }
+         const pointNote = pt.note || pt.optionalNote || pt.remark;
+         if(hasValue(pointNote)) itemLines.push("Note: " + pointNote);
        });
-
      } else {
-
        (w.measurements || []).forEach((m,i) => {
          const parts = [];
-
-         if(hasValue(m.l) || hasValue(m.li)){
-           parts.push("Length: " +
-             (hasValue(m.l) ? m.l + " ft" : "") +
-             (hasValue(m.li) ? " " + m.li + " in" : ""));
-         }
-
-         if(hasValue(m.w) || hasValue(m.wi)){
-           parts.push("Width: " +
-             (hasValue(m.w) ? m.w + " ft" : "") +
-             (hasValue(m.wi) ? " " + m.wi + " in" : ""));
-         }
-
-         if(hasValue(m.h) || hasValue(m.hi)){
-           parts.push("Height: " +
-             (hasValue(m.h) ? m.h + " ft" : "") +
-             (hasValue(m.hi) ? " " + m.hi + " in" : ""));
-         }
-
-         if(hasValue(m.qty) && Number(m.qty) !== 0){
-           parts.push("Manual Qty: " + m.qty);
-         }
-
+         const length = formatDimension(m.l, m.li);
+         const width = formatDimension(m.w, m.wi);
+         const height = formatDimension(m.h, m.hi);
+         if(length) parts.push("Length: " + length);
+         if(width) parts.push("Width: " + width);
+         if(height) parts.push("Height: " + height);
+         if(hasValue(m.qty) && Number(m.qty) !== 0) parts.push("Manual Qty: " + m.qty);
+         if(hasValue(m.unit)) parts.push("Unit: " + m.unit);
+         const calculated = calculateMeasure(m);
          if(hasValue(m.unit)){
-           parts.push("Unit: " + m.unit);
+           parts.push("Quantity: " + calculated.toFixed(2) + " " + m.unit);
+           addTotal(category, m.unit, calculated);
          }
-
-         if(parts.length){
-           itemLines.push("Measurement " + (i+1) + ": " + parts.join(" | "));
-         }
+         if(parts.length) itemLines.push("Measurement " + (i+1) + ": " + parts.join(" | "));
+         const measurementNote = m.note || m.optionalNote || m.remark;
+         if(hasValue(measurementNote)) itemLines.push("Note: " + measurementNote);
        });
      }
 
-     // Note फक्त भरलेली असेल तर
-     if(hasValue(w.note)){
-       itemLines.push("Note: " + w.note);
-     }
+     // Work/Sub-category Optional Note; रिकामी note दाखवू नका.
+     const workNote = w.note || w.optionalNote || w.remark;
+     if(hasValue(workNote)) itemLines.push("Note: " + workNote);
+     // Stored data मध्ये category-level note असल्यास तीही समाविष्ट करा.
+     const categoryNote = w.mainCategoryNote || w.categoryNote || w.mainNote;
+     if(hasValue(categoryNote)) itemLines.push("Category Note: " + categoryNote);
 
-     // रिकामे Category Items दाखवू नका
      if(heading && itemLines.length){
        details.push(heading);
        itemLines.forEach(line => details.push("  " + line));
@@ -11791,39 +11793,34 @@ function importSurveyToEstimate(selectedProject){
    });
  });
 
- if(!confirm("Survey मधील माहिती Estimate मध्ये Import करायची? सध्याच्या Estimate मधील भरलेली माहिती बदलली जाईल.")){
-   return;
- }
+ // प्रत्येक Main Category चा एकूण आकडा (वेगवेगळे units वेगळे ठेवा).
+ categoryTotals.forEach((units, category) => {
+   details.push(category + " – Category Total Quantity");
+   units.forEach((total, unit) => {
+     details.push("  Category Total Quantity: " + Number(total).toFixed(2) + " " + unit);
+   });
+ });
+
+ if(!confirm("Survey मधील माहिती Estimate मध्ये Import करायची? सध्याच्या Estimate मधील भरलेली माहिती बदलली जाईल.")) return;
 
  show("est");
-
  document.getElementById("est-client").value = client.name || "";
  document.getElementById("est-contact").value = client.mobile || "";
  document.getElementById("est-work").value = client.project || "";
-
  document.getElementById("est-items").innerHTML = "";
  addItem("est");
-
  const row = document.querySelector("#est-items .item-row");
-
  if(row){
-   row.querySelector(".item-name").value =
-     client.requirements || "Renovation Work";
-
-   // प्रत्येक Item नवीन ओळीत
+   row.querySelector(".item-name").value = client.requirements || "Renovation Work";
    row.querySelector(".item-desc").value = details.join("\n");
-
    row.querySelector(".item-qty").value = areaTotal.toFixed(2);
    row.querySelector(".item-unit").value = "Sq.ft.";
    row.querySelector(".item-rate").value = "";
    row.querySelector(".item-amt").value = "0.00";
  }
-
  recalcAll();
-
  alert("Survey Data Estimate मध्ये Import झाला. Save बटण दाबून Estimate सेव्ह करा.");
 }
-
 window.importSurveyToEstimate = importSurveyToEstimate;
 
 </script>
