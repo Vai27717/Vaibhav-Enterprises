@@ -3313,9 +3313,21 @@ async function deleteEstimate(estNo) {
 
 
 
+
 async function shareEstimate(estNo) {
   try {
-    console.log("STEP 1: Estimate fetch started");
+
+    // Second click: Share directly during user gesture
+    if (
+      window.__preparedEstimateShare &&
+      window.__preparedEstimateShare.estNo === estNo
+    ) {
+      const shareData = window.__preparedEstimateShare.data;
+      window.__preparedEstimateShare = null;
+
+      await navigator.share(shareData);
+      return;
+    }
 
     const res = await fetch(
       `${DEPLOY_URL}?action=getsingle&estimateNumber=${encodeURIComponent(estNo)}`
@@ -3357,7 +3369,6 @@ async function shareEstimate(estNo) {
     items.forEach(it => {
       lines.push('• *' + it.name + '*');
 
-      // Material Quantity विभाग फक्त WhatsApp साठी लपवा
       const description = (it.description || '')
         .split(/\n\s*Material Quantity \(Per 1 Sq\.ft\.\)\s*\n/i)[0]
         .trim();
@@ -3394,7 +3405,6 @@ async function shareEstimate(estNo) {
 
     lines.push('');
     lines.push('_Thank you for connecting with Vaibhav Enterprises_');
-
     lines.push('');
 
     // Estimate PDF Download Link
@@ -3405,9 +3415,7 @@ async function shareEstimate(estNo) {
 
     const message = lines.join('\n');
 
-    // Share Banner Image with Estimate Message
-    console.log("STEP 2: Banner fetch started");
-
+    // Fetch Banner Image
     const imageResponse = await fetch('./estimate-banner.png');
 
     if (!imageResponse.ok) {
@@ -3422,23 +3430,31 @@ async function shareEstimate(estNo) {
       { type: 'image/png' }
     );
 
+    // Check image sharing support
     if (
       navigator.share &&
       navigator.canShare &&
       navigator.canShare({ files: [bannerFile] })
     ) {
-      await navigator.share({
-        files: [bannerFile],
-        title: 'Vaibhav Enterprises - Estimate',
-        text: message
-      });
-    } else {
-      window.open(
-        'https://wa.me/?text=' + encodeURIComponent(message),
-        '_blank'
+
+      // Prepare sharing for the second click
+      window.__preparedEstimateShare = {
+        estNo: estNo,
+        data: {
+          files: [bannerFile],
+          title: 'Vaibhav Enterprises - Estimate',
+          text: message
+        }
+      };
+
+      alert(
+        "Estimate तयार आहे. आता Share बटण पुन्हा क्लिक करा आणि WhatsApp निवडा."
       );
 
-      alert("Image sharing is not supported in this browser. Text message opened.");
+    } else {
+      alert(
+        "या Browser मध्ये Image Sharing समर्थित नाही. Mobile Chrome वर प्रयत्न करा."
+      );
     }
 
   } catch (err) {
