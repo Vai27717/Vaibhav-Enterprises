@@ -3384,7 +3384,13 @@ async function shareEstimate(estNo) {
 
     lines.push('');
     lines.push('_Thank you for connecting with Vaibhav Enterprises_');
-
+    lines.push('');
+    // ✅ Show website line only if it exists and not empty
+    if (website) {
+        lines.push(`For more information regarding the work, please visit the website.: ${website}`);
+    }
+   
+   
     window.open(
       'https://wa.me/?text=' + encodeURIComponent(lines.join('\n')),
       '_blank'
@@ -5125,7 +5131,7 @@ function shareInvoice(invNo) {
     lines.push(`${c.name || cname}`);
     // ✅ Show website line only if it exists and not empty
     if (website) {
-        lines.push(`For more info, visit: ${website}`);
+        lines.push(`For more information regarding the work, please visit the website.: ${website}`);
     }
 
     lines.push(`Thank you for connecting with ${cname}`);
