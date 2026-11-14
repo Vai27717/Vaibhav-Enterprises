@@ -3315,6 +3315,8 @@ async function deleteEstimate(estNo) {
 
 async function shareEstimate(estNo) {
   try {
+    console.log("STEP 1: Estimate fetch started");
+
     const res = await fetch(
       `${DEPLOY_URL}?action=getsingle&estimateNumber=${encodeURIComponent(estNo)}`
     );
@@ -3328,6 +3330,14 @@ async function shareEstimate(estNo) {
 
     const items = JSON.parse(r["Items"] || "[]");
     const lines = [];
+
+    const rawWebsite = (DATA.company && DATA.company.website)
+      ? DATA.company.website.trim()
+      : "";
+
+    const website = rawWebsite
+      ? (/^https?:\/\//i.test(rawWebsite) ? rawWebsite : "https://" + rawWebsite)
+      : "";
 
     lines.push('🧾 Estimate Details');
     lines.push('');
@@ -3377,29 +3387,66 @@ async function shareEstimate(estNo) {
     lines.push('_Vaibhav Enterprises_');
     lines.push('');
 
+    // Website link
+    if (website) {
+      lines.push(`For more information regarding the work, please visit the website.: ${website}`);
+    }
+
+    lines.push('');
+    lines.push('_Thank you for connecting with Vaibhav Enterprises_');
+
+    lines.push('');
+
+    // Estimate PDF Download Link
     lines.push(
       'Download Estimate PDF:https://vai27717.github.io/Your-Estimate/?view=customer&id=' +
       r["Estimate Number"]
     );
 
-    lines.push('');
-    lines.push('_Thank you for connecting with Vaibhav Enterprises_');
-    lines.push('');
-    // ✅ Show website line only if it exists and not empty
-    if (website) {
-        lines.push(`For more information regarding the work, please visit the website.: ${website}`);
+    const message = lines.join('\n');
+
+    // Share Banner Image with Estimate Message
+    console.log("STEP 2: Banner fetch started");
+
+    const imageResponse = await fetch('./estimate-banner.png');
+
+    if (!imageResponse.ok) {
+      throw new Error("Estimate Banner Image not found");
     }
-   
-   
-    window.open(
-      'https://wa.me/?text=' + encodeURIComponent(lines.join('\n')),
-      '_blank'
+
+    const imageBlob = await imageResponse.blob();
+
+    const bannerFile = new File(
+      [imageBlob],
+      'estimate-banner.png',
+      { type: 'image/png' }
     );
 
+    if (
+      navigator.share &&
+      navigator.canShare &&
+      navigator.canShare({ files: [bannerFile] })
+    ) {
+      await navigator.share({
+        files: [bannerFile],
+        title: 'Vaibhav Enterprises - Estimate',
+        text: message
+      });
+    } else {
+      window.open(
+        'https://wa.me/?text=' + encodeURIComponent(message),
+        '_blank'
+      );
+
+      alert("Image sharing is not supported in this browser. Text message opened.");
+    }
+
   } catch (err) {
+    if (err.name === "AbortError") return;
     alert("Share failed: " + err.message);
   }
 }
+
 
 
 
