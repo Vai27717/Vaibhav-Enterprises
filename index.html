@@ -2677,28 +2677,18 @@ function refreshMaterialsDatalist() {
 /* ---------- Contact picker (fallback prompt) ---------- */
 function pickContact(form){
   try{
-    if('contacts' in navigator && navigator.contacts && typeof navigator.contacts.select === 'function'){
+    if('contacts' in navigator && navigator.contacts.select){
       navigator.contacts.select(['name','tel'], {multiple:false}).then(list=>{
         if(list && list.length){
-          const c = list[0] || {};
-          // Android/Chrome versions may expose a contact value as an array or a string.
-          const readContactValue = value => {
-            if(Array.isArray(value)) value = value.find(v => v != null && String(v).trim() !== '') || '';
-            if(value && typeof value === 'object') value = value.value || value.number || value.displayName || '';
-            return value == null ? '' : String(value).trim();
-          };
-          const name = readContactValue(c.name || c.displayName || c.givenName);
-          const tel = readContactValue(c.tel || c.telephone || c.phone || c.phoneNumber);
+          const c = list[0];
+          const name = (c.name && c.name[0])||'';
+          const tel = (c.tel && c.tel[0])||'';
 
-          if(name || tel){
-            if(form==='est'){ el('est-client').value = name; el('est-contact').value = tel; }
-            if(form==='inv'){ el('inv-client').value = name; el('inv-contact').value = tel; }
-            if(form==='pay'){ el('pay-client').value = name; el('pay-contact').value = tel; }
-            if(form==='msr'){ el('msr-client').value = name; el('msr-contact').value = tel; }
-            if(form==='ord'){ el('merchant-name').value = name; el('merchant-contact').value = tel; }
-          } else {
-            fallbackPrompt();
-          }
+          if(form==='est'){ el('est-client').value = name; el('est-contact').value = tel; }
+          if(form==='inv'){ el('inv-client').value = name; el('inv-contact').value = tel; }
+          if(form==='pay'){ el('pay-client').value = name; el('pay-contact').value = tel; }
+          if(form==='msr'){ el('msr-client').value = name; el('msr-contact').value = tel; }
+          if(form==='ord'){ el('merchant-name').value = name; el('merchant-contact').value = tel; } 
         }
       }).catch(e=>{ fallbackPrompt(); });
       return;
@@ -2715,7 +2705,7 @@ function pickContact(form){
     if(form==='inv'){ if(name) el('inv-client').value=name; if(tel) el('inv-contact').value=tel; }
     if(form==='pay'){ if(name) el('pay-client').value=name; if(tel) el('pay-contact').value=tel; }
     if(form==='msr'){ if(name) el('msr-client').value=name; if(tel) el('msr-contact').value=tel; }
-    if(form==='ord'){ if(name) el('merchant-name').value=name; if(tel) el('merchant-contact').value=tel; }
+    if(form==='ord'){ if(name) el('merchant-name').value=name; if(tel) el('merchant-contact').value=tel; } 
   }
 }
 
