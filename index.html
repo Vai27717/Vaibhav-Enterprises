@@ -2675,49 +2675,58 @@ function refreshMaterialsDatalist() {
 
 
 /* ---------- Contact picker (fallback prompt) ---------- */
-function pickContact(form){
-  try{
-    if(navigator.contacts && typeof navigator.contacts.select === 'function'){
-      navigator.contacts.select(['name','tel'], {multiple:false}).then(list=>{
-        if(list && list.length){
-          const c = list[0] || {};
+async function pickContact(form){
+  function firstValue(value){
+    if (Array.isArray(value)) return value.find(v => v != null && String(v).trim() !== '') || '';
+    if (value && typeof value === 'object') return value.value || value.number || value.displayName || '';
+    return value == null ? '' : value;
+  }
 
-          // Chrome versions may return contact values as arrays or strings.
-          const firstValue = value => {
-            if(Array.isArray(value)) return String(value.find(v => v != null && String(v).trim()) || '').trim();
-            if(value == null) return '';
-            return String(value).trim();
-          };
-
-          const name = firstValue(c.name || c.displayName || c.fullName);
-          const tel = firstValue(c.tel || c.phone || c.phoneNumbers || c.telephone);
-
-          if(form==='est'){ el('est-client').value = name; el('est-contact').value = tel; }
-          if(form==='inv'){ el('inv-client').value = name; el('inv-contact').value = tel; }
-          if(form==='pay'){ el('pay-client').value = name; el('pay-contact').value = tel; }
-          if(form==='msr'){ el('msr-client').value = name; el('msr-contact').value = tel; }
-          if(form==='ord'){ el('merchant-name').value = name; el('merchant-contact').value = tel; }
-
-          // If Chrome returns a contact without readable fields, use manual entry.
-          if(!name && !tel) fallbackPrompt();
-        }
-      }).catch(e=>{ fallbackPrompt(); });
-      return;
-    }
-  }catch(e){}
-  fallbackPrompt();
+  function fillFields(name, tel){
+    const targets = {
+      est: ['est-client','est-contact'],
+      inv: ['inv-client','inv-contact'],
+      pay: ['pay-client','pay-contact'],
+      msr: ['msr-client','msr-contact'],
+      ord: ['merchant-name','merchant-contact']
+    };
+    const ids = targets[form];
+    if (!ids) return false;
+    const nameField = el(ids[0]);
+    const telField = el(ids[1]);
+    if (!nameField || !telField) return false;
+    if (name !== '') nameField.value = String(name).trim();
+    if (tel !== '') telField.value = String(tel).trim();
+    nameField.dispatchEvent(new Event('input', {bubbles:true}));
+    nameField.dispatchEvent(new Event('change', {bubbles:true}));
+    telField.dispatchEvent(new Event('input', {bubbles:true}));
+    telField.dispatchEvent(new Event('change', {bubbles:true}));
+    return true;
+  }
 
   function fallbackPrompt(){
-    const name = prompt('Contact name');
-    const tel = prompt('Contact number');
-    if(!name && !tel) return;
-
-    if(form==='est'){ if(name) el('est-client').value=name; if(tel) el('est-contact').value=tel; }
-    if(form==='inv'){ if(name) el('inv-client').value=name; if(tel) el('inv-contact').value=tel; }
-    if(form==='pay'){ if(name) el('pay-client').value=name; if(tel) el('pay-contact').value=tel; }
-    if(form==='msr'){ if(name) el('msr-client').value=name; if(tel) el('msr-contact').value=tel; }
-    if(form==='ord'){ if(name) el('merchant-name').value=name; if(tel) el('merchant-contact').value=tel; }
+    const name = prompt('Contact name') || '';
+    const tel = prompt('Contact number') || '';
+    if (name || tel) fillFields(name, tel);
   }
+
+  try{
+    if (navigator.contacts && typeof navigator.contacts.select === 'function'){
+      const list = await navigator.contacts.select(['name','tel'], {multiple:false});
+      if (Array.isArray(list) && list.length){
+        const c = list[0] || {};
+        const name = firstValue(c.name ?? c.names ?? c.displayName);
+        const tel = firstValue(c.tel ?? c.phone ?? c.phoneNumber ?? c.telephone);
+        if (name !== '' || tel !== '') {
+          fillFields(name, tel);
+          return;
+        }
+      }
+    }
+  }catch(e){
+    console.warn('Contact Picker:', e);
+  }
+  fallbackPrompt();
 }
 
 /* -------------------------------------------------------------
